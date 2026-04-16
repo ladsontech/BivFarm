@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "508575398900",
+    "project_id": "bivfarm",
+    "storage_bucket": "bivfarm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508575398900:android:e60feceefe3781f93f57a1",
+        "android_client_info": {
+          "package_name": "com.buyaff.bivFarm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAacA6PLAti5CWL-Mje-PwlRl7wQhLxHDA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
