@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'services/theme_provider.dart';
+import 'services/auth_service.dart';
 import 'screens/splash_screen.dart';
-import 'screens/demo/demo_home.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/home_shell.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        Provider(create: (_) => AuthService()),
+      ],
       child: const BFarmApp(),
     ),
   );
@@ -25,21 +33,21 @@ class BFarmApp extends StatelessWidget {
           title: 'BFarm',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.currentTheme,
-          home: const _AppEntry(),
+          home: const AuthWrapper(),
         );
       },
     );
   }
 }
 
-class _AppEntry extends StatefulWidget {
-  const _AppEntry();
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
 
   @override
-  State<_AppEntry> createState() => _AppEntryState();
+  State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _AppEntryState extends State<_AppEntry> {
+class _AuthWrapperState extends State<AuthWrapper> {
   bool _splashDone = false;
 
   @override
@@ -51,6 +59,20 @@ class _AppEntryState extends State<_AppEntry> {
         },
       );
     }
-    return const DemoHome();
+
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData) {
+          return const HomeShell();
+        }
+        return const LoginScreen();
+      },
+    );
   }
 }

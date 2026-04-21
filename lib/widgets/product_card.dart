@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product_model.dart';
 import '../theme/app_theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProductCard extends StatelessWidget {
   final ProductModel product;
@@ -41,10 +42,14 @@ class ProductCard extends StatelessWidget {
                               ),
                             ),
                           )
-                        : Image.network(
-                            product.imageUrl!,
+                        : CachedNetworkImage(
+                            imageUrl: product.imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => Container(
+                            placeholder: (context, url) => Container(
+                              color: AppTheme.surfaceLight,
+                              child: const Center(child: CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)),
+                            ),
+                            errorWidget: (context, url, err) => Container(
                               color: AppTheme.surfaceLight,
                               child: Center(
                                 child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 32),
@@ -66,10 +71,9 @@ class ProductCard extends StatelessWidget {
             // Info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       product.productName,
@@ -81,12 +85,13 @@ class ProductCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 2),
                     Text(
                       product.category,
                       style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
@@ -99,23 +104,41 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: 3),
-                    Row(
+                    const SizedBox(height: 4),
+                    Column(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 11, color: AppTheme.textMuted),
-                        SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            product.district,
-                            style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined, size: 8, color: AppTheme.textMuted),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                product.district,
+                                style: TextStyle(color: AppTheme.textMuted, fontSize: 8),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 1),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline, size: 8, color: AppTheme.textMuted),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                product.sellerName.isNotEmpty ? product.sellerName : 'Farmer',
+                                style: TextStyle(color: AppTheme.textMuted, fontSize: 8),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: product.availability == 'Available Now'
                             ? AppTheme.greenSurface
@@ -128,8 +151,8 @@ class ProductCard extends StatelessWidget {
                           color: product.availability == 'Available Now'
                               ? AppTheme.greenLight
                               : AppTheme.textMuted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

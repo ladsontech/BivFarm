@@ -14,6 +14,7 @@ class UserModel {
   final String subcounty;
   final String village;
   final String? profilePhoto;
+  final String? bio;
   final String? agentId;
   final bool isProfileComplete;
   final bool isVerified;
@@ -35,6 +36,7 @@ class UserModel {
     this.subcounty = '',
     this.village = '',
     this.profilePhoto,
+    this.bio,
     this.agentId,
     this.isProfileComplete = false,
     this.isVerified = false,
@@ -58,6 +60,7 @@ class UserModel {
       subcounty: map['subcounty'] ?? '',
       village: map['village'] ?? '',
       profilePhoto: map['profilePhoto'],
+      bio: map['bio'],
       agentId: map['agentId'],
       isProfileComplete: map['isProfileComplete'] ?? false,
       isVerified: map['isVerified'] ?? false,
@@ -81,6 +84,7 @@ class UserModel {
       'subcounty': subcounty,
       'village': village,
       'profilePhoto': profilePhoto,
+      'bio': bio,
       'agentId': agentId,
       'isProfileComplete': isProfileComplete,
       'isVerified': isVerified,
@@ -103,6 +107,7 @@ class UserModel {
     String? subcounty,
     String? village,
     String? profilePhoto,
+    String? bio,
     String? agentId,
     bool? isProfileComplete,
     bool? isVerified,
@@ -123,6 +128,7 @@ class UserModel {
       subcounty: subcounty ?? this.subcounty,
       village: village ?? this.village,
       profilePhoto: profilePhoto ?? this.profilePhoto,
+      bio: bio ?? this.bio,
       agentId: agentId ?? this.agentId,
       isProfileComplete: isProfileComplete ?? this.isProfileComplete,
       isVerified: isVerified ?? this.isVerified,

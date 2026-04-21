@@ -41,42 +41,25 @@ class AppConstants {
 
   static const Map<String, List<String>> productCategories = {
     'Produce': [
-      'Maize',
-      'Beans',
-      'Groundnuts',
-      'Soybeans',
-      'Rice',
-      'Coffee',
-      'Cocoa',
-      'Cassava',
-      'Sweet potatoes',
-      'Irish potatoes',
-      'Sugarcane',
-      'Maize flour',
-      'Cassava flour',
-      'Others',
+      'Maize', 'Beans', 'Groundnuts', 'Soybeans', 'Rice', 'Coffee', 'Cocoa', 
+      'Cassava', 'Sweet potatoes', 'Irish potatoes', 'Sugarcane', 'Maize flour', 
+      'Cassava flour', 'Others',
     ],
-    'Poultry & Livestock': [
-      'Poultry',
-      'Fish',
-      'Pigs',
-      'Goats',
-      'Cattle',
-      'Sheep',
-      'Rabbits',
-      'Others',
+    'Poultry': [
+      'Chickens', 'Turkeys', 'Ducks', 'Eggs', 'Others',
+    ],
+    'Livestock': [
+      'Pigs', 'Goats', 'Cattle', 'Sheep', 'Rabbits', 'Others',
     ],
     'Fruits & Vegetables': [
-      'Tomatoes',
-      'Onions',
-      'Mangoes',
-      'Pineapples',
-      'Oranges',
-      'Cucumber',
-      'Ginger',
-      'Green pepper',
-      'Lemons',
-      'Others',
+      'Tomatoes', 'Onions', 'Mangoes', 'Pineapples', 'Oranges', 'Cucumber', 
+      'Ginger', 'Green pepper', 'Lemons', 'Others',
+    ],
+    'Farm Machinery': [
+      'Tractors', 'Ploughs', 'Harrows', 'Planters', 'Harvesters', 'Others',
+    ],
+    'Fertilizers & Pesticides': [
+      'Fertilizers', 'Pesticides', 'Herbicides', 'Fungicides', 'Others',
     ],
   };
 

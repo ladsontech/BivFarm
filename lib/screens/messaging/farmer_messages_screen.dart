@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/message_model.dart';
-import '../../services/demo_data.dart';
+import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 
 class FarmerMessagesScreen extends StatefulWidget {
@@ -14,15 +14,11 @@ class FarmerMessagesScreen extends StatefulWidget {
 }
 
 class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
-  late List<MessageModel> _messages;
+  final _db = DatabaseService();
 
   @override
   void initState() {
     super.initState();
-    _messages = DemoData.messages
-        .where((m) => m.recipientId == widget.userId)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   String _formatTime(DateTime dt) {
@@ -62,28 +58,37 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_messages.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.chat_bubble_outline, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
-            SizedBox(height: 16),
-            Text('No messages yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
-            SizedBox(height: 8),
-            Text(
-              'Messages from the Admin and\nRegistry will appear here',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+    return StreamBuilder<List<MessageModel>>(
+      stream: _db.streamMessagesByUser(widget.userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+        }
+        
+        final messages = snapshot.data ?? [];
+
+        if (messages.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chat_bubble_outline, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
+                const SizedBox(height: 16),
+                Text('No messages yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                const SizedBox(height: 8),
+                Text(
+                  'Messages from the Admin and\nRegistry will appear here',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    final unreadCount = _messages.where((m) => !m.isRead).length;
+        final unreadCount = messages.where((m) => !m.isRead).length;
 
-    return Column(
+        return Column(
       children: [
         // Header bar
         Container(
@@ -94,8 +99,8 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.chat_bubble_outline, color: AppTheme.greenLight, size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.chat_bubble_outline, color: AppTheme.greenLight, size: 20),
+              const SizedBox(width: 10),
               Text(
                 'Messages',
                 style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
@@ -110,7 +115,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                   ),
                   child: Text(
                     '$unreadCount unread',
-                    style: TextStyle(color: AppTheme.greenLight, fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: AppTheme.greenLight, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
             ],
@@ -120,10 +125,10 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: _messages.length,
+            itemCount: messages.length,
             separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border, indent: 72),
             itemBuilder: (context, index) {
-              final msg = _messages[index];
+              final msg = messages[index];
               final roleColor = _getRoleColor(msg.senderRole);
               return InkWell(
                 onTap: () => _showMessageDetail(msg),
@@ -158,7 +163,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   _formatTime(msg.createdAt),
                                   style: TextStyle(
@@ -169,7 +174,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 3),
+                            const SizedBox(height: 3),
                             Text(
                               msg.subject,
                               style: TextStyle(
@@ -180,7 +185,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               msg.body,
                               style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
@@ -196,7 +201,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                           margin: const EdgeInsets.only(left: 8, top: 4),
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppTheme.greenLight,
                             shape: BoxShape.circle,
                           ),
@@ -210,26 +215,14 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
         ),
       ],
     );
+      },
+    );
   }
 
   void _showMessageDetail(MessageModel msg) {
-    // Mark as read
-    setState(() {
-      final idx = _messages.indexOf(msg);
-      if (idx != -1) {
-        _messages[idx] = MessageModel(
-          id: msg.id,
-          senderId: msg.senderId,
-          senderName: msg.senderName,
-          senderRole: msg.senderRole,
-          recipientId: msg.recipientId,
-          subject: msg.subject,
-          body: msg.body,
-          isRead: true,
-          createdAt: msg.createdAt,
-        );
-      }
-    });
+    if (!msg.isRead) {
+      _db.markMessageRead(msg.id);
+    }
 
     final roleColor = _getRoleColor(msg.senderRole);
 
@@ -271,7 +264,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                         backgroundColor: roleColor.withOpacity(0.15),
                         child: Icon(_getRoleIcon(msg.senderRole), color: roleColor, size: 22),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +280,7 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Divider(color: AppTheme.border, height: 1),
                   const SizedBox(height: 16),
                   // Subject

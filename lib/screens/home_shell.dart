@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'marketplace/marketplace_screen.dart';
+import 'marketplace/add_product_screen.dart';
 import 'bidding/bids_list_screen.dart';
 import 'agent/agent_dashboard_screen.dart';
 import 'admin/admin_dashboard_screen.dart';
-import 'admin/registry_dashboard_screen.dart';
 import 'messaging/farmer_messages_screen.dart';
-import 'marketplace/add_product_screen.dart';
+import 'profile/profile_screen.dart';
+import 'marketplace/categories_screen.dart';
+import 'auth/onboarding_screen.dart';
+import 'auth/login_screen.dart';
+import 'notifications/notifications_screen.dart';
+import '../models/notification_model.dart';
 
 class HomeShell extends StatefulWidget {
-  final UserModel user;
-
-  const HomeShell({super.key, required this.user});
+  const HomeShell({super.key});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -22,50 +27,195 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
-  final _auth = AuthService();
+  final GlobalKey<State<MarketplaceScreen>> _marketKey = GlobalKey();
 
-  List<Widget> get _screens {
-    switch (widget.user.role) {
+  void _onCategorySelected(String category) {
+    setState(() {
+      _currentIndex = 0; // Switch to Marketplace tab
+    });
+    // Use post frame callback to ensure the state is available if we just switched
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final marketState = _marketKey.currentState;
+      if (marketState != null) {
+        // Use forced dynamic cast to access the custom method on the private state class
+        (marketState as dynamic).applyExternalFilter(category);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final uid = authService.currentUser?.uid;
+
+    if (uid == null) return const LoginScreen();
+
+    return StreamBuilder<UserModel?>(
+      stream: DatabaseService().streamUser(uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snapshot.data;
+        if (user == null) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('User profile not found.'),
+                  TextButton(
+                    onPressed: () => authService.signOut(),
+                    child: const Text('Sign Out'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Redirect to Onboarding if profile not complete
+        if (!user.isProfileComplete) {
+          return OnboardingScreen(userId: user.id);
+        }
+
+        final screens = _getScreens(user);
+        final navItems = _getNavItems(user);
+
+        // Clamp index
+        final safeIndex = _currentIndex.clamp(0, screens.length - 1);
+
+        return Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 64,
+            title: Image.asset(
+              'assets/images/Bfarm_icon.png',
+              height: 64,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
+            ),
+            actions: [
+              StreamBuilder<List<NotificationModel>>(
+                stream: DatabaseService().streamNotifications(user.id),
+                builder: (context, snap) {
+                  final unreadCount = snap.data?.where((n) => !n.isRead).length ?? 0;
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.notifications_none, color: AppTheme.textPrimary),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => NotificationsScreen(userId: user.id)),
+                          );
+                        },
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.error,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                            child: Text(
+                              unreadCount > 9 ? '9+' : '$unreadCount',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: IndexedStack(
+            index: safeIndex,
+            children: screens,
+          ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: safeIndex,
+              onTap: (i) => setState(() => _currentIndex = i),
+              type: BottomNavigationBarType.fixed, // Prevent scaling/shifting
+              selectedFontSize: 11,
+              unselectedFontSize: 10,
+              items: navItems,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _getScreens(UserModel user) {
+    switch (user.role) {
       case 'Admin':
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
-          BidsListScreen(userId: widget.user.id, userRole: widget.user.role),
+          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          CategoriesScreen(onCategorySelected: _onCategorySelected),
+          BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
+          ProfileScreen(user: user),
         ];
       case 'Registry':
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
-          BidsListScreen(userId: widget.user.id, userRole: widget.user.role),
-          const RegistryDashboardScreen(),
+          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          CategoriesScreen(onCategorySelected: _onCategorySelected),
+          BidsListScreen(userId: user.id, userRole: user.role),
+          const AdminDashboardScreen(),
+          ProfileScreen(user: user),
         ];
       case 'Agent':
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
-          AgentDashboardScreen(agentId: widget.user.id),
+          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          CategoriesScreen(onCategorySelected: _onCategorySelected),
+          AgentDashboardScreen(agentId: user.id),
+          ProfileScreen(user: user),
         ];
       case 'Farmer':
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
-          FarmerMessagesScreen(userId: widget.user.id),
+          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          CategoriesScreen(onCategorySelected: _onCategorySelected),
+          _FarmerListingsTab(userId: user.id),
+          FarmerMessagesScreen(userId: user.id),
+          ProfileScreen(user: user),
         ];
       case 'Buyer':
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
-          BidsListScreen(userId: widget.user.id, userRole: widget.user.role),
+          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          CategoriesScreen(onCategorySelected: _onCategorySelected),
+          BidsListScreen(userId: user.id, userRole: user.role),
+          ProfileScreen(user: user),
         ];
       default:
         return [
-          MarketplaceScreen(userRole: widget.user.role, userId: widget.user.id),
+          MarketplaceScreen(userRole: user.role, userId: user.id),
+          ProfileScreen(user: user),
         ];
     }
   }
 
-  List<BottomNavigationBarItem> get _navItems {
+  List<BottomNavigationBarItem> _getNavItems(UserModel user) {
     final items = <BottomNavigationBarItem>[
       const BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Market'),
+      const BottomNavigationBarItem(icon: Icon(Icons.category_outlined), label: 'Categories'),
     ];
 
-    switch (widget.user.role) {
+    switch (user.role) {
       case 'Admin':
         items.addAll([
           const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
@@ -79,226 +229,162 @@ class _HomeShellState extends State<HomeShell> {
         ]);
         break;
       case 'Agent':
-        items.add(
-          const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Dashboard'),
-        );
+        items.add(const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Dashboard'));
         break;
       case 'Farmer':
-        items.add(
+        items.addAll([
+          const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: 'Listings'),
           const BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
-        );
+        ]);
         break;
       case 'Buyer':
-        items.add(
-          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'My Bids'),
-        );
-        break;
-      default:
+        items.add(const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'My Bids'));
         break;
     }
 
-    return items;
-  }
+    // All roles get a Profile tab
+    items.add(const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'));
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 64,
-        title: Image.asset(
-          'assets/images/Bfarm_icon.png',
-          height: 64,
-          fit: BoxFit.contain,
-          alignment: Alignment.centerLeft,
-        ),
-        actions: [
-          // My Listings (Farmer)
-          if (widget.user.role == 'Farmer')
-            IconButton(
-              icon: const Icon(Icons.inventory_2_outlined),
-              tooltip: 'My Listings',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => _MyListingsScreen(userId: widget.user.id),
-                  ),
-                );
-              },
-            ),
-          // Profile
-          PopupMenuButton<String>(
-            icon: CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.surfaceLight,
-              backgroundImage: widget.user.profilePhoto != null ? NetworkImage(widget.user.profilePhoto!) : null,
-              child: widget.user.profilePhoto == null
-                  ? Text(
-                      widget.user.name.isNotEmpty ? widget.user.name[0].toUpperCase() : '?',
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontWeight: FontWeight.w600),
-                    )
-                  : null,
-            ),
-            color: AppTheme.surface,
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.user.name, style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-                    Text(widget.user.role, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                    Text(widget.user.district, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(value: 'logout', child: Row(
-                children: [
-                  Icon(Icons.logout, size: 18, color: AppTheme.error),
-                  SizedBox(width: 8),
-                  Text('Sign Out', style: TextStyle(color: AppTheme.error)),
-                ],
-              )),
-            ],
-            onSelected: (v) {
-              if (v == 'logout') _auth.signOut();
-            },
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
-          items: _navItems,
-        ),
-      ),
-    );
+    return items;
   }
 }
 
-// ─── My Listings Screen (Farmer) ─────────────────────
-class _MyListingsScreen extends StatelessWidget {
+// ─── Farmer Listings Tab (embedded, no AppBar) ───────────
+class _FarmerListingsTab extends StatelessWidget {
   final String userId;
-  const _MyListingsScreen({required this.userId});
+  const _FarmerListingsTab({required this.userId});
 
   @override
   Widget build(BuildContext context) {
     final db = DatabaseService();
-    return Scaffold(
-      appBar: AppBar(title: Text('My Listings')),
-      body: StreamBuilder(
-        stream: db.streamProductsBySeller(userId),
-        builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppTheme.green));
-          }
-          final products = snap.data ?? [];
-          if (products.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
-                  SizedBox(height: 16),
-                  Text('No listings yet', style: TextStyle(color: AppTheme.textMuted)),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Create Listing'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: products.length,
-            itemBuilder: (ctx, i) {
-              final p = products[i];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId, existingProduct: p)),
-                  );
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.card,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.border, width: 0.5),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppTheme.greenSurface,
-                          borderRadius: BorderRadius.circular(10),
-                          image: p.imageUrl != null
-                              ? DecorationImage(
-                                  image: p.imageUrl!.startsWith('assets/')
-                                      ? AssetImage(p.imageUrl!) as ImageProvider
-                                      : NetworkImage(p.imageUrl!),
-                                  fit: BoxFit.cover)
-                              : null,
+    return StreamBuilder(
+      stream: db.streamProductsBySeller(userId),
+      builder: (ctx, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+        }
+        final products = snap.data ?? [];
+        if (products.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
+                const SizedBox(height: 16),
+                Text('No listings yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                const SizedBox(height: 6),
+                Text(
+                  'Start selling by creating your first listing',
+                  style: TextStyle(color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Create Listing'),
+                ),
+              ],
+            ),
+          );
+        }
+        return Stack(
+          children: [
+            ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+              itemCount: products.length,
+              itemBuilder: (ctx, i) {
+                final p = products[i];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId, existingProduct: p)),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.card,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.border, width: 0.5),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: AppTheme.greenSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            image: p.imageUrl != null
+                                ? DecorationImage(
+                                    image: p.imageUrl!.startsWith('assets/')
+                                        ? AssetImage(p.imageUrl!) as ImageProvider
+                                        : CachedNetworkImageProvider(p.imageUrl!),
+                                    fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: p.imageUrl == null ? const Icon(Icons.eco, color: AppTheme.greenLight) : null,
                         ),
-                        child: p.imageUrl == null ? Icon(Icons.eco, color: AppTheme.greenLight) : null,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p.productName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text('${p.quantity} ${p.quantityUnit} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(p.productName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-                            Text('${p.quantity} ${p.quantityUnit} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                            Text(
+                              'UGX ${p.price.toStringAsFixed(0)}',
+                              style: const TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: p.availability == 'Available Now' ? AppTheme.greenSurface : AppTheme.surfaceLight,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                p.availability,
+                                style: TextStyle(
+                                  color: p.availability == 'Available Now' ? AppTheme.greenLight : AppTheme.textMuted,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('UGX ${p.price.toStringAsFixed(0)} / ${p.quantityUnit.toLowerCase() == 'pieces' ? 'Piece' : (p.quantityUnit.toLowerCase() == 'crates' ? 'Crate' : p.quantityUnit)}', style: TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: p.availability == 'Available Now' ? AppTheme.greenSurface : AppTheme.surfaceLight,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(p.availability, style: TextStyle(color: p.availability == 'Available Now' ? AppTheme.greenLight : AppTheme.textMuted, fontSize: 10)),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
-        },
-        child: const Icon(Icons.add),
-      ),
+                );
+              },
+            ),
+            // Floating Add button
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'addListing',
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
+                },
+                child: const Icon(Icons.add),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

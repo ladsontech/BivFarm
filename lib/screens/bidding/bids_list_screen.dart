@@ -4,6 +4,8 @@ import '../../models/bid_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../models/message_model.dart';
+import '../orders/admin_bulk_orders_tab.dart';
 
 class BidsListScreen extends StatelessWidget {
   final String userId;
@@ -25,26 +27,56 @@ class BidsListScreen extends StatelessWidget {
       bidStream = db.streamBidsByBuyer(userId);
     }
 
-    return Scaffold(
-      body: (userRole == 'Admin' || userRole == 'Registry')
-          ? FutureBuilder<List<BidModel>>(
-              future: db.getAllBids(),
-              builder: (ctx, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: AppTheme.green));
-                }
-                return _buildBidList(snap.data ?? [], formatter, userRole, db);
-              },
-            )
-          : StreamBuilder<List<BidModel>>(
-              stream: bidStream,
-              builder: (ctx, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: AppTheme.green));
-                }
-                return _buildBidList(snap.data ?? [], formatter, userRole, db);
-              },
+    final isAdmin = userRole == 'Admin' || userRole == 'Registry';
+
+    if (isAdmin) {
+      return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: AppBar(
+              backgroundColor: AppTheme.surface,
+              elevation: 0,
+              bottom: TabBar(
+                labelColor: AppTheme.green,
+                unselectedLabelColor: AppTheme.textMuted,
+                indicatorColor: AppTheme.green,
+                tabs: const [
+                  Tab(text: 'Standard Bids'),
+                  Tab(text: 'Bulk Orders'),
+                ],
+              ),
             ),
+          ),
+          body: TabBarView(
+            children: [
+              FutureBuilder<List<BidModel>>(
+                future: db.getAllBids(),
+                builder: (ctx, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+                  }
+                  return _buildBidList(snap.data ?? [], formatter, userRole, db);
+                },
+              ),
+              AdminBulkOrdersTab(db: db),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: StreamBuilder<List<BidModel>>(
+        stream: bidStream,
+        builder: (ctx, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          }
+          return _buildBidList(snap.data ?? [], formatter, userRole, db);
+        },
+      ),
     );
   }
 
@@ -55,7 +87,7 @@ class BidsListScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(role == 'Farmer' ? Icons.chat_bubble_outline : Icons.gavel, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(role == 'Farmer' ? 'No messages yet' : 'No bids yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
           ],
         ),
@@ -67,109 +99,185 @@ class BidsListScreen extends StatelessWidget {
       itemCount: bids.length,
       itemBuilder: (ctx, i) {
         final bid = bids[i];
+        final isAdmin = role == 'Admin' || role == 'Registry';
+        
         return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppTheme.card,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppTheme.border, width: 0.5),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      bid.productName,
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  BidStatusBadge(status: bid.status),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _infoChip(Icons.scale, '${bid.quantity}'),
-                  const SizedBox(width: 12),
-                  // Farmers do not see the buyer's offered price natively, maybe they only see the amount if the admin approves it?
-                  // Or maybe they see the price but not the buyer. For now, we show the price to the farmer since it's an offer on their product.
-                  _infoChip(Icons.payments, 'UGX ${formatter.format(bid.offeredPrice)}'),
-                ],
-              ),
-              const SizedBox(height: 6),
-              // Hide buyer name for farmer
-              if (role != 'Farmer')
-                Text(
-                  role == 'Buyer' ? 'Your bid' : 'By: ${bid.buyerName} • ${bid.buyerPhone}',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                )
-              else
-                Text(
-                  'From: Administrator',
-                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+              // Price & Status Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.greenSurface,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                 ),
-                
-              // Hide buyer notes for farmer
-              if (role != 'Farmer' && bid.notes != null && bid.notes!.isNotEmpty) ...[
-                SizedBox(height: 4),
-                Text(bid.notes!, style: TextStyle(color: AppTheme.textMuted, fontSize: 12, fontStyle: FontStyle.italic)),
-              ],
-              
-              // Show Admin Notes to Farmer
-              if (role == 'Farmer' && bid.adminNotes != null && bid.adminNotes!.isNotEmpty) ...[
-                SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.greenSurface,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.forum, size: 14, color: AppTheme.greenLight),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          bid.adminNotes!,
-                          style: TextStyle(color: AppTheme.textPrimary, fontSize: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.gavel, color: AppTheme.greenDark, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('UGX ${formatter.format(bid.offeredPrice)}', style: const TextStyle(color: AppTheme.greenDark, fontSize: 18, fontWeight: FontWeight.w800)),
+                          Text('${bid.productName} • Qty: ${bid.quantity}', style: TextStyle(color: AppTheme.greenDark.withOpacity(0.7), fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    if (isAdmin)
+                      PopupMenuButton<String>(
+                        tooltip: 'Change Status',
+                        offset: const Offset(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        onSelected: (v) {
+                          db.updateBidStatus(bid.id, v);
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            enabled: false,
+                            child: Text('Update State', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textMuted)),
+                          ),
+                          const PopupMenuDivider(),
+                          ...['Pending', 'Under Review', 'Accepted', 'Rejected', 'Completed'].map(
+                            (s) => PopupMenuItem(value: s, child: Row(children: [
+                              Icon(s == bid.status ? Icons.radio_button_checked : Icons.radio_button_off, size: 16, color: s == bid.status ? AppTheme.greenLight : AppTheme.textMuted),
+                              const SizedBox(width: 8),
+                              Text(s),
+                            ])),
+                          ),
+                        ],
+                        child: BidStatusBadge(status: bid.status),
+                      )
+                    else
+                      BidStatusBadge(status: bid.status),
+                  ],
+                ),
+              ),
+              // Body
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // Buyer Info
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppTheme.surfaceLight,
+                          child: Icon(role == 'Farmer' ? Icons.security : Icons.shopping_cart, color: AppTheme.textMuted, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                role == 'Farmer' ? 'From: Administrator' : (role == 'Buyer' ? 'Your bid' : bid.buyerName),
+                                style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                              if (role != 'Farmer' && role != 'Buyer') 
+                                Text('Buyer: ${bid.buyerPhone.isNotEmpty ? bid.buyerPhone : "No phone"}', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        if (isAdmin)
+                          IconButton(
+                            icon: const Icon(Icons.message_outlined, color: AppTheme.greenLight, size: 20),
+                            tooltip: 'Message Buyer',
+                            onPressed: () => _showDirectMessageDialog(ctx, bid.buyerId, bid.buyerName, db),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Seller (Farmer) Info for Admins and Buyers
+                    if (role != 'Farmer')
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: AppTheme.surfaceLight,
+                            child: Icon(Icons.agriculture, color: AppTheme.textMuted, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  bid.sellerName.isNotEmpty ? bid.sellerName : 'Farmer',
+                                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                                Text('Farmer: ${bid.sellerPhone.isNotEmpty ? bid.sellerPhone : "No phone"}', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          if (isAdmin)
+                            IconButton(
+                              icon: Icon(Icons.support_agent, color: AppTheme.green, size: 20),
+                              tooltip: 'Leave notes & msg Farmer',
+                              onPressed: () => _showMessageDialog(ctx, bid, db),
+                            ),
+                        ],
+                      ),
+                    
+                    // Notes 
+                    if (role != 'Farmer' && bid.notes != null && bid.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.notes, size: 14, color: AppTheme.textMuted),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(bid.notes!, style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontStyle: FontStyle.italic))),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-              
-              SizedBox(height: 4),
-              Text(
-                DateFormat('MMM d, yyyy • hh:mm a').format(bid.createdAt),
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-              ),
-              
-              // Admin/Registry actions
-              if (role == 'Admin' || role == 'Registry') ...[
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    _actionBtn('Msg Farmer', AppTheme.green, () {
-                      _showMessageDialog(ctx, bid, db);
-                    }),
-                    SizedBox(width: 6),
-                    _actionBtn('Accept', AppTheme.statusAccepted, () {
-                      db.updateBidStatus(bid.id, 'Accepted');
-                    }),
-                    SizedBox(width: 6),
-                    _actionBtn('Reject', AppTheme.statusRejected, () {
-                      db.updateBidStatus(bid.id, 'Rejected');
-                    }),
+                    
+                    // Admin Notes to Farmer
+                    if (role == 'Farmer' && bid.adminNotes != null && bid.adminNotes!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: AppTheme.greenSurface, borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.forum, size: 14, color: AppTheme.greenLight),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(bid.adminNotes!, style: TextStyle(color: AppTheme.textPrimary, fontSize: 12))),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 12),
+                    // Date
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 13, color: AppTheme.textMuted),
+                        const SizedBox(width: 4),
+                        Text(DateFormat('MMM d, yyyy – h:mm a').format(bid.createdAt), style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      ],
+                    ),
+
+                    // Note: Action buttons moved up natively into UI. Status is handled by top right badge dropdown.
                   ],
                 ),
-              ],
+              ),
             ],
           ),
         );
@@ -183,15 +291,15 @@ class BidsListScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        title: Text('Message Farmer', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+        title: Text('Admin Note to Farmer', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
         content: TextField(
           controller: tc,
           maxLines: 3,
           style: TextStyle(color: AppTheme.textPrimary),
           decoration: InputDecoration(
-            hintText: 'Enter a message for the farmer...',
+            hintText: 'Enter details or instructions for the farmer...',
             hintStyle: TextStyle(color: AppTheme.textMuted),
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -217,28 +325,63 @@ class BidsListScreen extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: AppTheme.textMuted),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(text, style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
       ],
     );
   }
 
-  Widget _actionBtn(String label, Color color, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: color.withOpacity(0.3)),
+  void _showDirectMessageDialog(BuildContext context, String recipientId, String recipientName, DatabaseService db) {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: Text('Message to $recipientName', style: TextStyle(color: AppTheme.textPrimary)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomTextField(label: 'Subject', controller: titleCtrl),
+              const SizedBox(height: 12),
+              CustomTextField(label: 'Message', controller: bodyCtrl, maxLines: 4),
+            ],
           ),
-          child: Center(
-            child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
-          ),
-        ),
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx), 
+              child: Text('Cancel', style: TextStyle(color: AppTheme.textMuted))
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleCtrl.text.isEmpty || bodyCtrl.text.isEmpty) return;
+                try {
+                  await db.addMessage(MessageModel(
+                    id: '',
+                    senderId: 'admin',
+                    senderName: 'Admin',
+                    senderRole: 'Admin',
+                    recipientId: recipientId,
+                    subject: titleCtrl.text,
+                    body: bodyCtrl.text,
+                  ));
+                  if (context.mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Message sent')));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

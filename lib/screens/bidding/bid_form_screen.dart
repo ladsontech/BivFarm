@@ -31,13 +31,17 @@ class _BidFormScreenState extends State<BidFormScreen> {
     setState(() => _loading = true);
     try {
       final user = await _auth.getCurrentUserModel();
+      final seller = await _db.getUser(widget.product.sellerId);
       final bid = BidModel(
         id: '',
         productId: widget.product.id,
         productName: widget.product.productName,
         buyerId: widget.buyerId,
         buyerName: user?.name ?? '',
+        buyerPhone: user?.phone ?? '',
         sellerId: widget.product.sellerId,
+        sellerName: seller?.name ?? widget.product.sellerName,
+        sellerPhone: seller?.phone ?? '',
         quantity: double.parse(_qtyCtrl.text),
         offeredPrice: double.parse(_priceCtrl.text.replaceAll(',', '')),
         notes: _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null,
@@ -70,7 +74,7 @@ class _BidFormScreenState extends State<BidFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Place a Bid')),
+      appBar: AppBar(title: const Text('Place a Bid')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -95,9 +99,9 @@ class _BidFormScreenState extends State<BidFormScreen> {
                         color: AppTheme.greenSurface,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.eco, color: AppTheme.greenLight),
+                      child: const Icon(Icons.eco, color: AppTheme.greenLight),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +157,7 @@ class _BidFormScreenState extends State<BidFormScreen> {
                 child: Row(
                   children: [
                     Icon(Icons.info_outline, color: AppTheme.textMuted, size: 16),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Your bid will be sent to the registry for review. The registry will coordinate between you and the farmer.',

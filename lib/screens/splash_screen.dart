@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         fit: BoxFit.contain,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'BivMark Co Ltd',
                       style: TextStyle(

@@ -42,7 +42,7 @@ class CustomTextField extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         TextFormField(
           controller: controller,
           validator: validator,
@@ -92,11 +92,12 @@ class CustomDropdown extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           validator: validator,
           dropdownColor: AppTheme.surfaceLight,
+          isExpanded: true,
           style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
           decoration: const InputDecoration(),
           items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
@@ -203,7 +204,7 @@ class StatCard extends StatelessWidget {
               ),
               child: Icon(icon, color: c, size: 20),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               value,
               style: TextStyle(
@@ -212,7 +213,7 @@ class StatCard extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               title,
               style: TextStyle(color: AppTheme.textMuted, fontSize: 12),

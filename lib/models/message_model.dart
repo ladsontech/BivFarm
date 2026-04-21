@@ -20,4 +20,31 @@ class MessageModel {
     this.isRead = false,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toMap() {
+    return {
+      'senderId': senderId,
+      'senderName': senderName,
+      'senderRole': senderRole,
+      'recipientId': recipientId,
+      'subject': subject,
+      'body': body,
+      'isRead': isRead,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory MessageModel.fromMap(Map<String, dynamic> map, String id) {
+    return MessageModel(
+      id: id,
+      senderId: map['senderId'] ?? '',
+      senderName: map['senderName'] ?? '',
+      senderRole: map['senderRole'] ?? 'Admin',
+      recipientId: map['recipientId'] ?? '',
+      subject: map['subject'] ?? '',
+      body: map['body'] ?? '',
+      isRead: map['isRead'] ?? false,
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
+    );
+  }
 }

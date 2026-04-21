@@ -7,6 +7,8 @@ class BidModel {
   final String buyerName;
   final String buyerPhone;
   final String sellerId;
+  final String sellerName;
+  final String sellerPhone;
   final double quantity;
   final double offeredPrice;
   final String status; // Pending, Under Review, Accepted, Rejected, Completed
@@ -22,6 +24,8 @@ class BidModel {
     this.buyerName = '',
     this.buyerPhone = '',
     required this.sellerId,
+    this.sellerName = '',
+    this.sellerPhone = '',
     required this.quantity,
     required this.offeredPrice,
     this.status = 'Pending',
@@ -42,6 +46,8 @@ class BidModel {
       buyerName: buyerName,
       buyerPhone: buyerPhone,
       sellerId: sellerId,
+      sellerName: sellerName,
+      sellerPhone: sellerPhone,
       quantity: quantity,
       offeredPrice: offeredPrice,
       status: status ?? this.status,
@@ -60,6 +66,8 @@ class BidModel {
       buyerName: map['buyerName'] ?? '',
       buyerPhone: map['buyerPhone'] ?? '',
       sellerId: map['sellerId'] ?? '',
+      sellerName: map['sellerName'] ?? '',
+      sellerPhone: map['sellerPhone'] ?? '',
       quantity: (map['quantity'] ?? 0).toDouble(),
       offeredPrice: (map['offeredPrice'] ?? 0).toDouble(),
       status: map['status'] ?? 'Pending',
@@ -77,6 +85,8 @@ class BidModel {
       'buyerName': buyerName,
       'buyerPhone': buyerPhone,
       'sellerId': sellerId,
+      'sellerName': sellerName,
+      'sellerPhone': sellerPhone,
       'quantity': quantity,
       'offeredPrice': offeredPrice,
       'status': status,
