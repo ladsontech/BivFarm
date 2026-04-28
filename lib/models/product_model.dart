@@ -3,6 +3,8 @@ class ProductModel {
   final String id;
   final String sellerId;
   final String sellerName;
+  final String? sellerPhoto;
+  final String? sellerPhone;
   final String category;
   final String productName;
   final double quantity;
@@ -10,14 +12,19 @@ class ProductModel {
   final String availability;
   final double price;
   final String district;
-  final String? imageUrl;
+  final List<String> imageUrls;
   final bool isActive;
   final DateTime createdAt;
+
+  /// Backward-compatible getter: returns first image or null
+  String? get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
 
   ProductModel({
     required this.id,
     required this.sellerId,
     this.sellerName = '',
+    this.sellerPhoto,
+    this.sellerPhone,
     required this.category,
     required this.productName,
     required this.quantity,
@@ -25,16 +32,28 @@ class ProductModel {
     required this.availability,
     required this.price,
     required this.district,
-    this.imageUrl,
+    List<String>? imageUrls,
+    @Deprecated('Use imageUrls instead') String? imageUrl,
     this.isActive = true,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  })  : imageUrls = imageUrls ?? (imageUrl != null ? [imageUrl] : []),
+        createdAt = createdAt ?? DateTime.now();
 
   factory ProductModel.fromMap(Map<String, dynamic> map, String id) {
+    // Support both old single imageUrl and new imageUrls list
+    List<String> urls = [];
+    if (map['imageUrls'] != null && map['imageUrls'] is List) {
+      urls = List<String>.from(map['imageUrls']);
+    } else if (map['imageUrl'] != null && (map['imageUrl'] as String).isNotEmpty) {
+      urls = [map['imageUrl'] as String];
+    }
+
     return ProductModel(
       id: id,
       sellerId: map['sellerId'] ?? '',
       sellerName: map['sellerName'] ?? '',
+      sellerPhoto: map['sellerPhoto'],
+      sellerPhone: map['sellerPhone'],
       category: map['category'] ?? '',
       productName: map['productName'] ?? '',
       quantity: (map['quantity'] ?? 0).toDouble(),
@@ -42,7 +61,7 @@ class ProductModel {
       availability: map['availability'] ?? 'Available Now',
       price: (map['price'] ?? 0).toDouble(),
       district: map['district'] ?? '',
-      imageUrl: map['imageUrl'],
+      imageUrls: urls,
       isActive: map['isActive'] ?? true,
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
     );
@@ -52,6 +71,8 @@ class ProductModel {
     return {
       'sellerId': sellerId,
       'sellerName': sellerName,
+      'sellerPhoto': sellerPhoto,
+      'sellerPhone': sellerPhone,
       'category': category,
       'productName': productName,
       'quantity': quantity,
@@ -59,7 +80,8 @@ class ProductModel {
       'availability': availability,
       'price': price,
       'district': district,
-      'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
+      'imageUrl': imageUrl, // backward compat for old queries
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
     };
@@ -68,6 +90,8 @@ class ProductModel {
   ProductModel copyWith({
     String? sellerId,
     String? sellerName,
+    String? sellerPhoto,
+    String? sellerPhone,
     String? category,
     String? productName,
     double? quantity,
@@ -75,13 +99,15 @@ class ProductModel {
     String? availability,
     double? price,
     String? district,
-    String? imageUrl,
+    List<String>? imageUrls,
     bool? isActive,
   }) {
     return ProductModel(
       id: id,
       sellerId: sellerId ?? this.sellerId,
       sellerName: sellerName ?? this.sellerName,
+      sellerPhoto: sellerPhoto ?? this.sellerPhoto,
+      sellerPhone: sellerPhone ?? this.sellerPhone,
       category: category ?? this.category,
       productName: productName ?? this.productName,
       quantity: quantity ?? this.quantity,
@@ -89,7 +115,7 @@ class ProductModel {
       availability: availability ?? this.availability,
       price: price ?? this.price,
       district: district ?? this.district,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrls: imageUrls ?? this.imageUrls,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt,
     );

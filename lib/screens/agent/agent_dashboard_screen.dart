@@ -9,6 +9,8 @@ import '../../widgets/common_widgets.dart';
 import '../../widgets/my_listings_tab.dart';
 import '../../utils/constants.dart';
 import '../../utils/validators.dart';
+import '../../models/product_model.dart';
+import '../marketplace/add_product_screen.dart';
 
 class AgentDashboardScreen extends StatefulWidget {
   final String agentId;
@@ -181,7 +183,7 @@ class _MyUsersTab extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => _UserDetailScreen(user: u)),
+                  MaterialPageRoute(builder: (_) => _UserDetailScreen(user: u, agentId: agentId)),
                 );
               },
               child: Container(
@@ -214,6 +216,18 @@ class _MyUsersTab extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Quick manage listings button for farmers
+                    if (u.role == 'Farmer')
+                      IconButton(
+                        icon: const Icon(Icons.inventory_2_outlined, color: AppTheme.greenLight, size: 20),
+                        tooltip: 'Manage Listings',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => _FarmerListingsManageScreen(farmer: u)),
+                          );
+                        },
+                      ),
                     Icon(Icons.chevron_right, color: AppTheme.textMuted, size: 20),
                   ],
                 ),
@@ -229,7 +243,8 @@ class _MyUsersTab extends StatelessWidget {
 // ─── User Detail / Edit Screen ───────────────────────
 class _UserDetailScreen extends StatefulWidget {
   final UserModel user;
-  const _UserDetailScreen({required this.user});
+  final String agentId;
+  const _UserDetailScreen({required this.user, required this.agentId});
 
   @override
   State<_UserDetailScreen> createState() => _UserDetailScreenState();
@@ -366,6 +381,10 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
         _infoRow(Icons.email, 'Email', u.email.isNotEmpty ? u.email : 'Not set'),
         _infoRow(Icons.wc, 'Gender', u.gender.isNotEmpty ? u.gender : 'Not set'),
         _infoRow(Icons.location_on, 'District', u.district.isNotEmpty ? u.district : 'Not set'),
+        _infoRow(Icons.map, 'Subcounty', u.subcounty.isNotEmpty ? u.subcounty : 'Not set'),
+        _infoRow(Icons.home, 'Village', u.village.isNotEmpty ? u.village : 'Not set'),
+        if (u.bio != null && u.bio!.isNotEmpty)
+          _infoRow(Icons.info_outline, 'Bio', u.bio!),
         _infoRow(Icons.verified, 'Status', u.isVerified ? 'Verified' : 'Unverified',
             valueColor: u.isVerified ? AppTheme.greenLight : AppTheme.warning),
         _infoRow(Icons.calendar_today, 'Registered', _formatDate(u.createdAt)),
@@ -414,6 +433,152 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
   String _formatDate(DateTime date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+}
+
+// ─── Farmer Listings Management (Agent Impersonation) ─
+class _FarmerListingsManageScreen extends StatelessWidget {
+  final UserModel farmer;
+  const _FarmerListingsManageScreen({required this.farmer});
+
+  @override
+  Widget build(BuildContext context) {
+    final db = DatabaseService();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${farmer.firstName.isNotEmpty ? farmer.firstName : farmer.name}\'s Listings'),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.swap_horiz, color: Colors.orange, size: 14),
+                const SizedBox(width: 4),
+                Text('Managing as Agent', style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: farmer.id)),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Listing'),
+      ),
+      body: FutureBuilder<List<ProductModel>>(
+        future: db.getProductsBySeller(farmer.id),
+        builder: (ctx, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          }
+          final products = snap.data ?? [];
+          if (products.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 56),
+                  const SizedBox(height: 12),
+                  Text('No listings yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text('Add a listing for this farmer', style: TextStyle(color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13)),
+                ],
+              ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: products.length,
+            itemBuilder: (ctx, i) {
+              final p = products[i];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: farmer.id, existingProduct: p)),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.border, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppTheme.greenSurface,
+                          borderRadius: BorderRadius.circular(10),
+                          image: p.imageUrl != null
+                              ? DecorationImage(
+                                  image: p.imageUrl!.startsWith('assets/')
+                                      ? AssetImage(p.imageUrl!) as ImageProvider
+                                      : NetworkImage(p.imageUrl!),
+                                  fit: BoxFit.cover)
+                              : null,
+                        ),
+                        child: p.imageUrl == null ? const Icon(Icons.eco, color: AppTheme.greenLight) : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(p.productName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 2),
+                            Text('${p.quantity} ${p.quantityUnit} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'UGX ${p.price.toStringAsFixed(0)}',
+                            style: const TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: p.availability == 'Available Now' ? AppTheme.greenSurface : AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              p.availability,
+                              style: TextStyle(
+                                color: p.availability == 'Available Now' ? AppTheme.greenLight : AppTheme.textMuted,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -484,6 +649,9 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
   final _bioCtrl = TextEditingController();
   String? _gender;
   String? _district;
+  String _subcounty = '';
+  String _village = '';
+  String _nin = '';
   bool _loading = false;
 
   static const String _defaultPassword = 'bivfarm123';
@@ -509,6 +677,9 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
           'phone': _phoneCtrl.text.trim(),
           'gender': _gender,
           'district': _district,
+          'subcounty': _subcounty,
+          'village': _village,
+          'nin': _nin,
           'userCategory': widget.role,
           'bio': _bioCtrl.text.trim(),
         },
@@ -687,11 +858,14 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
               const SizedBox(height: 14),
               CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
               const SizedBox(height: 14),
-              if (widget.role == 'Farmer') ...[
-                CustomTextField(label: 'Bio / Speciality (Optional)', hint: 'e.g. Pigs Farmer, Fruit Specialist', controller: _bioCtrl),
-                const SizedBox(height: 14),
-              ],
+              CustomTextField(label: 'Subcounty (Optional)', hint: 'e.g. Buseruka', onChanged: (v) => _subcounty = v),
               const SizedBox(height: 14),
+              CustomTextField(label: 'Village (Optional)', hint: 'e.g. Kaiso', onChanged: (v) => _village = v),
+              const SizedBox(height: 14),
+              CustomTextField(label: 'Bio / Speciality (Optional)', hint: 'e.g. Pigs Farmer, Fruit Specialist', controller: _bioCtrl),
+              const SizedBox(height: 14),
+              CustomTextField(label: 'NIN (Optional)', hint: 'National ID Number', onChanged: (v) => _nin = v),
+              const SizedBox(height: 28),
               CustomButton(text: 'Register ${widget.role}', onPressed: _register, isLoading: _loading),
             ],
           ),

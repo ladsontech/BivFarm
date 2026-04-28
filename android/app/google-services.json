@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "508575398900",
+    "firebase_url": "https://bivfarm-default-rtdb.firebaseio.com",
     "project_id": "bivfarm",
     "storage_bucket": "bivfarm.firebasestorage.app"
   },
@@ -12,7 +13,36 @@
           "package_name": "com.buyaff.bivFarm"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "508575398900-48aapemr8g094hvjr0vdg26nr16j9em8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.buyaff.bivFarm",
+            "certificate_hash": "0a1f78ec3bdeb9acc7311eb92c5de0621843268b"
+          }
+        },
+        {
+          "client_id": "508575398900-p7c8uakg98peg0l56esltj3qcq3665u0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.buyaff.bivFarm",
+            "certificate_hash": "79123fe44f165b5a8d706ffbfec5bd2c79c55f01"
+          }
+        },
+        {
+          "client_id": "508575398900-uqb28tsps1lglof24lmbi6hqh7u411ec.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.buyaff.bivFarm",
+            "certificate_hash": "51524818f33292b479d3aac667dbd9d6dca3abee"
+          }
+        },
+        {
+          "client_id": "508575398900-o1otm7sn8qukd19fotcd1cs6q4cmj0am.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAacA6PLAti5CWL-Mje-PwlRl7wQhLxHDA"
@@ -20,7 +50,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "508575398900-o1otm7sn8qukd19fotcd1cs6q4cmj0am.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

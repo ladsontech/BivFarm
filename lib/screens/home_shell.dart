@@ -17,6 +17,7 @@ import 'auth/onboarding_screen.dart';
 import 'auth/login_screen.dart';
 import 'notifications/notifications_screen.dart';
 import '../models/notification_model.dart';
+import '../services/notification_service.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -81,6 +82,9 @@ class _HomeShellState extends State<HomeShell> {
         if (!user.isProfileComplete) {
           return OnboardingScreen(userId: user.id);
         }
+
+        // Store FCM token for push notifications
+        NotificationService().storeToken(user.id);
 
         final screens = _getScreens(user);
         final navItems = _getNavItems(user);
@@ -183,6 +187,7 @@ class _HomeShellState extends State<HomeShell> {
         return [
           MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
+          BidsListScreen(userId: user.id, userRole: user.role),
           AgentDashboardScreen(agentId: user.id),
           ProfileScreen(user: user),
         ];
@@ -229,7 +234,10 @@ class _HomeShellState extends State<HomeShell> {
         ]);
         break;
       case 'Agent':
-        items.add(const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Dashboard'));
+        items.addAll([
+          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
+          const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Dashboard'),
+        ]);
         break;
       case 'Farmer':
         items.addAll([

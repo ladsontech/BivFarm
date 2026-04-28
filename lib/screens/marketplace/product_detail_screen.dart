@@ -8,10 +8,9 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../bidding/bid_form_screen.dart';
-import '../profile/public_profile_screen.dart';
 import '../../widgets/product_card.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
   final String currentUserId;
   final String currentUserRole;
@@ -24,41 +23,99 @@ class ProductDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  final PageController _pageCtrl = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###');
     final db = DatabaseService();
+    final images = widget.product.imageUrls;
+    final role = widget.currentUserRole;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Image Header
+          // ── Image Carousel Header ──────────────
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 300,
             pinned: true,
             backgroundColor: AppTheme.background,
             flexibleSpace: FlexibleSpaceBar(
-              background: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                  ? (product.imageUrl!.startsWith('assets/')
-                      ? Image.asset(
-                          product.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => Container(
-                            color: AppTheme.surfaceLight,
-                            child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 48),
+              background: images.isNotEmpty
+                  ? Stack(
+                      children: [
+                        PageView.builder(
+                          controller: _pageCtrl,
+                          itemCount: images.length,
+                          onPageChanged: (i) => setState(() => _currentPage = i),
+                          itemBuilder: (ctx, i) {
+                            return GestureDetector(
+                              onTap: () => _showFullScreenImage(context, images, i),
+                              child: _buildImage(images[i]),
+                            );
+                          },
+                        ),
+                        // Dot indicators
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 16,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(images.length, (i) {
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                                  width: _currentPage == i ? 20 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: _currentPage == i
+                                        ? AppTheme.greenLight
+                                        : Colors.white.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                );
+                              }),
+                            ),
                           ),
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: product.imageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: AppTheme.surfaceLight,
-                            child: const Center(child: CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)),
+                        // Image counter badge
+                        if (images.length > 1)
+                          Positioned(
+                            top: 80,
+                            right: 16,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.photo_library, color: Colors.white, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${_currentPage + 1}/${images.length}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          errorWidget: (context, url, err) => Container(
-                            color: AppTheme.surfaceLight,
-                            child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 48),
-                          ),
-                        ))
+                      ],
+                    )
                   : Container(
                       color: AppTheme.surfaceLight,
                       child: Icon(Icons.inventory_2, color: AppTheme.textMuted, size: 64),
@@ -80,7 +137,7 @@ class ProductDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      product.category,
+                      widget.product.category,
                       style: const TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
@@ -88,7 +145,7 @@ class ProductDetailScreen extends StatelessWidget {
 
                   // Product Name
                   Text(
-                    product.productName,
+                    widget.product.productName,
                     style: TextStyle(
                       color: AppTheme.textPrimary,
                       fontSize: 24,
@@ -99,7 +156,7 @@ class ProductDetailScreen extends StatelessWidget {
 
                   // Price
                   Text(
-                    'UGX ${formatter.format(product.price)} / ${product.quantityUnit.toLowerCase() == 'pieces' ? 'Piece' : (product.quantityUnit.toLowerCase() == 'crates' ? 'Crate' : product.quantityUnit)}',
+                    'UGX ${formatter.format(widget.product.price)} / ${widget.product.quantityUnit.toLowerCase() == 'pieces' ? 'Piece' : (widget.product.quantityUnit.toLowerCase() == 'crates' ? 'Crate' : widget.product.quantityUnit)}',
                     style: const TextStyle(
                       color: AppTheme.greenLight,
                       fontSize: 22,
@@ -109,11 +166,10 @@ class ProductDetailScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Details
-                  _detailRow(Icons.scale, 'Quantity', '${product.quantity} ${product.quantityUnit}'),
-                  _detailRow(Icons.location_on_outlined, 'District', product.district),
-                  _detailRow(Icons.schedule, 'Availability', product.availability),
-                  
-                  _detailRow(Icons.calendar_today, 'Listed', DateFormat('MMM d, yyyy').format(product.createdAt)),
+                  _detailRow(Icons.scale, 'Quantity', '${widget.product.quantity} ${widget.product.quantityUnit}'),
+                  _detailRow(Icons.location_on_outlined, 'District', widget.product.district),
+                  _detailRow(Icons.schedule, 'Availability', widget.product.availability),
+                  _detailRow(Icons.calendar_today, 'Listed', DateFormat('MMM d, yyyy').format(widget.product.createdAt)),
                   const SizedBox(height: 32),
 
                   // About the Farmer UI
@@ -123,7 +179,7 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   FutureBuilder<UserModel?>(
-                    future: db.getUser(product.sellerId),
+                    future: db.getUser(widget.product.sellerId),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator(color: AppTheme.green));
@@ -229,16 +285,23 @@ class ProductDetailScreen extends StatelessWidget {
                               ],
                             ),
                             
-                            // Admin Only Info
-                            if (currentUserRole == 'Admin') ...[
+                            // Admin / Agent Contact Info
+                            if (role == 'Admin' || role == 'Agent') ...[
                               const SizedBox(height: 16),
                               const Divider(),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(Icons.admin_panel_settings, color: Colors.orange, size: 16),
+                                  Icon(
+                                    role == 'Admin' ? Icons.admin_panel_settings : Icons.support_agent,
+                                    color: Colors.orange,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 8),
-                                  const Text('Admin Only Contact Data', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    role == 'Admin' ? 'Admin Contact Data' : 'Agent Contact Data',
+                                    style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -291,8 +354,8 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Bids section (admin view only)
-                  if (currentUserRole == 'Admin' || currentUserRole == 'Registry') ...[
+                  // Bids section (admin + agent view)
+                  if (role == 'Admin' || role == 'Registry' || role == 'Agent') ...[
                     const Divider(),
                     const SizedBox(height: 8),
                     Text(
@@ -301,7 +364,7 @@ class ProductDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     StreamBuilder<List<BidModel>>(
-                      stream: db.streamBidsByProduct(product.id),
+                      stream: db.streamBidsByProduct(widget.product.id),
                       builder: (ctx, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator(color: AppTheme.green));
@@ -326,12 +389,12 @@ class ProductDetailScreen extends StatelessWidget {
                   const Divider(),
                   const SizedBox(height: 16),
                   Text(
-                    'More products from ${product.sellerName.isNotEmpty ? product.sellerName.split(' ').first : "this farmer"}',
+                    'More products from ${widget.product.sellerName.isNotEmpty ? widget.product.sellerName.split(' ').first : "this farmer"}',
                     style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 16),
                   StreamBuilder<List<ProductModel>>(
-                    stream: db.streamProductsBySeller(product.sellerId),
+                    stream: db.streamProductsBySeller(widget.product.sellerId),
                     builder: (ctx, snap) {
                       if (snap.connectionState == ConnectionState.waiting) {
                         return const SizedBox(
@@ -339,8 +402,7 @@ class ProductDetailScreen extends StatelessWidget {
                           child: Center(child: CircularProgressIndicator(color: AppTheme.green)),
                         );
                       }
-                      // Filter out only the current product (isActive is handled in the stream)
-                      final otherProducts = (snap.data ?? []).where((p) => p.id != product.id).toList();
+                      final otherProducts = (snap.data ?? []).where((p) => p.id != widget.product.id).toList();
                       
                       if (otherProducts.isEmpty) {
                         return Padding(
@@ -362,7 +424,7 @@ class ProductDetailScreen extends StatelessWidget {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 0.6, // Further increased height (was 0.65) to eliminate remaining 7.6px overflow
+                          childAspectRatio: 0.6,
                         ),
                         itemCount: otherProducts.length,
                         itemBuilder: (ctx, i) {
@@ -372,8 +434,8 @@ class ProductDetailScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(
                                 product: p,
-                                currentUserId: currentUserId,
-                                currentUserRole: currentUserRole,
+                                currentUserId: widget.currentUserId,
+                                currentUserRole: widget.currentUserRole,
                               )));
                             },
                           );
@@ -388,7 +450,8 @@ class ProductDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: (currentUserRole == 'Buyer' || currentUserRole == 'Farmer' || currentUserRole == 'Admin') && currentUserId != product.sellerId
+      // Bid button — visible for Buyer, Admin, and Agent (not on own products)
+      bottomNavigationBar: (role == 'Buyer' || role == 'Admin' || role == 'Agent') && widget.currentUserId != widget.product.sellerId
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -397,7 +460,7 @@ class ProductDetailScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => BidFormScreen(product: product, buyerId: currentUserId),
+                        builder: (_) => BidFormScreen(product: widget.product, buyerId: widget.currentUserId),
                       ),
                     );
                   },
@@ -410,6 +473,40 @@ class ProductDetailScreen extends StatelessWidget {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, stack) => Container(
+          color: AppTheme.surfaceLight,
+          child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 48),
+        ),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        color: AppTheme.surfaceLight,
+        child: const Center(child: CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)),
+      ),
+      errorWidget: (context, url, err) => Container(
+        color: AppTheme.surfaceLight,
+        child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 48),
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, List<String> images, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _FullScreenGallery(images: images, initialIndex: initialIndex),
+      ),
     );
   }
 
@@ -472,6 +569,75 @@ class ProductDetailScreen extends StatelessWidget {
           ),
           BidStatusBadge(status: bid.status),
         ],
+      ),
+    );
+  }
+}
+
+// ── Full Screen Image Gallery ──────────────────────
+class _FullScreenGallery extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  const _FullScreenGallery({required this.images, required this.initialIndex});
+
+  @override
+  State<_FullScreenGallery> createState() => _FullScreenGalleryState();
+}
+
+class _FullScreenGalleryState extends State<_FullScreenGallery> {
+  late PageController _controller;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          '${_current + 1} / ${widget.images.length}',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
+        centerTitle: true,
+      ),
+      body: PageView.builder(
+        controller: _controller,
+        itemCount: widget.images.length,
+        onPageChanged: (i) => setState(() => _current = i),
+        itemBuilder: (ctx, i) {
+          final url = widget.images[i];
+          return InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Center(
+              child: url.startsWith('assets/')
+                  ? Image.asset(url, fit: BoxFit.contain)
+                  : CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => const Center(
+                        child: CircularProgressIndicator(color: AppTheme.green),
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                    ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
+import '../services/database_service.dart';
 
 class AuthService {
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
@@ -87,6 +88,12 @@ class AuthService {
         createdAt: DateTime.now(),
       );
       await _firestore.collection('users').doc(uid).set(userModel.toMap());
+      // Notify admins asynchronously
+      DatabaseService().sendUserSignupNotification(
+        userName: phone,
+        userRole: role,
+        userId: uid,
+      ).catchError((_) {});
     }
   }
 
@@ -110,6 +117,12 @@ class AuthService {
     );
 
     await _firestore.collection('users').doc(cred.user!.uid).set(userModel.toMap());
+    // Notify admins asynchronously
+    DatabaseService().sendUserSignupNotification(
+      userName: userModel.name,
+      userRole: role,
+      userId: cred.user!.uid,
+    ).catchError((_) {});
     return cred;
   }
 
@@ -161,6 +174,12 @@ class AuthService {
       }, uid);
 
       await docRef.set(userModel.toMap());
+      // Notify admins asynchronously (skip for Agent creating themselves)
+      DatabaseService().sendUserSignupNotification(
+        userName: profileData['name'] ?? email,
+        userRole: role,
+        userId: uid,
+      ).catchError((_) {});
       return uid;
     } finally {
       // 3. Clean up the secondary app
@@ -204,6 +223,12 @@ class AuthService {
             createdAt: DateTime.now(),
           );
           await _firestore.collection('users').doc(uid).set(userModel.toMap());
+            // Notify admins asynchronously
+            DatabaseService().sendUserSignupNotification(
+              userName: userModel.name.isNotEmpty ? userModel.name : googleUser.email,
+              userRole: defaultRole,
+              userId: uid,
+            ).catchError((_) {});
         }
       }
       return userCredential;

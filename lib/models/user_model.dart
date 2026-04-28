@@ -16,6 +16,7 @@ class UserModel {
   final String? profilePhoto;
   final String? bio;
   final String? agentId;
+  final String? fcmToken;
   final bool isProfileComplete;
   final bool isVerified;
   final bool isActive;
@@ -38,6 +39,7 @@ class UserModel {
     this.profilePhoto,
     this.bio,
     this.agentId,
+    this.fcmToken,
     this.isProfileComplete = false,
     this.isVerified = false,
     this.isActive = true,
@@ -62,6 +64,7 @@ class UserModel {
       profilePhoto: map['profilePhoto'],
       bio: map['bio'],
       agentId: map['agentId'],
+      fcmToken: map['fcmToken'],
       isProfileComplete: map['isProfileComplete'] ?? false,
       isVerified: map['isVerified'] ?? false,
       isActive: map['isActive'] ?? true,
@@ -86,6 +89,7 @@ class UserModel {
       'profilePhoto': profilePhoto,
       'bio': bio,
       'agentId': agentId,
+      'fcmToken': fcmToken,
       'isProfileComplete': isProfileComplete,
       'isVerified': isVerified,
       'isActive': isActive,
@@ -109,6 +113,7 @@ class UserModel {
     String? profilePhoto,
     String? bio,
     String? agentId,
+    String? fcmToken,
     bool? isProfileComplete,
     bool? isVerified,
     bool? isActive,
@@ -130,6 +135,7 @@ class UserModel {
       profilePhoto: profilePhoto ?? this.profilePhoto,
       bio: bio ?? this.bio,
       agentId: agentId ?? this.agentId,
+      fcmToken: fcmToken ?? this.fcmToken,
       isProfileComplete: isProfileComplete ?? this.isProfileComplete,
       isVerified: isVerified ?? this.isVerified,
       isActive: isActive ?? this.isActive,

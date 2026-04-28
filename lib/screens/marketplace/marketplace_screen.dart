@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
+import '../../models/user_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
@@ -31,7 +32,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   late PageController _carouselPageCtrl;
   Timer? _carouselTimer;
-  int _carouselIndex = 0;
+  final ValueNotifier<int> _carouselIndex = ValueNotifier(0);
 
   final List<Map<String, String>> _carouselItems = [
     {
@@ -71,9 +72,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   void _startCarousel() {
     _carouselTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_carouselPageCtrl.hasClients) {
-        _carouselIndex = (_carouselIndex + 1) % _carouselItems.length;
+        _carouselIndex.value = (_carouselIndex.value + 1) % _carouselItems.length;
         _carouselPageCtrl.animateToPage(
-          _carouselIndex,
+          _carouselIndex.value,
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeInOut,
         );
@@ -86,6 +87,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     _searchCtrl.dispose();
     _carouselPageCtrl.dispose();
     _carouselTimer?.cancel();
+    _carouselIndex.dispose();
     super.dispose();
   }
 
@@ -419,113 +421,140 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Search Bar
+          // ── Greeting + Search bar ────────────────────────
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchCtrl,
-                      onChanged: (_) => setState(() {}),
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Search products, categories, districts...',
-                        prefixIcon: Icon(Icons.search, color: AppTheme.textMuted, size: 20),
-                        suffixIcon: _searchCtrl.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.close, color: AppTheme.textMuted, size: 18),
-                                onPressed: () {
-                                  _searchCtrl.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            child: StreamBuilder<UserModel?>(
+              stream: DatabaseService().streamUser(widget.userId),
+              builder: (ctx, snap) {
+                final user = snap.data;
+                final firstName = user?.firstName.isNotEmpty == true
+                    ? user!.firstName
+                    : (user?.name.split(' ').first ?? '');
+                final greeting = _greeting();
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(greeting, style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  firstName.isNotEmpty ? firstName : widget.userRole,
+                                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppTheme.green, width: 2),
+                              image: user?.profilePhoto != null
+                                  ? DecorationImage(image: CachedNetworkImageProvider(user!.profilePhoto!), fit: BoxFit.cover)
+                                  : null,
+                              color: AppTheme.greenSurface,
+                            ),
+                            child: user?.profilePhoto == null
+                                ? Center(child: Text(
+                                    firstName.isNotEmpty ? firstName[0].toUpperCase() : widget.userRole[0],
+                                    style: const TextStyle(color: AppTheme.greenDark, fontWeight: FontWeight.w800, fontSize: 17),
+                                  ))
+                                : null,
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchCtrl,
+                              onChanged: (_) => setState(() {}),
+                              style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: 'Search products, farmers, districts…',
+                                prefixIcon: Icon(Icons.search_rounded, color: AppTheme.textMuted, size: 20),
+                                suffixIcon: _searchCtrl.text.isNotEmpty
+                                    ? IconButton(icon: Icon(Icons.close, color: AppTheme.textMuted, size: 18), onPressed: () { _searchCtrl.clear(); setState(() {}); })
+                                    : null,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: _showFilterSheet,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(11),
+                              decoration: BoxDecoration(
+                                color: _hasFilter ? AppTheme.green : AppTheme.surfaceLight,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _hasFilter ? AppTheme.green : AppTheme.border),
+                                boxShadow: _hasFilter ? [BoxShadow(color: AppTheme.green.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))] : [],
+                              ),
+                              child: Icon(Icons.tune_rounded, color: _hasFilter ? Colors.white : AppTheme.textMuted, size: 20),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _showFilterSheet,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: (_filterCategory != null || _filterDistrict != null || _filterAvailability != null)
-                            ? AppTheme.greenSurface
-                            : AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: (_filterCategory != null || _filterDistrict != null || _filterAvailability != null)
-                              ? AppTheme.green
-                              : AppTheme.border,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.tune,
-                        color: (_filterCategory != null || _filterDistrict != null || _filterAvailability != null)
-                            ? AppTheme.greenLight
-                            : AppTheme.textMuted,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
-          
-          // Active Filters Display
+
           _buildActiveFilters(),
-          
-          // Carousel
+
+          // ── Hero Carousel ────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               child: SizedBox(
-                height: 180,
+                height: 195,
                 child: Stack(
                   children: [
                     PageView.builder(
                       controller: _carouselPageCtrl,
-                      onPageChanged: (i) => setState(() => _carouselIndex = i),
+                      onPageChanged: (i) => _carouselIndex.value = i,
                       itemCount: _carouselItems.length,
                       itemBuilder: (ctx, i) {
                         final item = _carouselItems[i];
                         return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            image: DecorationImage(
-                              image: AssetImage(item['image']!),
-                              fit: BoxFit.cover,
-                              colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.3), BlendMode.darken),
-                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            image: DecorationImage(image: AssetImage(item['image']!), fit: BoxFit.cover,
+                              colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.25), BlendMode.darken)),
                           ),
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomCenter,
+                                colors: [Colors.transparent, Colors.black.withOpacity(0.75)], stops: const [0.35, 1.0]),
                             ),
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  item['title']!,
-                                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(color: AppTheme.green.withOpacity(0.85), borderRadius: BorderRadius.circular(20)),
+                                  child: const Text('BivFarm', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
                                 ),
+                                const SizedBox(height: 6),
+                                Text(item['title']!, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800, height: 1.1)),
                                 const SizedBox(height: 4),
-                                Text(
-                                  item['desc']!,
-                                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
-                                ),
+                                Text(item['desc']!, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12)),
                               ],
                             ),
                           ),
@@ -533,21 +562,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       },
                     ),
                     Positioned(
-                      bottom: 12,
-                      right: 20,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          _carouselItems.length,
-                          (index) => Container(
-                            margin: const EdgeInsets.only(left: 4),
-                            width: _carouselIndex == index ? 20 : 6,
-                            height: 6,
+                      bottom: 12, left: 0, right: 0,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: _carouselIndex,
+                        builder: (_, idx, __) => Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_carouselItems.length, (i) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: idx == i ? 22 : 6, height: 6,
                             decoration: BoxDecoration(
-                              color: _carouselIndex == index ? AppTheme.green : Colors.white.withOpacity(0.5),
+                              color: idx == i ? AppTheme.greenAccent : Colors.white.withOpacity(0.5),
                               borderRadius: BorderRadius.circular(3),
                             ),
-                          ),
+                          )),
                         ),
                       ),
                     ),
@@ -556,115 +584,120 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               ),
             ),
           ),
-          
-          // Bulk / Special Order Banner
+
+          // ── Category quick-filter strip ──────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 42,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _categoryChip(null, 'All', Icons.apps_rounded),
+                  ...AppConstants.productCategories.keys.map((cat) => _categoryChip(cat, cat, _catIcon(cat))),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 10)),
+
+          // ── Bulk Order banner ────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => BulkOrderFormScreen(userId: widget.userId)),
-                  );
-                },
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BulkOrderFormScreen(userId: widget.userId))),
                 child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.green.withOpacity(0.5), width: 1),
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(colors: [AppTheme.green.withOpacity(0.85), const Color(0xFF1B5E20)],
+                      begin: Alignment.centerLeft, end: Alignment.centerRight),
+                    boxShadow: [BoxShadow(color: AppTheme.green.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.greenSurface,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.shopping_cart_checkout, color: AppTheme.green, size: 20),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white, size: 22),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Bulk / Special Order', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 2),
-                            Text('Order large quantities or farm inputs from Registry', style: TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
-                          ],
-                        ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('Bulk / Special Order', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
+                          SizedBox(height: 2),
+                          Text('Large quantities & farm inputs from Registry', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        ]),
                       ),
-                      const Icon(Icons.chevron_right, color: AppTheme.green),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // Products Grid
+          // ── Section header ───────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _filterCategory != null ? '$_filterCategory Listings' : 'All Listings',
+                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  if (_hasFilter)
+                    GestureDetector(
+                      onTap: () => setState(() { _filterCategory = null; _filterDistrict = null; _filterAvailability = null; }),
+                      child: Text('Clear', style: TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Products grid ────────────────────────────────
           StreamBuilder<List<ProductModel>>(
             stream: _db.streamProducts(),
             builder: (ctx, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator(color: AppTheme.green)),
-                );
+                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator(color: AppTheme.green)));
               }
               final products = _applyFilters(snap.data ?? []);
               if (products.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
-                        const SizedBox(height: 16),
-                        Text('No products found', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
-                        const SizedBox(height: 4),
-                        Text('Try adjusting your filters', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-                      ],
-                    ),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
+                      const SizedBox(height: 16),
+                      Text('No products found', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text('Try adjusting your filters', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                    ]),
                   ),
                 );
               }
-              // Precache all product images for instant loading
               for (final p in products) {
                 if (p.imageUrl != null && p.imageUrl!.isNotEmpty && !p.imageUrl!.startsWith('assets/')) {
                   precacheImage(CachedNetworkImageProvider(p.imageUrl!), context);
                 }
               }
               return SliverPadding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.52,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                    crossAxisCount: 2, childAspectRatio: 0.70, crossAxisSpacing: 12, mainAxisSpacing: 14,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (ctx, i) {
-                      return ProductCard(
-                        product: products[i],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(
-                                product: products[i],
-                                currentUserId: widget.userId,
-                                currentUserRole: widget.userRole,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                    (ctx, i) => ProductCard(
+                      product: products[i],
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => ProductDetailScreen(product: products[i], currentUserId: widget.userId, currentUserRole: widget.userRole),
+                      )),
+                    ),
                     childCount: products.length,
                   ),
                 ),
@@ -674,70 +707,90 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ],
       ),
       floatingActionButton: (widget.userRole == 'Farmer' || widget.userRole == 'Admin' || widget.userRole == 'Agent')
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddProductScreen(sellerId: widget.userId),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: widget.userId))),
+              icon: const Icon(Icons.add),
+              label: const Text('List Product', style: TextStyle(fontWeight: FontWeight.w700)),
+              backgroundColor: AppTheme.green,
             )
           : null,
     );
   }
 
-  Widget _buildActiveFilters() {
-    final bool hasCategory = _filterCategory != null;
-    final bool hasDistrict = _filterDistrict != null;
-    final bool hasAvailability = _filterAvailability != null;
+  // ── Helpers ───────────────────────────────────────────
 
-    if (!hasCategory && !hasDistrict && !hasAvailability) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
+  bool get _hasFilter => _filterCategory != null || _filterDistrict != null || _filterAvailability != null;
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning,';
+    if (hour < 17) return 'Good afternoon,';
+    return 'Good evening,';
+  }
+
+  Widget _categoryChip(String? cat, String label, IconData icon) {
+    final selected = _filterCategory == cat;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _filterCategory = cat;
+        _filterSubCategory = null;
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.green : AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? AppTheme.green : AppTheme.border),
+          boxShadow: selected ? [BoxShadow(color: AppTheme.green.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2))] : [],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: selected ? Colors.white : AppTheme.textMuted),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _catIcon(String category) {
+    switch (category) {
+      case 'Produce': return Icons.grass_rounded;
+      case 'Poultry': return Icons.egg_outlined;
+      case 'Livestock': return Icons.pets_rounded;
+      case 'Fruits & Vegetables': return Icons.eco_rounded;
+      case 'Farm Machinery': return Icons.agriculture_rounded;
+      case 'Fertilizers & Pesticides': return Icons.science_outlined;
+      default: return Icons.inventory_2_outlined;
     }
+  }
 
+  Widget _buildActiveFilters() {
+    if (!_hasFilter) return const SliverToBoxAdapter(child: SizedBox.shrink());
     return SliverToBoxAdapter(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: Wrap(
           spacing: 8,
-          runSpacing: 8,
+          runSpacing: 6,
           children: [
-            if (hasCategory)
-              _buildFilterChip('Category: $_filterCategory', () {
-                setState(() => _filterCategory = null);
-              }),
-            if (hasDistrict)
-              _buildFilterChip('District: $_filterDistrict', () {
-                setState(() => _filterDistrict = null);
-              }),
-            if (hasAvailability)
-              _buildFilterChip('Status: $_filterAvailability', () {
-                setState(() => _filterAvailability = null);
-              }),
-            if ((hasCategory ? 1 : 0) + (hasDistrict ? 1 : 0) + (hasAvailability ? 1 : 0) > 1)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _filterCategory = null;
-                    _filterDistrict = null;
-                    _filterAvailability = null;
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  child: Text(
-                    'Clear All',
-                    style: TextStyle(
-                      color: AppTheme.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+            if (_filterCategory != null)
+              _buildFilterChip('Category: $_filterCategory', () => setState(() => _filterCategory = null)),
+            if (_filterDistrict != null)
+              _buildFilterChip('District: $_filterDistrict', () => setState(() => _filterDistrict = null)),
+            if (_filterAvailability != null)
+              _buildFilterChip('Status: $_filterAvailability', () => setState(() => _filterAvailability = null)),
           ],
         ),
       ),
@@ -755,23 +808,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppTheme.greenLight,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w500)),
           const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onClear,
-            child: const Icon(
-              Icons.close,
-              color: AppTheme.greenLight,
-              size: 14,
-            ),
-          ),
+          GestureDetector(onTap: onClear, child: const Icon(Icons.close, color: AppTheme.greenLight, size: 14)),
         ],
       ),
     );

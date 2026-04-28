@@ -53,21 +53,78 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _resetPassword() async {
-    final email = _emailCtrl.text.trim();
-    if (email.isEmpty) {
-      _showError('Enter your email first');
-      return;
-    }
-    try {
-      await _auth.resetPassword(email);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent')),
+    final resetEmailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    bool localLoading = false;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Reset Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Enter your email address to receive a password reset link.', style: TextStyle(fontSize: 14)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: resetEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'Enter your email',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: localLoading ? null : () async {
+                    final email = resetEmailCtrl.text.trim();
+                    if (email.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter an email')),
+                      );
+                      return;
+                    }
+                    setState(() => localLoading = true);
+                    try {
+                      await _auth.resetPassword(email);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Password reset email sent. Check your inbox.')),
+                        );
+                      }
+                    } catch (e) {
+                      setState(() => localLoading = false);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.greenLight,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: localLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Send Link'),
+                ),
+              ],
+            );
+          }
         );
       }
-    } catch (e) {
-      if (mounted) _showError(e.toString().replaceAll('Exception: ', ''));
-    }
+    );
   }
 
   Future<void> _signInWithGoogle() async {

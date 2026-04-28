@@ -21,6 +21,8 @@ class BidsListScreen extends StatelessWidget {
     Stream<List<BidModel>> bidStream;
     if (userRole == 'Admin' || userRole == 'Registry') {
       bidStream = db.streamBidsByProduct('').asBroadcastStream(); // will use getAllBids
+    } else if (userRole == 'Agent') {
+      bidStream = db.streamBidsByAgent(userId);
     } else if (userRole == 'Farmer') {
       bidStream = db.streamBidsBySeller(userId);
     } else {
@@ -28,6 +30,8 @@ class BidsListScreen extends StatelessWidget {
     }
 
     final isAdmin = userRole == 'Admin' || userRole == 'Registry';
+    final isAgent = userRole == 'Agent';
+    final canManage = isAdmin || isAgent;
 
     if (isAdmin) {
       return DefaultTabController(
@@ -67,6 +71,56 @@ class BidsListScreen extends StatelessWidget {
       );
     }
 
+    // Agent gets a similar tabbed view scoped to their farmers
+    if (isAgent) {
+      return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: AppBar(
+              backgroundColor: AppTheme.surface,
+              elevation: 0,
+              title: Text('My Farmers\' Orders', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+              bottom: TabBar(
+                labelColor: AppTheme.green,
+                unselectedLabelColor: AppTheme.textMuted,
+                indicatorColor: AppTheme.green,
+                tabs: const [
+                  Tab(text: 'Farmer Bids'),
+                  Tab(text: 'My Bids'),
+                ],
+              ),
+            ),
+          ),
+          body: TabBarView(
+            children: [
+              // Bids for managed farmers
+              StreamBuilder<List<BidModel>>(
+                stream: bidStream,
+                builder: (ctx, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+                  }
+                  return _buildBidList(snap.data ?? [], formatter, 'Agent', db);
+                },
+              ),
+              // Agent's own bids (as buyer)
+              StreamBuilder<List<BidModel>>(
+                stream: db.streamBidsByBuyer(userId),
+                builder: (ctx, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+                  }
+                  return _buildBidList(snap.data ?? [], formatter, 'Buyer', db);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: StreamBuilder<List<BidModel>>(
         stream: bidStream,
@@ -100,6 +154,8 @@ class BidsListScreen extends StatelessWidget {
       itemBuilder: (ctx, i) {
         final bid = bids[i];
         final isAdmin = role == 'Admin' || role == 'Registry';
+        final isAgent = role == 'Agent';
+        final canManage = isAdmin || isAgent;
         
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -131,7 +187,7 @@ class BidsListScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (isAdmin)
+                    if (canManage)
                       PopupMenuButton<String>(
                         tooltip: 'Change Status',
                         offset: const Offset(0, 40),
@@ -187,7 +243,7 @@ class BidsListScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        if (isAdmin)
+                        if (canManage)
                           IconButton(
                             icon: const Icon(Icons.message_outlined, color: AppTheme.greenLight, size: 20),
                             tooltip: 'Message Buyer',
@@ -219,7 +275,7 @@ class BidsListScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (isAdmin)
+                          if (canManage)
                             IconButton(
                               icon: Icon(Icons.support_agent, color: AppTheme.green, size: 20),
                               tooltip: 'Leave notes & msg Farmer',

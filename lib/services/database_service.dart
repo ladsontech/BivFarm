@@ -153,6 +153,51 @@ class DatabaseService {
     return snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList();
   }
 
+  /// Stream bids for all farmers assigned to this agent
+  Stream<List<BidModel>> streamBidsByAgent(String agentId) {
+    // First get farmer IDs, then stream bids for those farmers
+    return Stream.fromFuture(getUsersByAgent(agentId)).asyncExpand((farmers) {
+      final farmerIds = farmers.map((f) => f.id).toList();
+      if (farmerIds.isEmpty) return Stream.value(<BidModel>[]);
+      // Firestore whereIn limited to 30, chunk if needed
+      final chunks = <List<String>>[];
+      for (var i = 0; i < farmerIds.length; i += 30) {
+        chunks.add(farmerIds.sublist(i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
+      }
+      if (chunks.length == 1) {
+        return _db.collection('bids')
+            .where('sellerId', whereIn: chunks.first)
+            .snapshots()
+            .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+      }
+      // Multiple chunks: merge results
+      return Stream.fromFuture(Future.wait(
+        chunks.map((chunk) => _db.collection('bids').where('sellerId', whereIn: chunk).get()),
+      )).map((snaps) => snaps.expand((s) => s.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id))).toList());
+    });
+  }
+
+  /// Stream bulk orders for all farmers assigned to this agent
+  Stream<List<BulkOrderModel>> streamBulkOrdersByAgent(String agentId) {
+    return Stream.fromFuture(getUsersByAgent(agentId)).asyncExpand((farmers) {
+      final farmerIds = farmers.map((f) => f.id).toList();
+      if (farmerIds.isEmpty) return Stream.value(<BulkOrderModel>[]);
+      final chunks = <List<String>>[];
+      for (var i = 0; i < farmerIds.length; i += 30) {
+        chunks.add(farmerIds.sublist(i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
+      }
+      if (chunks.length == 1) {
+        return _db.collection('bulk_orders')
+            .where('sellerId', whereIn: chunks.first)
+            .snapshots()
+            .map((snap) => snap.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id)).toList());
+      }
+      return Stream.fromFuture(Future.wait(
+        chunks.map((chunk) => _db.collection('bulk_orders').where('sellerId', whereIn: chunk).get()),
+      )).map((snaps) => snaps.expand((s) => s.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id))).toList());
+    });
+  }
+
   // --- Bulk Orders ---
   Future<String> addBulkOrder(BulkOrderModel order) async {
     final docRef = await _db.collection('bulk_orders').add(order.toMap());
@@ -161,6 +206,26 @@ class DatabaseService {
 
   Future<void> updateBulkOrderStatus(String orderId, String status) async {
     await _db.collection('bulk_orders').doc(orderId).update({'status': status});
+
+    // Notify buyer and admins about status change
+    try {
+      final orderDoc = await _db.collection('bulk_orders').doc(orderId).get();
+      if (orderDoc.exists) {
+        final data = orderDoc.data()!;
+        final buyerId = data['buyerId'] ?? '';
+        final itemName = data['itemName'] ?? 'your order';
+        if (buyerId.isNotEmpty) {
+          await sendBulkOrderNotification(
+            title: 'Order Status Updated',
+            body: 'Your bulk order for $itemName is now: $status',
+            relatedId: orderId,
+            buyerId: buyerId,
+          );
+        }
+      }
+    } catch (e) {
+      print('Notification Error (bulk order status): $e');
+    }
   }
 
   Future<void> updateBulkOrderAdminNotes(String orderId, String notes) async {
@@ -373,11 +438,48 @@ class DatabaseService {
       await addNotification(NotificationModel(
         id: '',
         recipientId: admin.id,
-        title: "Bulk Order: $title",
+        title: 'Bulk Order: $title',
         body: body,
         type: 'order',
         relatedId: relatedId,
       ));
     }
+  }
+
+  /// Send a notification to all admins when a new user signs up.
+  Future<void> sendUserSignupNotification({
+    required String userName,
+    required String userRole,
+    required String userId,
+  }) async {
+    try {
+      final admins = await getUsersByRole('Admin');
+      for (var admin in admins) {
+        await addNotification(NotificationModel(
+          id: '',
+          recipientId: admin.id,
+          title: 'New User Registered',
+          body: '$userName joined as a $userRole',
+          type: 'general',
+          relatedId: userId,
+          data: {'userId': userId, 'role': userRole},
+        ));
+      }
+    } catch (e) {
+      print('Notification Error (user signup): $e');
+    }
+  }
+
+  // --- FCM Token ---
+  Future<void> updateFcmToken(String userId, String token) async {
+    await _db.collection('users').doc(userId).update({'fcmToken': token});
+  }
+
+  /// Get products for a specific seller (for agent impersonation)
+  Future<List<ProductModel>> getProductsBySeller(String sellerId) async {
+    final snap = await _db.collection('products')
+        .where('sellerId', isEqualTo: sellerId)
+        .get();
+    return snap.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)).toList();
   }
 }
