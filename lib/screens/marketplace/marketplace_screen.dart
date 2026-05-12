@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
 import '../../utils/constants.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/network_image_widget.dart';
 import 'dart:async';
 import 'product_detail_screen.dart';
 import 'add_product_screen.dart';
@@ -457,7 +458,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                               shape: BoxShape.circle,
                               border: Border.all(color: AppTheme.green, width: 2),
                               image: user?.profilePhoto != null
-                                  ? DecorationImage(image: CachedNetworkImageProvider(user!.profilePhoto!), fit: BoxFit.cover)
+                                  ? DecorationImage(image: appNetworkImageProvider(user!.profilePhoto!), fit: BoxFit.cover)
                                   : null,
                               color: AppTheme.greenSurface,
                             ),
@@ -682,7 +683,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               }
               for (final p in products) {
                 if (p.imageUrl != null && p.imageUrl!.isNotEmpty && !p.imageUrl!.startsWith('assets/')) {
-                  precacheImage(CachedNetworkImageProvider(p.imageUrl!), context);
+                  precacheImage(appNetworkImageProvider(p.imageUrl!), context);
                 }
               }
               return SliverPadding(

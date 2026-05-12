@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/network_image_widget.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'marketplace/add_product_screen.dart';
 import 'bidding/bids_list_screen.dart';
@@ -369,7 +370,7 @@ class _FarmerListingsTab extends StatelessWidget {
                                 ? DecorationImage(
                                     image: p.imageUrl!.startsWith('assets/')
                                         ? AssetImage(p.imageUrl!) as ImageProvider
-                                        : CachedNetworkImageProvider(p.imageUrl!),
+                                        : appNetworkImageProvider(p.imageUrl!),
                                     fit: BoxFit.cover)
                                 : null,
                           ),

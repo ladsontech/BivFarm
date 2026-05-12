@@ -4,7 +4,7 @@ import '../models/product_model.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/network_image_widget.dart';
 
 class ProductCard extends StatefulWidget {
   final ProductModel product;
@@ -325,13 +325,13 @@ class _ProductCardState extends State<ProductCard> {
     final photo = user?.profilePhoto ?? widget.product.sellerPhoto;
     if (photo != null && photo.isNotEmpty) {
       return ClipOval(
-        child: CachedNetworkImage(
+        child: AppNetworkImage(
           imageUrl: photo,
           width: 24,
           height: 24,
           fit: BoxFit.cover,
-          placeholder: (_, __) => _defaultAvatar(user),
-          errorWidget: (_, __, ___) => _defaultAvatar(user),
+          placeholder: _defaultAvatar(user),
+          errorWidget: _defaultAvatar(user),
         ),
       );
     }
@@ -369,11 +369,11 @@ class _ProductCardState extends State<ProductCard> {
           errorBuilder: (_, __, ___) => _placeholder(),
         );
       }
-      return CachedNetworkImage(
+      return AppNetworkImage(
         imageUrl: url,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholder(loading: true),
-        errorWidget: (_, __, ___) => _placeholder(),
+        placeholder: _placeholder(loading: true),
+        errorWidget: _placeholder(),
       );
     }
     return _placeholder();
