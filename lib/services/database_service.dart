@@ -40,6 +40,10 @@ class DatabaseService {
     await _db.collection('users').doc(uid).update(data);
   }
 
+  Future<void> setUser(String uid, Map<String, dynamic> data) async {
+    await _db.collection('users').doc(uid).set(data);
+  }
+
   // --- Products ---
   Future<String> addProduct(ProductModel product) async {
     final docRef = await _db.collection('products').add(product.toMap());
