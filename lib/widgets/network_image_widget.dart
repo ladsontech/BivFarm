@@ -25,39 +25,13 @@ class AppNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return Image.network(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: fit,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return placeholder ??
-              Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return errorWidget ??
-              const Center(child: Icon(Icons.broken_image, color: Colors.grey));
-        },
-      );
-    }
-
     return CachedNetworkImage(
       imageUrl: imageUrl,
       width: width,
       height: height,
       fit: fit,
       placeholder: (context, url) =>
-          placeholder ?? const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          placeholder ?? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green)),
       errorWidget: (context, url, error) =>
           errorWidget ?? const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
     );
@@ -65,10 +39,6 @@ class AppNetworkImage extends StatelessWidget {
 }
 
 /// A cross-platform network image provider.
-/// Returns NetworkImage on web, CachedNetworkImageProvider on mobile.
 ImageProvider appNetworkImageProvider(String url) {
-  if (kIsWeb) {
-    return NetworkImage(url);
-  }
   return CachedNetworkImageProvider(url);
 }
