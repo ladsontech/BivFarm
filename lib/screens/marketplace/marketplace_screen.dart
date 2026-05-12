@@ -688,8 +688,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               return SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, childAspectRatio: 0.70, crossAxisSpacing: 12, mainAxisSpacing: 14,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220, childAspectRatio: 0.70, crossAxisSpacing: 12, mainAxisSpacing: 14,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) => ProductCard(

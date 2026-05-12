@@ -41,5 +41,10 @@ flutter:
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
+  web:
+    generate: true
+    image_path: "assets/images/Bfarm_icon.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
   image_path: "assets/images/Bfarm_icon.png"
   min_sdk_android: 21

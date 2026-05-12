@@ -92,16 +92,11 @@ class _HomeShellState extends State<HomeShell> {
         // Clamp index
         final safeIndex = _currentIndex.clamp(0, screens.length - 1);
 
-        return Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 64,
-            title: Image.asset(
-              'assets/images/Bfarm_icon.png',
-              height: 64,
-              fit: BoxFit.contain,
-              alignment: Alignment.centerLeft,
-            ),
-            actions: [
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 800;
+
+            final actions = [
               StreamBuilder<List<NotificationModel>>(
                 stream: DatabaseService().streamNotifications(user.id),
                 builder: (context, snap) {
@@ -141,25 +136,76 @@ class _HomeShellState extends State<HomeShell> {
                 },
               ),
               const SizedBox(width: 8),
-            ],
-          ),
-          body: IndexedStack(
-            index: safeIndex,
-            children: screens,
-          ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: safeIndex,
-              onTap: (i) => setState(() => _currentIndex = i),
-              type: BottomNavigationBarType.fixed, // Prevent scaling/shifting
-              selectedFontSize: 11,
-              unselectedFontSize: 10,
-              items: navItems,
-            ),
-          ),
+            ];
+
+            if (isDesktop) {
+              return Scaffold(
+                body: Row(
+                  children: [
+                    NavigationRail(
+                      selectedIndex: safeIndex,
+                      onDestinationSelected: (i) => setState(() => _currentIndex = i),
+                      labelType: NavigationRailLabelType.all,
+                      backgroundColor: AppTheme.surfaceLight,
+                      selectedIconTheme: const IconThemeData(color: AppTheme.green),
+                      selectedLabelTextStyle: const TextStyle(color: AppTheme.green, fontWeight: FontWeight.bold),
+                      unselectedIconTheme: IconThemeData(color: AppTheme.textMuted),
+                      unselectedLabelTextStyle: TextStyle(color: AppTheme.textMuted),
+                      leading: Padding(
+                        padding: const EdgeInsets.only(bottom: 20, top: 10),
+                        child: Image.asset('assets/images/Bfarm_icon.png', height: 48),
+                      ),
+                      destinations: navItems.map((item) => NavigationRailDestination(
+                        icon: item.icon,
+                        label: Text(item.label ?? ''),
+                      )).toList(),
+                    ),
+                    VerticalDivider(thickness: 1, width: 1, color: AppTheme.border),
+                    Expanded(
+                      child: Scaffold(
+                        appBar: AppBar(
+                          toolbarHeight: 64,
+                          title: Text('BivFarm Dashboard', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
+                          actions: actions,
+                        ),
+                        body: IndexedStack(index: safeIndex, children: screens),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Scaffold(
+              appBar: AppBar(
+                toolbarHeight: 64,
+                title: Image.asset(
+                  'assets/images/Bfarm_icon.png',
+                  height: 64,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                ),
+                actions: actions,
+              ),
+              body: IndexedStack(
+                index: safeIndex,
+                children: screens,
+              ),
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
+                ),
+                child: BottomNavigationBar(
+                  currentIndex: safeIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  type: BottomNavigationBarType.fixed,
+                  selectedFontSize: 11,
+                  unselectedFontSize: 10,
+                  items: navItems,
+                ),
+              ),
+            );
+          },
         );
       },
     );
