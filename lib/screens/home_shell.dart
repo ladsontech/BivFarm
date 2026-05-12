@@ -434,3 +434,226 @@ class _FarmerListingsTab extends StatelessWidget {
     );
   }
 }
+
+// ─── New User Role Selector (for Firebase Auth users without Firestore profile) ───
+class _NewUserRoleSelector extends StatefulWidget {
+  final String uid;
+  final String? email;
+  final VoidCallback onSignOut;
+
+  const _NewUserRoleSelector({
+    required this.uid,
+    this.email,
+    required this.onSignOut,
+  });
+
+  @override
+  State<_NewUserRoleSelector> createState() => _NewUserRoleSelectorState();
+}
+
+class _NewUserRoleSelectorState extends State<_NewUserRoleSelector> {
+  String? _selectedRole;
+  bool _loading = false;
+
+  Future<void> _createProfile() async {
+    if (_selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a role to continue')),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await DatabaseService().setUser(widget.uid, {
+        'id': widget.uid,
+        'email': widget.email ?? '',
+        'role': _selectedRole,
+        'name': '',
+        'firstName': '',
+        'lastName': '',
+        'phone': '',
+        'district': '',
+        'profilePhoto': '',
+        'isProfileComplete': false,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      // StreamBuilder in HomeShell will automatically detect the new doc
+      // and route to OnboardingScreen since isProfileComplete is false
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating profile: $e')),
+        );
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              const Icon(Icons.agriculture, color: AppTheme.green, size: 64),
+              const SizedBox(height: 20),
+              Text(
+                'Welcome to BivFarm!',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'How would you like to use BivFarm?',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppTheme.textMuted,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Role cards
+              _RoleCard(
+                icon: Icons.eco,
+                title: 'Farmer',
+                subtitle: 'I want to sell my produce',
+                isSelected: _selectedRole == 'Farmer',
+                onTap: () => setState(() => _selectedRole = 'Farmer'),
+              ),
+              const SizedBox(height: 14),
+              _RoleCard(
+                icon: Icons.shopping_bag,
+                title: 'Buyer',
+                subtitle: 'I want to buy from farmers',
+                isSelected: _selectedRole == 'Buyer',
+                onTap: () => setState(() => _selectedRole = 'Buyer'),
+              ),
+
+              const SizedBox(height: 36),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _createProfile,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Continue', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const Spacer(flex: 3),
+
+              // Sign out link
+              TextButton(
+                onPressed: widget.onSignOut,
+                child: Text(
+                  'Sign out',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _RoleCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.greenSurface : AppTheme.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppTheme.green : AppTheme.border,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppTheme.green.withOpacity(0.15)
+                    : AppTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppTheme.green : AppTheme.textMuted,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: AppTheme.green, size: 26),
+          ],
+        ),
+      ),
+    );
+  }
+}
