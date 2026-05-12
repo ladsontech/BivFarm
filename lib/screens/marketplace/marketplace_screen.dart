@@ -31,6 +31,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   String? _filterAvailability;
   String _sortBy = 'Newest';
 
+  ProductModel? _selectedProduct;
+
   late PageController _carouselPageCtrl;
   Timer? _carouselTimer;
   final ValueNotifier<int> _carouselIndex = ValueNotifier(0);
@@ -419,8 +421,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 900;
+
+        final Widget mainScaffold = Scaffold(
+          body: CustomScrollView(
         slivers: [
           // ── Greeting + Search bar ────────────────────────
           SliverToBoxAdapter(
@@ -695,9 +701,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) => ProductCard(
                       product: products[i],
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(product: products[i], currentUserId: widget.userId, currentUserRole: widget.userRole),
-                      )),
+                      onTap: () {
+                        if (isDesktop) {
+                          setState(() => _selectedProduct = products[i]);
+                        } else {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(product: products[i], currentUserId: widget.userId, currentUserRole: widget.userRole),
+                          ));
+                        }
+                      },
                     ),
                     childCount: products.length,
                   ),
@@ -715,6 +727,34 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               backgroundColor: AppTheme.green,
             )
           : null,
+    );
+
+        if (isDesktop && _selectedProduct != null) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: mainScaffold,
+              ),
+              VerticalDivider(width: 1, thickness: 1, color: AppTheme.border),
+              Expanded(
+                flex: 4,
+                child: ProductDetailScreen(
+                  key: ValueKey(_selectedProduct!.id),
+                  product: _selectedProduct!,
+                  currentUserId: widget.userId,
+                  currentUserRole: widget.userRole,
+                  isEmbedded: true,
+                  onClose: () => setState(() => _selectedProduct = null),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return mainScaffold;
+      },
     );
   }
 

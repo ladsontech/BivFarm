@@ -16,11 +16,16 @@ class ProductDetailScreen extends StatefulWidget {
   final String currentUserId;
   final String currentUserRole;
 
+  final bool isEmbedded;
+  final VoidCallback? onClose;
+
   const ProductDetailScreen({
     super.key,
     required this.product,
     required this.currentUserId,
     required this.currentUserRole,
+    this.isEmbedded = false,
+    this.onClose,
   });
 
   @override
@@ -49,9 +54,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         slivers: [
           // ── Image Carousel Header ──────────────
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: widget.isEmbedded ? 220 : 300,
             pinned: true,
+            automaticallyImplyLeading: !widget.isEmbedded,
             backgroundColor: AppTheme.background,
+            actions: widget.isEmbedded
+                ? [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: widget.onClose,
+                    )
+                  ]
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: images.isNotEmpty
                   ? Stack(
@@ -475,6 +489,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             )
           : null,
     );
+    
+    if (widget.isEmbedded) {
+      return Container(
+        color: AppTheme.background,
+        child: scaffold,
+      );
+    }
+    
+    return scaffold;
   }
 
   Widget _buildImage(String url) {

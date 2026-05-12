@@ -28,13 +28,12 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 0;
+  final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
   final GlobalKey<State<MarketplaceScreen>> _marketKey = GlobalKey();
+  final GlobalKey<NavigatorState> _desktopNavKey = GlobalKey<NavigatorState>();
 
   void _onCategorySelected(String category) {
-    setState(() {
-      _currentIndex = 0; // Switch to Marketplace tab
-    });
+    _currentIndexNotifier.value = 0; // Switch to Marketplace tab
     // Use post frame callback to ensure the state is available if we just switched
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final marketState = _marketKey.currentState;
@@ -82,12 +81,15 @@ class _HomeShellState extends State<HomeShell> {
         final screens = _getScreens(user);
         final navItems = _getNavItems(user);
 
-        // Clamp index
-        final safeIndex = _currentIndex.clamp(0, screens.length - 1);
+        return ValueListenableBuilder<int>(
+          valueListenable: _currentIndexNotifier,
+          builder: (context, currentIndex, _) {
+            // Clamp index
+            final safeIndex = currentIndex.clamp(0, screens.length - 1);
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= 800;
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 800;
 
             final actions = [
               StreamBuilder<List<NotificationModel>>(
@@ -137,7 +139,13 @@ class _HomeShellState extends State<HomeShell> {
                   children: [
                     NavigationRail(
                       selectedIndex: safeIndex,
-                      onDestinationSelected: (i) => setState(() => _currentIndex = i),
+                      onDestinationSelected: (i) {
+                        // If we are deep into the nested navigator, pop back to root when switching tabs
+                        if (_desktopNavKey.currentState?.canPop() ?? false) {
+                          _desktopNavKey.currentState?.popUntil((route) => route.isFirst);
+                        }
+                        _currentIndexNotifier.value = i;
+                      },
                       labelType: NavigationRailLabelType.all,
                       backgroundColor: AppTheme.surfaceLight,
                       selectedIconTheme: const IconThemeData(color: AppTheme.green),
@@ -155,13 +163,28 @@ class _HomeShellState extends State<HomeShell> {
                     ),
                     VerticalDivider(thickness: 1, width: 1, color: AppTheme.border),
                     Expanded(
-                      child: Scaffold(
-                        appBar: AppBar(
-                          toolbarHeight: 64,
-                          title: Text('BivFarm Dashboard', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
-                          actions: actions,
-                        ),
-                        body: IndexedStack(index: safeIndex, children: screens),
+                      child: Navigator(
+                        key: _desktopNavKey,
+                        onGenerateRoute: (settings) {
+                          return MaterialPageRoute(
+                            builder: (context) {
+                              return Scaffold(
+                                appBar: AppBar(
+                                  toolbarHeight: 64,
+                                  title: Text('BivFarm Dashboard', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
+                                  actions: actions,
+                                ),
+                                body: ValueListenableBuilder<int>(
+                                  valueListenable: _currentIndexNotifier,
+                                  builder: (context, idx, _) {
+                                    final sIndex = idx.clamp(0, screens.length - 1);
+                                    return IndexedStack(index: sIndex, children: screens);
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -190,7 +213,7 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 child: BottomNavigationBar(
                   currentIndex: safeIndex,
-                  onTap: (i) => setState(() => _currentIndex = i),
+                  onTap: (i) => _currentIndexNotifier.value = i,
                   type: BottomNavigationBarType.fixed,
                   selectedFontSize: 11,
                   unselectedFontSize: 10,
