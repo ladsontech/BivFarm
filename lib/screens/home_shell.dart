@@ -91,135 +91,162 @@ class _HomeShellState extends State<HomeShell> {
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth >= 800;
 
-            final actions = [
-              StreamBuilder<List<NotificationModel>>(
-                stream: DatabaseService().streamNotifications(user.id),
-                builder: (context, snap) {
-                  final unreadCount = snap.data?.where((n) => !n.isRead).length ?? 0;
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.notifications_none, color: AppTheme.textPrimary),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => NotificationsScreen(userId: user.id)),
-                          );
-                        },
-                      ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.error,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                            child: Text(
-                              unreadCount > 9 ? '9+' : '$unreadCount',
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-            ];
-
-            if (isDesktop) {
-              return Scaffold(
-                body: Row(
-                  children: [
-                    NavigationRail(
-                      selectedIndex: safeIndex,
-                      onDestinationSelected: (i) {
-                        // If we are deep into the nested navigator, pop back to root when switching tabs
-                        if (_desktopNavKey.currentState?.canPop() ?? false) {
-                          _desktopNavKey.currentState?.popUntil((route) => route.isFirst);
-                        }
-                        _currentIndexNotifier.value = i;
-                      },
-                      labelType: NavigationRailLabelType.all,
-                      backgroundColor: AppTheme.surfaceLight,
-                      selectedIconTheme: const IconThemeData(color: AppTheme.green),
-                      selectedLabelTextStyle: const TextStyle(color: AppTheme.green, fontWeight: FontWeight.bold),
-                      unselectedIconTheme: IconThemeData(color: AppTheme.textMuted),
-                      unselectedLabelTextStyle: TextStyle(color: AppTheme.textMuted),
-                      leading: Padding(
-                        padding: const EdgeInsets.only(bottom: 20, top: 10),
-                        child: Image.asset('assets/images/Bfarm_icon.png', height: 48),
-                      ),
-                      destinations: navItems.map((item) => NavigationRailDestination(
-                        icon: item.icon,
-                        label: Text(item.label ?? ''),
-                      )).toList(),
-                    ),
-                    VerticalDivider(thickness: 1, width: 1, color: AppTheme.border),
-                    Expanded(
-                      child: Navigator(
-                        key: _desktopNavKey,
-                        onGenerateRoute: (settings) {
-                          return MaterialPageRoute(
-                            builder: (context) {
-                              return Scaffold(
-                                appBar: AppBar(
-                                  toolbarHeight: 64,
-                                  title: Text('BivFarm Dashboard', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w700)),
-                                  actions: actions,
-                                ),
-                                body: ValueListenableBuilder<int>(
-                                  valueListenable: _currentIndexNotifier,
-                                  builder: (context, idx, _) {
-                                    final sIndex = idx.clamp(0, screens.length - 1);
-                                    return IndexedStack(index: sIndex, children: screens);
-                                  },
-                                ),
+                final actions = [
+                  StreamBuilder<List<NotificationModel>>(
+                    stream: DatabaseService().streamNotifications(user.id),
+                    builder: (context, snap) {
+                      final unreadCount =
+                          snap.data?.where((n) => !n.isRead).length ?? 0;
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.notifications_none,
+                                color: AppTheme.textPrimary),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        NotificationsScreen(userId: user.id)),
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                          ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.error,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                constraints: const BoxConstraints(
+                                    minWidth: 16, minHeight: 16),
+                                child: Text(
+                                  unreadCount > 9 ? '9+' : '$unreadCount',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ];
 
-            return Scaffold(
-              appBar: AppBar(
-                toolbarHeight: 64,
-                title: Image.asset(
-                  'assets/images/Bfarm_icon.png',
-                  height: 64,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.centerLeft,
-                ),
-                actions: actions,
-              ),
-              body: IndexedStack(
-                index: safeIndex,
-                children: screens,
-              ),
-              bottomNavigationBar: Container(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-                ),
-                child: BottomNavigationBar(
-                  currentIndex: safeIndex,
-                  onTap: (i) => _currentIndexNotifier.value = i,
-                  type: BottomNavigationBarType.fixed,
-                  selectedFontSize: 11,
-                  unselectedFontSize: 10,
-                  items: navItems,
-                ),
-              ),
+                if (isDesktop) {
+                  return Scaffold(
+                    body: Row(
+                      children: [
+                        NavigationRail(
+                          selectedIndex: safeIndex,
+                          onDestinationSelected: (i) {
+                            // If we are deep into the nested navigator, pop back to root when switching tabs
+                            if (_desktopNavKey.currentState?.canPop() ??
+                                false) {
+                              _desktopNavKey.currentState
+                                  ?.popUntil((route) => route.isFirst);
+                            }
+                            _currentIndexNotifier.value = i;
+                          },
+                          labelType: NavigationRailLabelType.all,
+                          backgroundColor: AppTheme.surfaceLight,
+                          selectedIconTheme:
+                              const IconThemeData(color: AppTheme.green),
+                          selectedLabelTextStyle: const TextStyle(
+                              color: AppTheme.green,
+                              fontWeight: FontWeight.bold),
+                          unselectedIconTheme:
+                              IconThemeData(color: AppTheme.textMuted),
+                          unselectedLabelTextStyle:
+                              TextStyle(color: AppTheme.textMuted),
+                          leading: Padding(
+                            padding: const EdgeInsets.only(bottom: 20, top: 10),
+                            child: Image.asset('assets/images/Bfarm_icon.png',
+                                height: 48),
+                          ),
+                          destinations: navItems
+                              .map((item) => NavigationRailDestination(
+                                    icon: item.icon,
+                                    label: Text(item.label ?? ''),
+                                  ))
+                              .toList(),
+                        ),
+                        VerticalDivider(
+                            thickness: 1, width: 1, color: AppTheme.border),
+                        Expanded(
+                          child: Navigator(
+                            key: _desktopNavKey,
+                            onGenerateRoute: (settings) {
+                              return MaterialPageRoute(
+                                builder: (context) {
+                                  return Scaffold(
+                                    appBar: AppBar(
+                                      toolbarHeight: 64,
+                                      title: Text('BivFarm Dashboard',
+                                          style: TextStyle(
+                                              color: AppTheme.textPrimary,
+                                              fontWeight: FontWeight.w700)),
+                                      actions: actions,
+                                    ),
+                                    body: ValueListenableBuilder<int>(
+                                      valueListenable: _currentIndexNotifier,
+                                      builder: (context, idx, _) {
+                                        final sIndex =
+                                            idx.clamp(0, screens.length - 1);
+                                        return IndexedStack(
+                                            index: sIndex, children: screens);
+                                      },
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Scaffold(
+                  appBar: AppBar(
+                    toolbarHeight: 64,
+                    title: Image.asset(
+                      'assets/images/Bfarm_icon.png',
+                      height: 64,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    actions: actions,
+                  ),
+                  body: IndexedStack(
+                    index: safeIndex,
+                    children: screens,
+                  ),
+                  bottomNavigationBar: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                          top: BorderSide(color: AppTheme.border, width: 0.5)),
+                    ),
+                    child: BottomNavigationBar(
+                      currentIndex: safeIndex,
+                      onTap: (i) => _currentIndexNotifier.value = i,
+                      type: BottomNavigationBarType.fixed,
+                      selectedFontSize: 11,
+                      unselectedFontSize: 10,
+                      items: navItems,
+                    ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -231,7 +258,8 @@ class _HomeShellState extends State<HomeShell> {
     switch (user.role) {
       case 'Admin':
         return [
-          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
@@ -239,7 +267,8 @@ class _HomeShellState extends State<HomeShell> {
         ];
       case 'Registry':
         return [
-          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
@@ -247,7 +276,8 @@ class _HomeShellState extends State<HomeShell> {
         ];
       case 'Agent':
         return [
-          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
           BidsListScreen(userId: user.id, userRole: user.role),
           AgentDashboardScreen(agentId: user.id),
@@ -255,7 +285,8 @@ class _HomeShellState extends State<HomeShell> {
         ];
       case 'Farmer':
         return [
-          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
           _FarmerListingsTab(userId: user.id),
           FarmerMessagesScreen(userId: user.id),
@@ -263,7 +294,8 @@ class _HomeShellState extends State<HomeShell> {
         ];
       case 'Buyer':
         return [
-          MarketplaceScreen(key: _marketKey, userRole: user.role, userId: user.id),
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id),
           CategoriesScreen(onCategorySelected: _onCategorySelected),
           BidsListScreen(userId: user.id, userRole: user.role),
           ProfileScreen(user: user),
@@ -278,42 +310,51 @@ class _HomeShellState extends State<HomeShell> {
 
   List<BottomNavigationBarItem> _getNavItems(UserModel user) {
     final items = <BottomNavigationBarItem>[
-      const BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Market'),
-      const BottomNavigationBarItem(icon: Icon(Icons.category_outlined), label: 'Categories'),
+      const BottomNavigationBarItem(
+          icon: Icon(Icons.storefront), label: 'Market'),
+      const BottomNavigationBarItem(
+          icon: Icon(Icons.category_outlined), label: 'Categories'),
     ];
 
     switch (user.role) {
       case 'Admin':
         items.addAll([
           const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
-          const BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Admin'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard), label: 'Admin'),
         ]);
         break;
       case 'Registry':
         items.addAll([
           const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
-          const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Registry'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.assignment), label: 'Registry'),
         ]);
         break;
       case 'Agent':
         items.addAll([
           const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
-          const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Dashboard'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.people), label: 'Dashboard'),
         ]);
         break;
       case 'Farmer':
         items.addAll([
-          const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: 'Listings'),
-          const BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2_outlined), label: 'Listings'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
         ]);
         break;
       case 'Buyer':
-        items.add(const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'My Bids'));
+        items.add(const BottomNavigationBarItem(
+            icon: Icon(Icons.gavel), label: 'My Bids'));
         break;
     }
 
     // All roles get a Profile tab
-    items.add(const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'));
+    items.add(const BottomNavigationBarItem(
+        icon: Icon(Icons.person_outline), label: 'Profile'));
 
     return items;
   }
@@ -331,7 +372,8 @@ class _FarmerListingsTab extends StatelessWidget {
       stream: db.streamProductsBySeller(userId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.green));
         }
         final products = snap.data ?? [];
         if (products.isEmpty) {
@@ -339,18 +381,25 @@ class _FarmerListingsTab extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 64),
+                Icon(Icons.inventory_2_outlined,
+                    color: AppTheme.textMuted.withOpacity(0.3), size: 64),
                 const SizedBox(height: 16),
-                Text('No listings yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                Text('No listings yet',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
                 const SizedBox(height: 6),
                 Text(
                   'Start selling by creating your first listing',
-                  style: TextStyle(color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13),
+                  style: TextStyle(
+                      color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                AddProductScreen(sellerId: userId)));
                   },
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Create Listing'),
@@ -370,7 +419,9 @@ class _FarmerListingsTab extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId, existingProduct: p)),
+                      MaterialPageRoute(
+                          builder: (_) => AddProductScreen(
+                              sellerId: userId, existingProduct: p)),
                     );
                   },
                   child: Container(
@@ -392,21 +443,32 @@ class _FarmerListingsTab extends StatelessWidget {
                             image: p.imageUrl != null
                                 ? DecorationImage(
                                     image: p.imageUrl!.startsWith('assets/')
-                                        ? AssetImage(p.imageUrl!) as ImageProvider
+                                        ? AssetImage(p.imageUrl!)
+                                            as ImageProvider
                                         : appNetworkImageProvider(p.imageUrl!),
                                     fit: BoxFit.cover)
                                 : null,
                           ),
-                          child: p.imageUrl == null ? const Icon(Icons.eco, color: AppTheme.greenLight) : null,
+                          child: p.imageUrl == null
+                              ? const Icon(Icons.eco,
+                                  color: AppTheme.greenLight)
+                              : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(p.productName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                              Text(p.productName,
+                                  style: TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
                               const SizedBox(height: 2),
-                              Text('${p.quantity} ${p.quantityUnit} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                              Text(
+                                  '${p.quantity} ${p.quantityUnit} • ${p.district}',
+                                  style: TextStyle(
+                                      color: AppTheme.textMuted, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -415,19 +477,27 @@ class _FarmerListingsTab extends StatelessWidget {
                           children: [
                             Text(
                               'UGX ${p.price.toStringAsFixed(0)}',
-                              style: const TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                  color: AppTheme.greenLight,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: p.availability == 'Available Now' ? AppTheme.greenSurface : AppTheme.surfaceLight,
+                                color: p.availability == 'Available Now'
+                                    ? AppTheme.greenSurface
+                                    : AppTheme.surfaceLight,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 p.availability,
                                 style: TextStyle(
-                                  color: p.availability == 'Available Now' ? AppTheme.greenLight : AppTheme.textMuted,
+                                  color: p.availability == 'Available Now'
+                                      ? AppTheme.greenLight
+                                      : AppTheme.textMuted,
                                   fontSize: 10,
                                 ),
                               ),
@@ -447,7 +517,10 @@ class _FarmerListingsTab extends StatelessWidget {
               child: FloatingActionButton(
                 heroTag: 'addListing',
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: userId)));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => AddProductScreen(sellerId: userId)));
                 },
                 child: const Icon(Icons.add),
               ),
