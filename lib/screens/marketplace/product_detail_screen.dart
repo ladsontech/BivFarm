@@ -7,6 +7,7 @@ import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/network_image_widget.dart';
 import '../bidding/bid_form_screen.dart';
 import '../../widgets/product_card.dart';
 
@@ -487,14 +488,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       );
     }
-    return CachedNetworkImage(
+    return AppNetworkImage(
       imageUrl: url,
       fit: BoxFit.cover,
-      placeholder: (context, url) => Container(
+      placeholder: Container(
         color: AppTheme.surfaceLight,
         child: const Center(child: CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)),
       ),
-      errorWidget: (context, url, err) => Container(
+      errorWidget: Container(
         color: AppTheme.surfaceLight,
         child: Icon(Icons.broken_image, color: AppTheme.textMuted, size: 48),
       ),
@@ -627,13 +628,13 @@ class _FullScreenGalleryState extends State<_FullScreenGallery> {
             child: Center(
               child: url.startsWith('assets/')
                   ? Image.asset(url, fit: BoxFit.contain)
-                  : CachedNetworkImage(
+                  : AppNetworkImage(
                       imageUrl: url,
                       fit: BoxFit.contain,
-                      placeholder: (_, __) => const Center(
+                      placeholder: const Center(
                         child: CircularProgressIndicator(color: AppTheme.green),
                       ),
-                      errorWidget: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                      errorWidget: const Icon(Icons.broken_image, color: Colors.white54, size: 64),
                     ),
             ),
           );
