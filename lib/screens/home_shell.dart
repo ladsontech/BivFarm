@@ -62,19 +62,11 @@ class _HomeShellState extends State<HomeShell> {
 
         final user = snapshot.data;
         if (user == null) {
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('User profile not found.'),
-                  TextButton(
-                    onPressed: () => authService.signOut(),
-                    child: const Text('Sign Out'),
-                  ),
-                ],
-              ),
-            ),
+          // User exists in Firebase Auth but has no Firestore profile yet
+          return _NewUserRoleSelector(
+            uid: uid,
+            email: authService.currentUser?.email,
+            onSignOut: () => authService.signOut(),
           );
         }
 
