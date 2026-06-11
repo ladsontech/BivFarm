@@ -202,23 +202,29 @@ class _HomeShellState extends State<HomeShell> {
                             onGenerateRoute: (settings) {
                               return MaterialPageRoute(
                                 builder: (context) {
-                                  return Scaffold(
-                                    appBar: AppBar(
-                                      toolbarHeight: 64,
-                                      title: Text('BFarm Dashboard',
-                                          style: TextStyle(
-                                              color: AppTheme.textPrimary,
-                                              fontWeight: FontWeight.w700)),
-                                      actions: actions,
-                                    ),
-                                    body: ValueListenableBuilder<int>(
-                                      valueListenable: _currentIndexNotifier,
-                                      builder: (context, idx, _) {
-                                        return IndexedStack(
-                                            index: idx.clamp(0, screens.length - 1), 
-                                            children: screens);
-                                      },
-                                    ),
+                                  return ValueListenableBuilder<int>(
+                                    valueListenable: _currentIndexNotifier,
+                                    builder: (context, idx, _) {
+                                      final safeIdx = idx.clamp(0, screens.length - 1);
+                                      // Hide AppBar for admin/agent dashboards which have their own headers
+                                      final isAdminOrAgentDashboard = (user.role == 'Admin' || user.role == 'Registry' || user.role == 'Agent') && safeIdx == 3;
+                                      
+                                      return Scaffold(
+                                        appBar: !isAdminOrAgentDashboard
+                                            ? AppBar(
+                                                toolbarHeight: 64,
+                                                title: Text('BFarm Dashboard',
+                                                    style: TextStyle(
+                                                        color: AppTheme.textPrimary,
+                                                        fontWeight: FontWeight.w700)),
+                                                actions: actions,
+                                              )
+                                            : null,
+                                        body: IndexedStack(
+                                            index: safeIdx,
+                                            children: screens),
+                                      );
+                                    },
                                   );
                                 },
                               );

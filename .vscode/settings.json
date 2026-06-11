@@ -1,6 +1,7 @@
 {
     "chat.tools.terminal.autoApprove": {
         "Set-Content": true,
-        "flutter": true
+        "flutter": true,
+        "npx -y firebase-tools@latest": true
     }
 }

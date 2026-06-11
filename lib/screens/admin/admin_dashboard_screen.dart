@@ -14,11 +14,12 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _db = DatabaseService();
+  bool _sidebarOpen = false;
 
   @override
   Widget build(BuildContext context) {
     final auth = AuthService();
-    final currentUserId = auth.currentUser?.uid ?? '';
+    final isMobile = MediaQuery.of(context).size.width < 800;
     
     return FutureBuilder<UserModel?>(
       future: auth.getCurrentUserModel(),
@@ -27,41 +28,109 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.green)));
         }
         
-        // Just show the Bids & Orders view with filters at the top
         return Scaffold(
-          appBar: null, // No app bar, filters are in the content
-          body: Column(
+          appBar: null,
+          body: Row(
             children: [
-              // Header with menu button
-              Container(
-                color: AppTheme.surface,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
+              // Sidebar - collapsible
+              if (!isMobile || _sidebarOpen)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: _sidebarOpen ? 240 : 0,
+                  child: Container(
+                    color: AppTheme.surface,
+                    child: Column(
+                      children: [
+                        // Sidebar header
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: AppTheme.border)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Admin',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              if (isMobile)
+                                GestureDetector(
+                                  onTap: () => setState(() => _sidebarOpen = false),
+                                  child: Icon(Icons.close, size: 18, color: AppTheme.textMuted),
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Menu items
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                _sidebarItem('Analytics', Icons.analytics_outlined, () {}),
+                                _sidebarItem('Registry Database', Icons.storage_outlined, () {}),
+                                _sidebarItem('Users', Icons.people_outline, () {}),
+                                _sidebarItem('Agents', Icons.person_outline, () {}),
+                                _sidebarItem('Create Farmer', Icons.agriculture_outlined, () {}),
+                                _sidebarItem('Create Group', Icons.groups_outlined, () {}),
+                                _sidebarItem('Register Store', Icons.storefront_outlined, () {}),
+                                _sidebarItem('Register Dealer', Icons.business_outlined, () {}),
+                                _sidebarItem('My Listings', Icons.inventory_2_outlined, () {}),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              // Main content
+              Expanded(
+                child: Column(
                   children: [
-                    Text(
-                      'Bids & Orders',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                    // Thin header
+                    Container(
+                      height: 48,
+                      color: AppTheme.surface,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+                      ),
+                      child: Row(
+                        children: [
+                          // Sidebar toggle
+                          if (!_sidebarOpen)
+                            GestureDetector(
+                              onTap: () => setState(() => _sidebarOpen = true),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(Icons.menu, size: 20, color: AppTheme.green),
+                              ),
+                            ),
+                          // Title
+                          Text(
+                            'Bids & Orders',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const Spacer(),
+                        ],
                       ),
                     ),
-                    const Spacer(),
-                    Tooltip(
-                      message: 'Admin Menu',
-                      child: IconButton(
-                        icon: Icon(Icons.more_vert, color: AppTheme.textMuted, size: 20),
-                        onPressed: () => _showAdminMenu(context, currentUserId),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                      ),
+                    // Bids content
+                    Expanded(
+                      child: RegistryBidsTab(db: _db),
                     ),
                   ],
                 ),
-              ),
-              // Bids & Orders content with filters
-              Expanded(
-                child: RegistryBidsTab(db: _db),
               ),
             ],
           ),
@@ -70,69 +139,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  void _showAdminMenu(BuildContext context, String currentUserId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          width: 300,
-          decoration: BoxDecoration(
-            color: AppTheme.card,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Admin Options',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-              Divider(height: 1, color: AppTheme.border),
-              _menuItem(ctx, 'Analytics', Icons.analytics_outlined, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-              _menuItem(ctx, 'Registry Database', Icons.storage_outlined, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-              _menuItem(ctx, 'Users', Icons.people_outline, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-              _menuItem(ctx, 'Agents', Icons.person_outline, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-              _menuItem(ctx, 'Create Farmer', Icons.agriculture_outlined, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-              _menuItem(ctx, 'My Listings', Icons.inventory_2_outlined, () {
-                Navigator.pop(ctx);
-                // Will implement navigation
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _menuItem(BuildContext context, String label, IconData icon, VoidCallback onTap) {
+  Widget _sidebarItem(String label, IconData icon, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, size: 20, color: AppTheme.green),
-      title: Text(label, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14)),
+      leading: Icon(icon, size: 18, color: AppTheme.green),
+      title: Text(label, style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      minLeadingWidth: 24,
+      dense: true,
       hoverColor: AppTheme.surfaceLight,
     );
   }
