@@ -60,6 +60,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _showError('Please enter your first and last name');
         return;
       }
+      if (_phoneCtrl.text.trim().isEmpty) {
+        _showError('Please enter your phone number');
+        return;
+      }
+      if (_phoneCtrl.text.trim().length < 9) {
+        _showError('Please enter a valid phone number');
+        return;
+      }
       if (_gender == null) {
         _showError('Please select your gender');
         return;
@@ -353,7 +361,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 18),
 
           CustomTextField(
-            label: 'Phone Number',
+            label: 'Phone Number (Required)',
             hint: '07.. ... ...',
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,

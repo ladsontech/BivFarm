@@ -93,6 +93,7 @@ class DatabaseService {
 
     final data = oldDoc.data()!;
     data['id'] = newUid; // Update the id field
+    data['authProvider'] = 'phone';
 
     // Write new doc
     await _db.collection('users').doc(newUid).set(data);
@@ -532,10 +533,12 @@ class DatabaseService {
       } else {
         final recipient = await getUser(msg.recipientId);
         if (recipient != null) {
+          final isSupport = msg.senderId == 'support' || msg.senderId == 'admin' || msg.senderRole == 'Admin' || msg.senderRole == 'Support';
+          final displaySenderName = isSupport ? 'BFarm Support' : msg.senderName;
           // Create Notification Doc
           await _db.collection('notifications').add({
             'recipientId': msg.recipientId,
-            'title': 'New Message from ${msg.senderName}',
+            'title': 'New Message from $displaySenderName',
             'body': msg.body,
             'isRead': false,
             'createdAt': DateTime.now().toIso8601String(),

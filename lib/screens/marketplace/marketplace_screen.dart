@@ -211,152 +211,148 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               // ── Category Ribbon ────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
-                  height: 100,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 20, right: 10),
-                    itemCount: AppConstants.productCategories.keys.length + 2,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // "All" chip
-                        final isSelected = _activeCategory == null && _activeSellerRole == null;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
+                  height: 96,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Builder(builder: (context) {
+                    // Custom ordered chip list: All, Produce, Produce Store, then rest
+                    final allCats = AppConstants.productCategories.keys.toList();
+                    // Build ordered: [null=All, 'Produce', '__store__', then remaining cats]
+                    final List<String?> chipOrder = [
+                      null, // All
+                      'Produce',
+                      '__store__', // Produce Store
+                      ...allCats.where((c) => c != 'Produce'),
+                    ];
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(left: 16, right: 8),
+                      itemCount: chipOrder.length,
+                      itemBuilder: (context, index) {
+                        final chip = chipOrder[index];
+
+                        if (chip == null) {
+                          // "All" chip
+                          final isSelected = _activeCategory == null && _activeSellerRole == null;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: InkWell(
+                              onTap: () => setState(() {
                                 _activeCategory = null;
                                 _activeSellerRole = null;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                              }),
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.apps,
+                                        color: isSelected ? Colors.white : AppTheme.green, size: 18),
+                                    const SizedBox(height: 2),
+                                    Text('All',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                          fontSize: 10,
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        )),
+                                  ],
                                 ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.apps,
-                                    color: isSelected ? Colors.white : AppTheme.green,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'All',
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
-                        );
-                      } else if (index == AppConstants.productCategories.keys.length + 1) {
-                        // "Produce Store" chip
-                        final isSelected = _activeSellerRole == 'Store';
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
+                          );
+                        } else if (chip == '__store__') {
+                          // "Produce Store" chip
+                          final isSelected = _activeSellerRole == 'Store';
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: InkWell(
+                              onTap: () => setState(() {
                                 _activeSellerRole = isSelected ? null : 'Store';
                                 _activeCategory = null;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                              }),
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.storefront,
+                                        color: isSelected ? Colors.white : AppTheme.green, size: 18),
+                                    const SizedBox(height: 2),
+                                    Text('Produce Store',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                          fontSize: 10,
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                  ],
                                 ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.storefront,
-                                    color: isSelected ? Colors.white : AppTheme.green,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Produce Store',
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
-                        );
-                      } else {
-                        // Category chip
-                        final cat = AppConstants.productCategories.keys.elementAt(index - 1);
-                        final isSelected = _activeCategory == cat && _activeSellerRole == null;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
+                          );
+                        } else {
+                          // Regular category chip
+                          final cat = chip;
+                          final isSelected = _activeCategory == cat && _activeSellerRole == null;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: InkWell(
+                              onTap: () => setState(() {
                                 _activeCategory = isSelected ? null : cat;
                                 _activeSellerRole = null;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                              }),
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.green : AppTheme.surfaceLight,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? AppTheme.green : AppTheme.border.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(_getCategoryIcon(cat),
+                                        color: isSelected ? Colors.white : AppTheme.green, size: 18),
+                                    const SizedBox(height: 2),
+                                    Text(cat,
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                          fontSize: 10,
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                  ],
                                 ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _getCategoryIcon(cat),
-                                    color: isSelected ? Colors.white : AppTheme.green,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    cat,
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                          );
+                        }
+                      },
+                    );
+                  }),
                 ),
               ),
 
@@ -406,79 +402,77 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                           ),
                         ],
                       ),
-                      child: Stack(
-                        clipBehavior: Clip.hardEdge,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 28),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'BULK / SPECIAL ORDER',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        'Need large quantities?',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      SizedBox(height: 1),
-                                      Text(
-                                        'Registry network fulfillment',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 11,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(25),
-                                    boxShadow: [
-                                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-                                    ],
-                                  ),
-                                  child: const Text(
-                                    'Get Quote',
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text(
+                                    'BULK / SPECIAL ORDER',
                                     style: TextStyle(
-                                      color: Color(0xFF1B5E20),
-                                      fontSize: 11,
+                                      color: Colors.white70,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Need large quantities?',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
-                                ),
+                                  SizedBox(height: 1),
+                                  Text(
+                                    'Registry network fulfillment',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(25),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
                               ],
+                            ),
+                            child: const Text(
+                              'Get Quote',
+                              style: TextStyle(
+                                color: Color(0xFF1B5E20),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ],
@@ -716,7 +710,7 @@ class _CategorySection extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 260,
+          height: 268,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 20, right: 10),

@@ -62,17 +62,17 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
       future: _db.getUser(widget.userId),
       builder: (context, userSnap) {
         if (userSnap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: AppTheme.background,
-            body: Center(child: CircularProgressIndicator(color: AppTheme.green)),
+            body: const Center(child: CircularProgressIndicator(color: AppTheme.green)),
           );
         }
         
         final currentUser = userSnap.data;
         if (currentUser == null) {
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: AppTheme.background,
-            body: Center(child: Text('User not found')),
+            body: const Center(child: Text('User not found')),
           );
         }
 
@@ -87,9 +87,9 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
       stream: _db.streamSupportConversations(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: AppTheme.background,
-            body: Center(child: CircularProgressIndicator(color: AppTheme.green)),
+            body: const Center(child: CircularProgressIndicator(color: AppTheme.green)),
           );
         }
 
@@ -417,8 +417,9 @@ class _FarmerMessagesScreenState extends State<FarmerMessagesScreen> {
                         separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border, indent: 72),
                         itemBuilder: (context, index) {
                           final msg = messages[index];
-                          final displaySenderName = msg.senderId == 'support' ? 'BFarm Support' : msg.senderName;
-                          final displaySenderRole = msg.senderId == 'support' ? 'Support' : msg.senderRole;
+                          final isSupport = msg.senderId == 'support' || msg.senderId == 'admin' || msg.senderRole == 'Admin' || msg.senderRole == 'Support';
+                          final displaySenderName = isSupport ? 'BFarm Support' : msg.senderName;
+                          final displaySenderRole = isSupport ? 'Support' : msg.senderRole;
                           
                           final roleColor = _getRoleColor(displaySenderRole);
                           final roleIcon = _getRoleIcon(displaySenderRole);

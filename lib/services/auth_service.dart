@@ -97,7 +97,9 @@ class AuthService {
         role: role,
         createdAt: DateTime.now(),
       );
-      await _firestore.collection('users').doc(uid).set(userModel.toMap());
+      final map = userModel.toMap();
+      map['authProvider'] = 'phone';
+      await _firestore.collection('users').doc(uid).set(map);
       // Notify admins asynchronously
       db.sendUserSignupNotification(
         userName: phone,
@@ -109,7 +111,67 @@ class AuthService {
 
   // ─── Email Auth (legacy / admin) ────────────────────
   Future<auth.UserCredential> signIn(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(email: email, password: password);
+    try {
+      return await _auth.signInWithEmailAndPassword(email: email, password: password);
+    } on auth.FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        try {
+          final querySnapshot = await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+              
+          if (querySnapshot.docs.isEmpty) {
+            throw Exception('No account found with this email. Please register first.');
+          }
+          
+          final userData = querySnapshot.docs.first.data();
+          final provider = userData['authProvider'] ?? userData['signInProvider'];
+          
+          if (provider == 'google' || (provider == null && userData['profilePhoto'] != null)) {
+            throw Exception(
+              'This email is linked to a Google account. Please tap "Continue with Google" to sign in.'
+            );
+          } else if (provider == 'phone') {
+            throw Exception(
+              'This email is linked to a phone number account. Please sign in with your phone number.'
+            );
+          }
+        } catch (dbError) {
+          if (dbError is Exception && dbError.toString().contains('Please')) {
+            rethrow;
+          }
+        }
+        throw Exception('Incorrect email or password. Please try again.');
+      } else if (e.code == 'account-exists-with-different-credential') {
+        try {
+          final querySnapshot = await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+              
+          if (querySnapshot.docs.isNotEmpty) {
+            final userData = querySnapshot.docs.first.data();
+            final provider = userData['authProvider'] ?? userData['signInProvider'];
+            if (provider == 'google' || (provider == null && userData['profilePhoto'] != null)) {
+              throw Exception(
+                'This email is already linked to a Google account. Please tap "Continue with Google" to sign in.'
+              );
+            }
+          }
+        } catch (innerE) {
+          if (innerE is Exception && innerE.toString().contains('Please')) rethrow;
+        }
+        throw Exception('An account with this email already exists using a different sign-in method.');
+      } else if (e.code == 'too-many-requests') {
+        throw Exception('Too many failed attempts. Please try again later or reset your password.');
+      } else if (e.code == 'network-request-failed') {
+        throw Exception('No internet connection. Please check your network and try again.');
+      }
+      throw Exception(e.message ?? 'Sign-in failed. Please try again.');
+    }
   }
 
   Future<auth.UserCredential> register(String email, String password, String role) async {
@@ -129,7 +191,9 @@ class AuthService {
       createdAt: DateTime.now(),
     );
 
-    await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
+    final map = userModel.toMap();
+    map['authProvider'] = 'email';
+    await _firestore.collection('users').doc(user.uid).set(map);
     // Notify admins asynchronously
     DatabaseService().sendUserSignupNotification(
       userName: userModel.name,
@@ -187,7 +251,9 @@ class AuthService {
         'createdAt': DateTime.now().toIso8601String(),
       }, uid);
 
-      await docRef.set(userModel.toMap());
+      final map = userModel.toMap();
+      map['authProvider'] = 'email';
+      await docRef.set(map);
       // Notify admins asynchronously (skip for Agent creating themselves)
       DatabaseService().sendUserSignupNotification(
         userName: profileData['name'] ?? email,
@@ -267,7 +333,9 @@ class AuthService {
             profilePhoto: userPhoto,
             createdAt: DateTime.now(),
           );
-          await _firestore.collection('users').doc(uid).set(userModel.toMap());
+          final map = userModel.toMap();
+          map['authProvider'] = 'google';
+          await _firestore.collection('users').doc(uid).set(map);
           // Notify admins asynchronously
           DatabaseService().sendUserSignupNotification(
             userName: userModel.name.isNotEmpty ? userModel.name : userEmail,

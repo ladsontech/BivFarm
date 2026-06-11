@@ -75,7 +75,9 @@ class _ChatScreenState extends State<ChatScreen> {
               radius: 16,
               backgroundColor: Colors.white24,
               child: Text(
-                widget.otherUser.name[0].toUpperCase(),
+                (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                    ? 'S'
+                    : widget.otherUser.name[0].toUpperCase(),
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
@@ -84,8 +86,18 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.otherUser.name, style: const TextStyle(fontSize: 15)),
-                  Text(widget.otherUser.role, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7))),
+                  Text(
+                    (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                        ? 'BFarm Support'
+                        : widget.otherUser.name,
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                  Text(
+                    (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                        ? 'Platform Support'
+                        : widget.otherUser.role,
+                    style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7)),
+                  ),
                 ],
               ),
             ),

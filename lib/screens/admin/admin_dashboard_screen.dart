@@ -78,11 +78,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(isRegistry ? 'Registry Dashboard' : 'Admin Dashboard'),
-            bottom: TabBar(
-              controller: _tabCtrl,
-              isScrollable: true,
-              tabs: tabs,
+            title: Text(
+              isRegistry ? 'Registry Dashboard' : 'Admin Dashboard',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            toolbarHeight: 50,
+            elevation: 1,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: TabBar(
+                controller: _tabCtrl,
+                isScrollable: true,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                tabs: tabs.map((tab) => SizedBox(
+                  height: 48,
+                  child: tab,
+                )).toList(),
+              ),
             ),
           ),
           body: TabBarView(
@@ -855,6 +867,8 @@ class _UserListTile extends StatelessWidget {
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding:
@@ -1925,9 +1939,9 @@ class _AdminActions {
                 try {
                   await db.addMessage(MessageModel(
                     id: '',
-                    senderId: 'admin',
-                    senderName: 'Admin',
-                    senderRole: 'Admin',
+                    senderId: 'support',
+                    senderName: 'BFarm Support',
+                    senderRole: 'Support',
                     recipientId: recipientId,
                     subject: titleCtrl.text,
                     body: bodyCtrl.text,

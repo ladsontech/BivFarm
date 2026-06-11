@@ -276,6 +276,13 @@ class _RegisterGroupScreenState extends State<RegisterGroupScreen> {
               CustomTextField(label: 'Group Name', controller: _nameCtrl),
               CustomTextField(label: 'Leader Name', controller: _leaderCtrl),
               CustomTextField(label: 'Leader Phone', controller: _phoneCtrl),
+              CustomTextField(label: 'Number of Members', controller: _membersCtrl, keyboardType: TextInputType.number),
+              CustomDropdown(
+                label: 'Category',
+                value: _category,
+                items: const ['Produce', 'Poultry', 'Livestock', 'Fruits & Vegetables', 'All'],
+                onChanged: (v) => setState(() => _category = v),
+              ),
               CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
               CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
               CustomTextField(label: 'Village', controller: _villageCtrl),
