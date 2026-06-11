@@ -14,6 +14,8 @@ class BidModel {
   final String status; // Pending, Under Review, Accepted, Rejected, Completed
   final String? notes;
   final String? adminNotes;
+  final bool isRegistryVerified;
+  final String? registryNotes;
   final DateTime createdAt;
 
   BidModel({
@@ -31,12 +33,16 @@ class BidModel {
     this.status = 'Pending',
     this.notes,
     this.adminNotes,
+    this.isRegistryVerified = false,
+    this.registryNotes,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
   BidModel copyWith({
     String? status,
     String? adminNotes,
+    bool? isRegistryVerified,
+    String? registryNotes,
   }) {
     return BidModel(
       id: id,
@@ -53,6 +59,8 @@ class BidModel {
       status: status ?? this.status,
       notes: notes,
       adminNotes: adminNotes ?? this.adminNotes,
+      isRegistryVerified: isRegistryVerified ?? this.isRegistryVerified,
+      registryNotes: registryNotes ?? this.registryNotes,
       createdAt: createdAt,
     );
   }
@@ -73,6 +81,8 @@ class BidModel {
       status: map['status'] ?? 'Pending',
       notes: map['notes'],
       adminNotes: map['adminNotes'],
+      isRegistryVerified: map['isRegistryVerified'] ?? false,
+      registryNotes: map['registryNotes'],
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
     );
   }
@@ -92,6 +102,8 @@ class BidModel {
       'status': status,
       'notes': notes,
       'adminNotes': adminNotes,
+      'isRegistryVerified': isRegistryVerified,
+      'registryNotes': registryNotes,
       'createdAt': createdAt.toIso8601String(),
     };
   }

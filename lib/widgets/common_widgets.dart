@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final bool enabled;
   final void Function(String)? onChanged;
+  final Iterable<String>? autofillHints;
 
   const CustomTextField({
     super.key,
@@ -27,6 +28,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.enabled = true,
     this.onChanged,
+    this.autofillHints,
   });
 
   @override
@@ -51,6 +53,7 @@ class CustomTextField extends StatelessWidget {
           maxLines: maxLines,
           enabled: enabled,
           onChanged: onChanged,
+          autofillHints: autofillHints,
           style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
           decoration: InputDecoration(
             hintText: hint,

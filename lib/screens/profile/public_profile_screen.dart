@@ -40,16 +40,11 @@ class PublicProfileScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: AppTheme.surfaceLight,
-                  backgroundImage: user.profilePhoto != null ? NetworkImage(user.profilePhoto!) : null,
-                  child: user.profilePhoto == null
-                      ? Text(
-                          user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        )
+                  backgroundImage: (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) ? NetworkImage(user.profilePhoto!) : null,
+                  child: (user.profilePhoto == null || user.profilePhoto!.isEmpty)
+                      ? (user.name.isNotEmpty 
+                         ? Text(user.name[0].toUpperCase(), style: TextStyle(color: AppTheme.textMuted, fontSize: 36, fontWeight: FontWeight.w700))
+                         : Icon(Icons.person_outline, color: AppTheme.textMuted, size: 40))
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -74,7 +69,7 @@ class PublicProfileScreen extends StatelessWidget {
                   ),
                   child: Text(
                     user.role,
-                    style: const TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 32),

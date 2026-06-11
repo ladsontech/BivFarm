@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../utils/image_source_picker.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
@@ -24,7 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
 
   // Step 1 — Welcome
-  File? _avatarFile;
+  XFile? _avatarFile;
 
   // Step 2 — Personal Info
   final _firstNameCtrl = TextEditingController();
@@ -80,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _pickAvatar() async {
     final picked = await showImageSourcePicker(context);
     if (picked != null) {
-      setState(() => _avatarFile = File(picked.path));
+      setState(() => _avatarFile = picked);
     }
   }
 
@@ -94,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       String? photoUrl;
       if (_avatarFile != null) {
-        photoUrl = await StorageService().uploadImage(_avatarFile!, 'profile_photos');
+        photoUrl = await StorageService().uploadXFile(_avatarFile!, 'profile_photos');
       }
 
       final data = <String, dynamic>{
@@ -261,7 +262,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: AppTheme.surfaceLight,
-                  backgroundImage: _avatarFile != null ? FileImage(_avatarFile!) : null,
+                  backgroundImage: _avatarFile != null
+                      ? (kIsWeb
+                          ? NetworkImage(_avatarFile!.path) as ImageProvider
+                          : FileImage(File(_avatarFile!.path)) as ImageProvider)
+                      : null,
                   child: _avatarFile == null
                       ? Icon(Icons.person, color: AppTheme.textMuted.withOpacity(0.4), size: 56)
                       : null,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../../utils/validators.dart';
@@ -42,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
     try {
       await _auth.signIn(_emailCtrl.text.trim(), _passwordCtrl.text);
@@ -167,7 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       onAutoVerified: (credential) async {
         try {
-          await _auth.signInWithPhoneCredential(credential);
+          final cred = await _auth.signInWithPhoneCredential(credential);
+          await _handlePhoneLoginMerge(cred.user!.uid);
         } catch (e) {
           if (mounted) _showError(e.toString());
         }
@@ -183,23 +185,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     setState(() => _loading = true);
     try {
-      await _auth.signInWithOTP(code);
-      final userModel = await _auth.getCurrentUserModel();
-      if (userModel == null) {
-        await _auth.signOut();
-        if (mounted) {
-          _showError('No account found. Please register first.');
-          setState(() {
-            _codeSent = false;
-            _loading = false;
-          });
-        }
-        return;
-      }
+      final cred = await _auth.signInWithOTP(code);
+      await _handlePhoneLoginMerge(cred.user!.uid);
     } catch (e) {
       if (mounted) _showError(e.toString().replaceAll('Exception: ', ''));
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// After phone OTP sign-in, check if a pre-created account exists by phone.
+  /// If so, migrate it to the new Auth UID so the user logs in seamlessly.
+  Future<void> _handlePhoneLoginMerge(String authUid) async {
+    final db = DatabaseService();
+
+    // Check if a Firestore doc already exists for this Auth UID
+    final existingByUid = await db.getUser(authUid);
+    if (existingByUid != null) {
+      // User doc already matches this UID — nothing to merge, proceed normally.
+      // HomeShell StreamBuilder will handle routing.
+      return;
+    }
+
+    // No doc for this UID — look up by phone number (pre-created account?)
+    final existingByPhone = await db.getUserByPhone(_fullPhone);
+    if (existingByPhone != null) {
+      // Found a pre-created account! Migrate it to the new Auth UID.
+      await db.migrateUserDocument(existingByPhone.id, authUid);
+      // HomeShell StreamBuilder will now find the doc and route accordingly.
+      return;
+    }
+
+    // Truly new user — create a minimal profile so HomeShell routes to role selector
+    await _auth.createUserIfNotExists(authUid, _fullPhone, 'Buyer');
   }
 
   void _showError(String msg) {
@@ -219,12 +236,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 12),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
 
               // ─── Logo ──────────────────────────────
               Container(
@@ -326,6 +346,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+      ),
       ),
     );
   }
@@ -472,6 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _otpCtrl,
             keyboardType: TextInputType.number,
             prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            autofillHints: const [AutofillHints.oneTimeCode],
           ),
           const SizedBox(height: 24),
           CustomButton(

@@ -14,7 +14,9 @@ import 'screens/home_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: kIsWeb ? DefaultFirebaseOptions.currentPlatform : null,
+  );
 
   // FCM background handler — not supported on web
   if (!kIsWeb) {

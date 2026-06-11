@@ -6,11 +6,17 @@ import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/my_listings_tab.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
 import '../../models/bid_model.dart';
 import '../../models/bulk_order_model.dart';
 import '../../models/message_model.dart';
+import '../marketplace/add_product_screen.dart';
+import '../common/registration_screens.dart';
+import '../../widgets/registry_database_tab.dart';
+import '../../widgets/registry_bids_tab.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -28,6 +34,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 5, vsync: this);
+    _tabCtrl.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -38,30 +47,159 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        bottom: TabBar(
-          controller: _tabCtrl,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: 'Analytics'),
-            Tab(text: 'Users'),
-            Tab(text: 'Agents'),
-            Tab(text: 'Create Farmer'),
-            Tab(text: 'My Listings'),
+    final auth = AuthService();
+    final currentUserId = auth.currentUser?.uid ?? '';
+    
+    return FutureBuilder<UserModel?>(
+      future: auth.getCurrentUserModel(),
+      builder: (context, userSnap) {
+        if (userSnap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.green)));
+        }
+        
+        final user = userSnap.data;
+        final isRegistry = user?.role == 'Registry';
+        
+        // Define tabs based on role
+        final List<Widget> tabs = [
+          const Tab(text: 'Analytics'),
+          const Tab(text: 'Registry Database'),
+          const Tab(text: 'Bids & Orders'),
+          if (!isRegistry) const Tab(text: 'Users'),
+          const Tab(text: 'Agents'),
+          if (isRegistry) const Tab(text: 'Register New') else const Tab(text: 'Create Farmer'),
+          const Tab(text: 'My Listings'),
+        ];
+
+        // Ensure TabController matches tab count
+        if (_tabCtrl.length != tabs.length) {
+          _tabCtrl = TabController(length: tabs.length, vsync: this);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isRegistry ? 'Registry Dashboard' : 'Admin Dashboard'),
+            bottom: TabBar(
+              controller: _tabCtrl,
+              isScrollable: true,
+              tabs: tabs,
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _AnalyticsTab(db: _db),
+              RegistryDatabaseTab(db: _db),
+              RegistryBidsTab(db: _db),
+              if (!isRegistry) _UsersTab(db: _db),
+              _AgentsTab(db: _db),
+              if (isRegistry) _RegistryRegistrationsTab(agentId: currentUserId) else _CreateFarmerTab(db: _db),
+              MyListingsTab(userId: currentUserId),
+            ],
+          ),
+          floatingActionButton: _tabCtrl.index == (tabs.length - 1)
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddProductScreen(sellerId: currentUserId),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Listing'),
+                )
+              : null,
+        );
+      }
+    );
+  }
+}
+
+// ─── Registry Registrations Tab ───────────────────────
+class _RegistryRegistrationsTab extends StatelessWidget {
+  final String agentId;
+  const _RegistryRegistrationsTab({required this.agentId});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _RegCard(
+            title: 'Register Farmer Group',
+            icon: Icons.groups_outlined,
+            color: AppTheme.green,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterGroupScreen(agentId: agentId))),
+          ),
+          const SizedBox(height: 12),
+          _RegCard(
+            title: 'Register Produce Store',
+            icon: Icons.storefront_outlined,
+            color: AppTheme.info,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterStoreScreen(agentId: agentId))),
+          ),
+          const SizedBox(height: 12),
+          _RegCard(
+            title: 'Register Input Dealer',
+            icon: Icons.business_outlined,
+            color: AppTheme.warning,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterDealerScreen(agentId: agentId))),
+          ),
+          const SizedBox(height: 12),
+          _RegCard(
+            title: 'Register Individual Farmer',
+            icon: Icons.person_outline,
+            color: AppTheme.greenLight,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterUserScreen(role: 'Farmer', agentId: agentId))),
+          ),
+          const SizedBox(height: 12),
+          _RegCard(
+            title: 'Register Individual Buyer',
+            icon: Icons.shopping_bag_outlined,
+            color: AppTheme.info,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterUserScreen(role: 'Buyer', agentId: agentId))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _RegCard({required this.title, required this.icon, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.border, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16))),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.textMuted),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabCtrl,
-        children: [
-          _AnalyticsTab(db: _db),
-          _UsersTab(db: _db),
-          _AgentsTab(db: _db),
-          _CreateFarmerTab(db: _db),
-          MyListingsTab(userId: AuthService().currentUser?.uid ?? ''),
-        ],
       ),
     );
   }
@@ -91,7 +229,9 @@ class _CreateFarmerTabState extends State<_CreateFarmerTab> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Form(
+      child: ResponsiveWrapper(
+        maxWidth: 550,
+        child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,7 +302,7 @@ class _CreateFarmerTabState extends State<_CreateFarmerTab> {
                 try {
                   await AuthService().registerUserByAgent(
                     email: _emailCtrl.text.trim(),
-                    password: 'farmer123',
+                    password: 'bfarm123',
                     role: 'Farmer',
                     agentId: _selectedAgentId ?? '',
                     profileData: {
@@ -179,7 +319,7 @@ class _CreateFarmerTabState extends State<_CreateFarmerTab> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text(
-                            'Farmer created successfully! Default password: farmer123')));
+                            'Farmer created successfully! Default password: bfarm123')));
                     _formKey.currentState!.reset();
                     setState(() {
                       _selectedAgentId = null;
@@ -198,43 +338,107 @@ class _CreateFarmerTabState extends State<_CreateFarmerTab> {
           ],
         ),
       ),
+      ),
     );
   }
 }
 
 // ─── Analytics Tab ───────────────────────────────────
-class _AnalyticsTab extends StatelessWidget {
+class _AnalyticsTab extends StatefulWidget {
   final DatabaseService db;
   const _AnalyticsTab({required this.db});
 
   @override
+  State<_AnalyticsTab> createState() => _AnalyticsTabState();
+}
+
+class _AnalyticsTabState extends State<_AnalyticsTab> {
+  late Future<Map<String, int>> _analyticsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _analyticsFuture = widget.db.getAnalytics();
+  }
+
+  void _refresh() {
+    setState(() {
+      _analyticsFuture = widget.db.getAnalytics();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, int>>(
-      future: db.getAnalytics(),
+      future: _analyticsFuture,
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(
               child: CircularProgressIndicator(color: AppTheme.green));
         }
+        if (snap.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, color: AppTheme.error, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Could not load analytics',
+                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snap.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         final data = snap.data ?? {};
+        final screenWidth = MediaQuery.of(context).size.width;
+        final gridColumns = screenWidth >= 1200 ? 4 : (screenWidth >= 800 ? 3 : 2);
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Overview',
-                  style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.1,
+          child: ResponsiveWrapper(
+            maxWidth: 900,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Overview',
+                        style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600)),
+                    IconButton(
+                      icon: Icon(Icons.refresh, color: AppTheme.textMuted),
+                      tooltip: 'Refresh Analytics',
+                      onPressed: _refresh,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: gridColumns,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.3,
                 children: [
                   StatCard(
                       title: 'Total Farmers',
@@ -290,6 +494,7 @@ class _AnalyticsTab extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         );
       },
@@ -374,7 +579,7 @@ class _UsersTabState extends State<_UsersTab> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<UserModel>>(
-      stream: Stream.fromFuture(widget.db.getAllUsers()),
+      stream: widget.db.streamAllUsers(),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(

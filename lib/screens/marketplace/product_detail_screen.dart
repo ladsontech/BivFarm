@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../widgets/network_image_widget.dart';
 import '../bidding/bid_form_screen.dart';
 import '../../widgets/product_card.dart';
+import 'add_product_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -49,7 +50,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final images = widget.product.imageUrls;
     final role = widget.currentUserRole;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       body: CustomScrollView(
         slivers: [
           // ── Image Carousel Header ──────────────
@@ -58,14 +59,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             pinned: true,
             automaticallyImplyLeading: !widget.isEmbedded,
             backgroundColor: AppTheme.background,
-            actions: widget.isEmbedded
-                ? [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: widget.onClose,
-                    )
-                  ]
-                : null,
+            actions: [
+              FutureBuilder<UserModel?>(
+                future: db.getUser(widget.product.sellerId),
+                builder: (context, userSnap) {
+                  final seller = userSnap.data;
+                  final isAgentOfSeller = role == 'Agent' && (widget.product.agentId == widget.currentUserId || seller?.agentId == widget.currentUserId);
+                  final canEdit = role == 'Admin' || isAgentOfSeller || widget.product.sellerId == widget.currentUserId;
+                  if (canEdit) {
+                    return IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit Listing',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: widget.product.sellerId, existingProduct: widget.product)),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+              if (widget.isEmbedded)
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: widget.onClose,
+                )
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: images.isNotEmpty
                   ? Stack(
@@ -153,7 +172,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                     child: Text(
                       widget.product.category,
-                      style: const TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -237,7 +256,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   child: user.profilePhoto == null
                                       ? Text(
                                           user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                                          style: const TextStyle(color: AppTheme.greenDark, fontSize: 20, fontWeight: FontWeight.bold),
+                                          style: TextStyle(color: AppTheme.greenDark, fontSize: 20, fontWeight: FontWeight.bold),
                                         )
                                       : null,
                                 ),
@@ -256,7 +275,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(color: AppTheme.greenSurface, borderRadius: BorderRadius.circular(4)),
-                                            child: Text(user.role, style: const TextStyle(color: AppTheme.greenLight, fontSize: 10, fontWeight: FontWeight.w600)),
+                                            child: Text(user.role, style: TextStyle(color: AppTheme.greenLight, fontSize: 10, fontWeight: FontWeight.w600)),
                                           ),
                                           if (user.bio != null && user.bio!.isNotEmpty) ...[
                                             const SizedBox(width: 8),
@@ -279,29 +298,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             const SizedBox(height: 20),
                             
                             // Location Row
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.location_on_rounded, color: AppTheme.textMuted, size: 20),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Location', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${user.village.isNotEmpty ? '${user.village}, ' : ''}${user.subcounty.isNotEmpty ? '${user.subcounty}, ' : ''}${user.district}',
-                                        style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                            Builder(
+                              builder: (context) {
+                                final isPrivileged = role == 'Admin' || role == 'Registry' || (role == 'Agent' && user.agentId == widget.currentUserId);
+                                final displayLocation = isPrivileged 
+                                    ? '${user.village.isNotEmpty ? '${user.village}, ' : ''}${user.subcounty.isNotEmpty ? '${user.subcounty}, ' : ''}${user.district}'
+                                    : user.district;
+                                
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.location_on_rounded, color: AppTheme.textMuted, size: 20),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Location', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            displayLocation,
+                                            style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                             
                             // Admin / Agent Contact Info
-                            if (role == 'Admin' || role == 'Agent') ...[
+                            if (role == 'Admin' || (role == 'Agent' && user.agentId == widget.currentUserId)) ...[
                               const SizedBox(height: 16),
                               const Divider(),
                               const SizedBox(height: 8),
@@ -314,7 +342,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    role == 'Admin' ? 'Admin Contact Data' : 'Agent Contact Data',
+                                    role == 'Admin' ? 'Admin Contact Data' : 'Your Farmer\'s Contact Data',
                                     style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
                                   ),
                                 ],
@@ -344,23 +372,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ],
                               ),
                             ] else ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(8)),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.privacy_tip_outlined, color: AppTheme.textMuted, size: 16),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Contact information is hidden for privacy. Place a bid to negotiate.',
-                                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              const SizedBox.shrink(),
                             ],
                           ],
                         ),
@@ -370,33 +382,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 32),
 
                   // Bids section (admin + agent view)
-                  if (role == 'Admin' || role == 'Registry' || role == 'Agent') ...[
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Bids on this product',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 12),
-                    StreamBuilder<List<BidModel>>(
-                      stream: db.streamBidsByProduct(widget.product.id),
-                      builder: (ctx, snap) {
-                        if (snap.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                        }
-                        final bids = snap.data ?? [];
-                        if (bids.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: Center(child: Text('No bids yet', style: TextStyle(color: AppTheme.textMuted))),
-                          );
-                        }
-                        return Column(
-                          children: bids.map((bid) => _bidTile(bid, formatter)).toList(),
-                        );
-                      },
-                    ),
+                  if (role == 'Admin' || role == 'Registry' || (role == 'Agent' && widget.product.sellerId == widget.currentUserId)) ...[
+                    // Wait, sellerId is the farmer ID. If the agent is managing the farmer, they should see.
+                    // Let's use a more robust check: does this product's seller have this agent?
+                  ] else if (role == 'Agent') ...[
+                    // Temporary placeholder or just hide it
                   ],
+
+                  // Let's re-implement the Bids section with actual agent-farmer check
+                  FutureBuilder<UserModel?>(
+                    future: db.getUser(widget.product.sellerId),
+                    builder: (ctx, farmerSnap) {
+                      final farmer = farmerSnap.data;
+                      final canSeeBids = role == 'Admin' || role == 'Registry' || (role == 'Agent' && farmer?.agentId == widget.currentUserId);
+                      
+                      if (!canSeeBids) return const SizedBox.shrink();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Bids on this product',
+                            style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 12),
+                          StreamBuilder<List<BidModel>>(
+                            stream: db.streamBidsByProduct(widget.product.id),
+                            builder: (ctx, snap) {
+                              if (snap.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+                              }
+                              final bids = snap.data ?? [];
+                              if (bids.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(child: Text('No bids yet', style: TextStyle(color: AppTheme.textMuted))),
+                                );
+                              }
+                              return Column(
+                                children: bids.map((bid) => _bidTile(bid, formatter)).toList(),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                   
                   const SizedBox(height: 40),
                   
@@ -437,9 +470,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.6,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.60, 
                         ),
                         itemCount: otherProducts.length,
                         itemBuilder: (ctx, i) {
@@ -465,8 +498,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      // Bid button — visible for Buyer, Admin, and Agent (not on own products)
-      bottomNavigationBar: (role == 'Buyer' || role == 'Admin' || role == 'Agent') && widget.currentUserId != widget.product.sellerId
+      // Bid button — visible for Buyer, Admin, Agent, and Farmer (not on own products)
+      bottomNavigationBar: (role == 'Buyer' || role == 'Admin' || role == 'Agent' || role == 'Farmer') && widget.currentUserId != widget.product.sellerId
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),

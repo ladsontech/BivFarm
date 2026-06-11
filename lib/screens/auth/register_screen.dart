@@ -43,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _registerWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
       _showError('Passwords do not match');
       return;
@@ -153,12 +153,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ─── Role Picker ───────────────────────
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ─── Role Picker ───────────────────────
               Text(
                 'I want to join as a',
                 style: TextStyle(
@@ -255,6 +258,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
+      ),
+      ),
       ),
     );
   }
@@ -454,6 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _otpCtrl,
             keyboardType: TextInputType.number,
             prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            autofillHints: const [AutofillHints.oneTimeCode],
           ),
           const SizedBox(height: 24),
           CustomButton(

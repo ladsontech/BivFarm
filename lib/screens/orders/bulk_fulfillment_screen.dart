@@ -5,6 +5,7 @@ import '../../models/bid_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
 
 class BulkFulfillmentScreen extends StatefulWidget {
@@ -24,8 +25,10 @@ class _BulkFulfillmentScreenState extends State<BulkFulfillmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Fulfill Bulk Order')),
-      body: Column(
-        children: [
+      body: ResponsiveWrapper(
+        maxWidth: 800,
+        child: Column(
+          children: [
           // Bulk Order Summary Banner
           Container(
             padding: const EdgeInsets.all(16),
@@ -42,7 +45,7 @@ class _BulkFulfillmentScreenState extends State<BulkFulfillmentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Target: ${widget.order.quantity} ${widget.order.quantityUnit}', style: const TextStyle(color: AppTheme.green, fontSize: 16, fontWeight: FontWeight.w800)),
+                      Text('Target: ${widget.order.quantity} ${widget.order.quantityUnit}', style: TextStyle(color: AppTheme.green, fontSize: 16, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 4),
                       Text('${widget.order.itemName} (${widget.order.category})', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
@@ -186,6 +189,7 @@ class _BulkFulfillmentScreenState extends State<BulkFulfillmentScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

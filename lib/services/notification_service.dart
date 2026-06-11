@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Top-level background handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -73,6 +74,7 @@ class NotificationService {
 
   /// Store the FCM token for the given user in Firestore
   Future<void> storeToken(String userId) async {
+    if (kIsWeb) return;
     try {
       final token = await _fcm.getToken();
       if (token != null) {

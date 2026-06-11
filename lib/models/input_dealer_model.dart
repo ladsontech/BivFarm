@@ -6,6 +6,8 @@ class InputDealerModel {
   final String productType;
   final String phone;
   final String district;
+  final String subcounty;
+  final String village;
   final String address;
   final String? tradingLicensePhoto;
   final bool isVerified;
@@ -20,6 +22,8 @@ class InputDealerModel {
     required this.productType,
     required this.phone,
     required this.district,
+    this.subcounty = '',
+    this.village = '',
     this.address = '',
     this.tradingLicensePhoto,
     this.isVerified = false,
@@ -36,6 +40,8 @@ class InputDealerModel {
       productType: map['productType'] ?? '',
       phone: map['phone'] ?? '',
       district: map['district'] ?? '',
+      subcounty: map['subcounty'] ?? '',
+      village: map['village'] ?? '',
       address: map['address'] ?? '',
       tradingLicensePhoto: map['tradingLicensePhoto'],
       isVerified: map['isVerified'] ?? false,
@@ -52,6 +58,8 @@ class InputDealerModel {
       'productType': productType,
       'phone': phone,
       'district': district,
+      'subcounty': subcounty,
+      'village': village,
       'address': address,
       'tradingLicensePhoto': tradingLicensePhoto,
       'isVerified': isVerified,
@@ -71,6 +79,8 @@ class FarmerGroupModel {
   final String leaderName;
   final String leaderPhone;
   final int memberCount;
+  final String category; // Produce, Poultry, Livestock, Fruits & Vegetables, All
+  final String? userId; // Linked Firebase Auth user account
   final String? registeredBy;
   final DateTime createdAt;
 
@@ -83,6 +93,8 @@ class FarmerGroupModel {
     required this.leaderName,
     required this.leaderPhone,
     this.memberCount = 0,
+    this.category = '',
+    this.userId,
     this.registeredBy,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -97,6 +109,8 @@ class FarmerGroupModel {
       leaderName: map['leaderName'] ?? '',
       leaderPhone: map['leaderPhone'] ?? '',
       memberCount: map['memberCount'] ?? 0,
+      category: map['category'] ?? '',
+      userId: map['userId'],
       registeredBy: map['registeredBy'],
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
     );
@@ -111,6 +125,8 @@ class FarmerGroupModel {
       'leaderName': leaderName,
       'leaderPhone': leaderPhone,
       'memberCount': memberCount,
+      'category': category,
+      'userId': userId,
       'registeredBy': registeredBy,
       'createdAt': createdAt.toIso8601String(),
     };

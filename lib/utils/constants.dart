@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'BivFarm';
+  static const String appName = 'BFarm';
 
   static const List<String> bunyoroDistricts = [
     'Hoima City',
@@ -81,6 +81,17 @@ class AppConstants {
     'Trays',
   ];
 
+  /// Smart units per category — controls what units are shown in the Unit dropdown
+  /// when a seller picks a specific category, so they only see relevant options.
+  static const Map<String, List<String>> categoryUnits = {
+    'Livestock':              ['Pieces'],
+    'Poultry':               ['Pieces', 'Trays', 'Crates'],
+    'Produce':               ['Bags', 'Kg', 'Tonnes'],
+    'Fruits & Vegetables':   ['Kg', 'Bunches', 'Pieces'],
+    'Farm Machinery':         ['Pieces'],
+    'Fertilizers & Pesticides': ['Kg', 'Bags', 'Litres'],
+  };
+
   static const List<String> bidStatuses = [
     'Pending',
     'Under Review',
@@ -92,6 +103,7 @@ class AppConstants {
   static const List<String> userRoles = [
     'Farmer',
     'Buyer',
+    'Store',
     'Agent',
     'Registry',
     'Admin',
@@ -106,6 +118,7 @@ class AppConstants {
     'Farmer',
     'Buyer',
     'Both',
+    'All',
   ];
 
   static const List<String> inputProductTypes = [

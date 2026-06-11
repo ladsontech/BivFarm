@@ -3,6 +3,7 @@ import '../../models/bulk_order_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 
 class BulkOrderFormScreen extends StatefulWidget {
   final String userId;
@@ -26,7 +27,7 @@ class _BulkOrderFormScreenState extends State<BulkOrderFormScreen> {
   final _notesCtrl = TextEditingController();
 
   final List<String> _produceCategories = [
-    'Produce', 'Poultry & Livestock', 'Fruits & Vegetables', 'Other'
+    'Produce', 'Poultry', 'Livestock', 'Fruits & Vegetables', 'Other'
   ];
   
   final List<String> _inputCategories = [
@@ -121,8 +122,10 @@ class _BulkOrderFormScreenState extends State<BulkOrderFormScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
+        child: ResponsiveWrapper(
+          maxWidth: 600,
+          child: Form(
+            key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -269,6 +272,7 @@ class _BulkOrderFormScreenState extends State<BulkOrderFormScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

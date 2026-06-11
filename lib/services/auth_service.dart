@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,9 +16,10 @@ class AuthService {
   Stream<auth.User?> get authStateChanges => _auth.authStateChanges();
 
   Future<UserModel?> getCurrentUserModel() async {
-    if (currentUser == null) return null;
-    final doc = await _firestore.collection('users').doc(currentUser!.uid).get();
-    if (!doc.exists) return null;
+    final user = currentUser;
+    if (user == null) return null;
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    if (!doc.exists || doc.data() == null) return null;
     return UserModel.fromMap(doc.data()!, doc.id);
   }
 
@@ -77,6 +79,14 @@ class AuthService {
   Future<void> createUserIfNotExists(String uid, String phone, String role) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     if (!doc.exists) {
+      final db = DatabaseService();
+      final existingByPhone = await db.getUserByPhone(phone);
+      if (existingByPhone != null) {
+        // Pre-created user exists! Migrate it to this UID.
+        await db.migrateUserDocument(existingByPhone.id, uid);
+        return;
+      }
+
       final userModel = UserModel(
         id: uid,
         name: '',
@@ -89,7 +99,7 @@ class AuthService {
       );
       await _firestore.collection('users').doc(uid).set(userModel.toMap());
       // Notify admins asynchronously
-      DatabaseService().sendUserSignupNotification(
+      db.sendUserSignupNotification(
         userName: phone,
         userRole: role,
         userId: uid,
@@ -105,8 +115,11 @@ class AuthService {
   Future<auth.UserCredential> register(String email, String password, String role) async {
     final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
     
+    final user = cred.user;
+    if (user == null) throw Exception('Registration failed: User is null');
+    
     final userModel = UserModel(
-      id: cred.user!.uid,
+      id: user.uid,
       name: email.split('@')[0],
       firstName: '',
       lastName: '',
@@ -116,12 +129,13 @@ class AuthService {
       createdAt: DateTime.now(),
     );
 
-    await _firestore.collection('users').doc(cred.user!.uid).set(userModel.toMap());
+    await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
     // Notify admins asynchronously
     DatabaseService().sendUserSignupNotification(
       userName: userModel.name,
       userRole: role,
-      userId: cred.user!.uid,
+      userId: user.uid,
+
     ).catchError((_) {});
     return cred;
   }
@@ -190,21 +204,52 @@ class AuthService {
   // --- Google Auth ---
   Future<auth.UserCredential?> signInWithGoogle({String defaultRole = 'Buyer'}) async {
     try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // The user canceled the sign-in
+      auth.UserCredential userCredential;
+      String userName = '';
+      String userEmail = '';
+      String? userPhoto;
+      String? userPhone;
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      if (kIsWeb) {
+        // Web flow using Firebase Auth Popup (avoids client ID configuration issues)
+        final auth.GoogleAuthProvider googleProvider = auth.GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        
+        userCredential = await _auth.signInWithPopup(googleProvider);
+        
+        final user = userCredential.user;
+        if (user == null) throw Exception('Google Sign-In failed: User is null');
 
-      // Create a new credential
-      final auth.OAuthCredential credential = auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+        userName = user.displayName ?? '';
+        userEmail = user.email ?? '';
+        userPhoto = user.photoURL;
+        userPhone = user.phoneNumber;
+      } else {
+        // Trigger the authentication flow for mobile
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) return null; // The user canceled the sign-in
 
-      // Sign in to Firebase Auth with the Google credential
-      final auth.UserCredential userCredential = await _auth.signInWithCredential(credential);
+        // Obtain the auth details from the request
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+        // Create a new credential
+        final auth.OAuthCredential credential = auth.GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        // Sign in to Firebase Auth with the Google credential
+        userCredential = await _auth.signInWithCredential(credential);
+        
+        final user = userCredential.user;
+        if (user == null) throw Exception('Google Sign-In failed: User is null');
+
+        userName = user.displayName ?? googleUser.displayName ?? '';
+        userEmail = user.email ?? googleUser.email;
+        userPhoto = user.photoURL ?? googleUser.photoUrl;
+        userPhone = user.phoneNumber;
+      }
       
       // Ensure user document exists in Firestore
       if (userCredential.user != null) {
@@ -213,22 +258,22 @@ class AuthService {
         if (!doc.exists) {
           final userModel = UserModel(
             id: uid,
-            name: userCredential.user!.displayName ?? googleUser.displayName ?? '',
+            name: userName,
             firstName: '',
             lastName: '',
-            phone: userCredential.user!.phoneNumber ?? '',
-            email: userCredential.user!.email ?? googleUser.email,
+            phone: userPhone ?? '',
+            email: userEmail,
             role: defaultRole,
-            profilePhoto: userCredential.user!.photoURL ?? googleUser.photoUrl,
+            profilePhoto: userPhoto,
             createdAt: DateTime.now(),
           );
           await _firestore.collection('users').doc(uid).set(userModel.toMap());
-            // Notify admins asynchronously
-            DatabaseService().sendUserSignupNotification(
-              userName: userModel.name.isNotEmpty ? userModel.name : googleUser.email,
-              userRole: defaultRole,
-              userId: uid,
-            ).catchError((_) {});
+          // Notify admins asynchronously
+          DatabaseService().sendUserSignupNotification(
+            userName: userModel.name.isNotEmpty ? userModel.name : userEmail,
+            userRole: defaultRole,
+            userId: uid,
+          ).catchError((_) {});
         }
       }
       return userCredential;

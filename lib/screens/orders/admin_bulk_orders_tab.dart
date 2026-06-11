@@ -4,6 +4,7 @@ import '../../models/message_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import 'bulk_fulfillment_screen.dart';
 
 class AdminBulkOrdersTab extends StatelessWidget {
@@ -45,14 +46,16 @@ class AdminBulkOrdersTab extends StatelessWidget {
           itemBuilder: (ctx, i) {
             final o = orders[i];
             final statusColor = _getStatusColor(o.status);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.border, width: 0.5),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
-              ),
+            return ResponsiveWrapper(
+              maxWidth: 800,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.border, width: 0.5),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+                ),
               child: Column(
                 children: [
                   // Header
@@ -122,7 +125,7 @@ class AdminBulkOrdersTab extends StatelessWidget {
                             CircleAvatar(
                               radius: 16,
                               backgroundColor: AppTheme.greenSurface,
-                              child: Text(o.buyerName.isNotEmpty ? o.buyerName[0].toUpperCase() : '?', style: const TextStyle(color: AppTheme.greenDark, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text(o.buyerName.isNotEmpty ? o.buyerName[0].toUpperCase() : '?', style: TextStyle(color: AppTheme.greenDark, fontSize: 12, fontWeight: FontWeight.bold)),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -192,6 +195,7 @@ class AdminBulkOrdersTab extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             );
           },

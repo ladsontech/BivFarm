@@ -3,6 +3,7 @@ import '../models/product_model.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import '../screens/marketplace/add_product_screen.dart';
+import 'network_image_widget.dart';
 
 class MyListingsTab extends StatelessWidget {
   final String userId;
@@ -26,7 +27,24 @@ class MyListingsTab extends StatelessWidget {
               children: [
                 Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.textMuted.withOpacity(0.3)),
                 const SizedBox(height: 16),
-                Text('You haven\'t uploaded any products yet', style: TextStyle(color: AppTheme.textMuted)),
+                Text('You haven\'t uploaded any products yet', style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddProductScreen(sellerId: userId),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Upload your first product'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    backgroundColor: AppTheme.green,
+                  ),
+                ),
               ],
             ),
           );
@@ -50,7 +68,13 @@ class MyListingsTab extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: p.imageUrl != null 
-                      ? Image.network(p.imageUrl!, width: 60, height: 60, fit: BoxFit.cover)
+                      ? AppNetworkImage(
+                          imageUrl: p.imageUrl!, 
+                          width: 60, 
+                          height: 60, 
+                          fit: BoxFit.cover,
+                          memCacheWidth: 200, // Small view, small cache
+                        )
                       : Container(width: 60, height: 60, color: AppTheme.surfaceLight, child: const Icon(Icons.image_not_supported)),
                   ),
                   const SizedBox(width: 16),
@@ -61,7 +85,7 @@ class MyListingsTab extends StatelessWidget {
                         Text(p.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         Text('${p.category} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                         const SizedBox(height: 4),
-                        Text('UGX ${p.price.toInt()}', style: const TextStyle(color: AppTheme.greenLight, fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('UGX ${p.price.toInt()}', style: TextStyle(color: AppTheme.greenLight, fontWeight: FontWeight.w600, fontSize: 13)),
                       ],
                     ),
                   ),

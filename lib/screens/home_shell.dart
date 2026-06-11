@@ -19,6 +19,12 @@ import 'auth/login_screen.dart';
 import 'notifications/notifications_screen.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../widgets/my_listings_tab.dart';
+import 'common/management_screen.dart';
+import '../widgets/floating_message_widget.dart';
+import 'orders/bulk_order_form_screen.dart';
+import 'marketplace/product_detail_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -31,6 +37,7 @@ class _HomeShellState extends State<HomeShell> {
   final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
   final GlobalKey<State<MarketplaceScreen>> _marketKey = GlobalKey();
   final GlobalKey<NavigatorState> _desktopNavKey = GlobalKey<NavigatorState>();
+  String? _selectedCategoryForTab;
 
   void _onCategorySelected(String category) {
     _currentIndexNotifier.value = 0; // Switch to Marketplace tab
@@ -42,6 +49,12 @@ class _HomeShellState extends State<HomeShell> {
         (marketState as dynamic).applyExternalFilter(category);
       }
     });
+  }
+
+  void _onViewAllCategory(String category) {
+    // Go to Categories tab (index 1) with the selected category pre-loaded
+    setState(() => _selectedCategoryForTab = category);
+    _currentIndexNotifier.value = 1;
   }
 
   @override
@@ -76,16 +89,17 @@ class _HomeShellState extends State<HomeShell> {
         }
 
         // Store FCM token for push notifications
-        NotificationService().storeToken(user.id);
+        if (!kIsWeb) {
+          NotificationService().storeToken(user.id);
+        }
 
-        final screens = _getScreens(user);
-        final navItems = _getNavItems(user);
 
         return ValueListenableBuilder<int>(
           valueListenable: _currentIndexNotifier,
           builder: (context, currentIndex, _) {
+            final navItems = _getNavItems(user);
             // Clamp index
-            final safeIndex = currentIndex.clamp(0, screens.length - 1);
+            final safeIndex = currentIndex.clamp(0, navItems.length - 1);
 
             return LayoutBuilder(
               builder: (context, constraints) {
@@ -101,8 +115,7 @@ class _HomeShellState extends State<HomeShell> {
                         alignment: Alignment.center,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.notifications_none,
-                                color: AppTheme.textPrimary),
+                            icon: const Icon(Icons.notifications_none, color: Colors.white),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -140,6 +153,8 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                   const SizedBox(width: 8),
                 ];
+
+                final screens = _getScreens(user, actions);
 
                 if (isDesktop) {
                   return Scaffold(
@@ -190,7 +205,7 @@ class _HomeShellState extends State<HomeShell> {
                                   return Scaffold(
                                     appBar: AppBar(
                                       toolbarHeight: 64,
-                                      title: Text('BivFarm Dashboard',
+                                      title: Text('BFarm Dashboard',
                                           style: TextStyle(
                                               color: AppTheme.textPrimary,
                                               fontWeight: FontWeight.w700)),
@@ -199,10 +214,9 @@ class _HomeShellState extends State<HomeShell> {
                                     body: ValueListenableBuilder<int>(
                                       valueListenable: _currentIndexNotifier,
                                       builder: (context, idx, _) {
-                                        final sIndex =
-                                            idx.clamp(0, screens.length - 1);
                                         return IndexedStack(
-                                            index: sIndex, children: screens);
+                                            index: idx.clamp(0, screens.length - 1), 
+                                            children: screens);
                                       },
                                     ),
                                   );
@@ -216,35 +230,27 @@ class _HomeShellState extends State<HomeShell> {
                   );
                 }
 
-                return Scaffold(
-                  appBar: AppBar(
-                    toolbarHeight: 64,
-                    title: Image.asset(
-                      'assets/images/Bfarm_icon.png',
-                      height: 64,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.centerLeft,
+                return Stack(
+                  children: [
+                    Scaffold(
+                      appBar: safeIndex == 0 ? null : AppBar(
+                        toolbarHeight: 64,
+                        title: Image.asset(
+                          'assets/images/bfarm_premium_logo.png',
+                          height: 64,
+                          fit: BoxFit.contain,
+                          alignment: Alignment.centerLeft,
+                        ),
+                        actions: actions,
+                      ),
+                      body: IndexedStack(
+                        index: safeIndex,
+                        children: screens,
+                      ),
+                      bottomNavigationBar: _buildCustomBottomNav(safeIndex, navItems, context),
                     ),
-                    actions: actions,
-                  ),
-                  body: IndexedStack(
-                    index: safeIndex,
-                    children: screens,
-                  ),
-                  bottomNavigationBar: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(color: AppTheme.border, width: 0.5)),
-                    ),
-                    child: BottomNavigationBar(
-                      currentIndex: safeIndex,
-                      onTap: (i) => _currentIndexNotifier.value = i,
-                      type: BottomNavigationBarType.fixed,
-                      selectedFontSize: 11,
-                      unselectedFontSize: 10,
-                      items: navItems,
-                    ),
-                  ),
+                    FloatingMessageWidget(userId: user.id),
+                  ],
                 );
               },
             );
@@ -254,13 +260,81 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  List<Widget> _getScreens(UserModel user) {
+  Widget _buildCustomBottomNav(int currentIndex, List<BottomNavigationBarItem> items, BuildContext context) {
+    return Container(
+      height: 70,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: Border(
+          top: BorderSide(color: AppTheme.border, width: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isSelected = currentIndex == index;
+          
+          return Expanded(
+            child: InkWell(
+              onTap: () => _currentIndexNotifier.value = index,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedScale(
+                    scale: isSelected ? 1.1 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: IconTheme(
+                      data: IconThemeData(
+                        color: isSelected ? AppTheme.green : AppTheme.textMuted,
+                        size: 24,
+                      ),
+                      child: item.icon,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: TextStyle(
+                      color: isSelected ? AppTheme.green : AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      letterSpacing: -0.2,
+                    ),
+                    child: Text(item.label ?? ''),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  List<Widget> _getScreens(UserModel user, List<Widget> actions) {
     switch (user.role) {
       case 'Admin':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id),
-          CategoriesScreen(onCategorySelected: _onCategorySelected),
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
           ProfileScreen(user: user),
@@ -268,8 +342,17 @@ class _HomeShellState extends State<HomeShell> {
       case 'Registry':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id),
-          CategoriesScreen(onCategorySelected: _onCategorySelected),
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
           ProfileScreen(user: user),
@@ -277,8 +360,17 @@ class _HomeShellState extends State<HomeShell> {
       case 'Agent':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id),
-          CategoriesScreen(onCategorySelected: _onCategorySelected),
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           AgentDashboardScreen(agentId: user.id),
           ProfileScreen(user: user),
@@ -286,23 +378,57 @@ class _HomeShellState extends State<HomeShell> {
       case 'Farmer':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id),
-          CategoriesScreen(onCategorySelected: _onCategorySelected),
-          _FarmerListingsTab(userId: user.id),
-          FarmerMessagesScreen(userId: user.id),
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
+          ManagementScreen(user: user),
           ProfileScreen(user: user),
         ];
       case 'Buyer':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id),
-          CategoriesScreen(onCategorySelected: _onCategorySelected),
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
           BidsListScreen(userId: user.id, userRole: user.role),
+          ProfileScreen(user: user),
+        ];
+      case 'Store':
+        return [
+          MarketplaceScreen(
+              key: _marketKey, userRole: user.role, userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
+              ))),
+          ManagementScreen(user: user, initialTabIndex: 1), // Default to Listings for Store
           ProfileScreen(user: user),
         ];
       default:
         return [
-          MarketplaceScreen(userRole: user.role, userId: user.id),
+          MarketplaceScreen(userRole: user.role, userId: user.id, actions: actions),
           ProfileScreen(user: user),
         ];
     }
@@ -333,22 +459,22 @@ class _HomeShellState extends State<HomeShell> {
         break;
       case 'Agent':
         items.addAll([
-          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
+          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'My Bids'),
           const BottomNavigationBarItem(
               icon: Icon(Icons.people), label: 'Dashboard'),
         ]);
         break;
       case 'Farmer':
-        items.addAll([
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined), label: 'Listings'),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
-        ]);
+        items.add(const BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined), label: 'Manage'));
         break;
       case 'Buyer':
         items.add(const BottomNavigationBarItem(
             icon: Icon(Icons.gavel), label: 'My Bids'));
+        break;
+      case 'Store':
+        items.add(const BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined), label: 'Manage'));
         break;
     }
 
@@ -360,177 +486,6 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-// ─── Farmer Listings Tab (embedded, no AppBar) ───────────
-class _FarmerListingsTab extends StatelessWidget {
-  final String userId;
-  const _FarmerListingsTab({required this.userId});
-
-  @override
-  Widget build(BuildContext context) {
-    final db = DatabaseService();
-    return StreamBuilder(
-      stream: db.streamProductsBySeller(userId),
-      builder: (ctx, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: CircularProgressIndicator(color: AppTheme.green));
-        }
-        final products = snap.data ?? [];
-        if (products.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.inventory_2_outlined,
-                    color: AppTheme.textMuted.withOpacity(0.3), size: 64),
-                const SizedBox(height: 16),
-                Text('No listings yet',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
-                const SizedBox(height: 6),
-                Text(
-                  'Start selling by creating your first listing',
-                  style: TextStyle(
-                      color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                AddProductScreen(sellerId: userId)));
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Create Listing'),
-                ),
-              ],
-            ),
-          );
-        }
-        return Stack(
-          children: [
-            ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-              itemCount: products.length,
-              itemBuilder: (ctx, i) {
-                final p = products[i];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => AddProductScreen(
-                              sellerId: userId, existingProduct: p)),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.card,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.border, width: 0.5),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: AppTheme.greenSurface,
-                            borderRadius: BorderRadius.circular(10),
-                            image: p.imageUrl != null
-                                ? DecorationImage(
-                                    image: p.imageUrl!.startsWith('assets/')
-                                        ? AssetImage(p.imageUrl!)
-                                            as ImageProvider
-                                        : appNetworkImageProvider(p.imageUrl!),
-                                    fit: BoxFit.cover)
-                                : null,
-                          ),
-                          child: p.imageUrl == null
-                              ? const Icon(Icons.eco,
-                                  color: AppTheme.greenLight)
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(p.productName,
-                                  style: TextStyle(
-                                      color: AppTheme.textPrimary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 2),
-                              Text(
-                                  '${p.quantity} ${p.quantityUnit} • ${p.district}',
-                                  style: TextStyle(
-                                      color: AppTheme.textMuted, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'UGX ${p.price.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                  color: AppTheme.greenLight,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: p.availability == 'Available Now'
-                                    ? AppTheme.greenSurface
-                                    : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                p.availability,
-                                style: TextStyle(
-                                  color: p.availability == 'Available Now'
-                                      ? AppTheme.greenLight
-                                      : AppTheme.textMuted,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            // Floating Add button
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: FloatingActionButton(
-                heroTag: 'addListing',
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => AddProductScreen(sellerId: userId)));
-                },
-                child: const Icon(Icons.add),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
 
 // ─── New User Role Selector (for Firebase Auth users without Firestore profile) ───
 class _NewUserRoleSelector extends StatefulWidget {
@@ -599,7 +554,7 @@ class _NewUserRoleSelectorState extends State<_NewUserRoleSelector> {
               const Icon(Icons.agriculture, color: AppTheme.green, size: 64),
               const SizedBox(height: 20),
               Text(
-                'Welcome to BivFarm!',
+                'Welcome to BFarm!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -608,7 +563,7 @@ class _NewUserRoleSelectorState extends State<_NewUserRoleSelector> {
               ),
               const SizedBox(height: 10),
               Text(
-                'How would you like to use BivFarm?',
+                'How would you like to use BFarm?',
                 style: TextStyle(
                   fontSize: 15,
                   color: AppTheme.textMuted,

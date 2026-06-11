@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../utils/image_source_picker.dart';
 import '../../models/user_model.dart';
@@ -10,7 +8,10 @@ import '../../services/storage_service.dart';
 import '../../services/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -23,7 +24,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _db = DatabaseService();
   final _storage = StorageService();
-  final _picker = ImagePicker();
 
   bool _editingPersonal = false;
   bool _editingLocation = false;
@@ -80,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() => _uploadingPhoto = true);
     try {
-      final url = await _storage.uploadImage(File(picked.path), 'profile_photos');
+      final url = await _storage.uploadXFile(picked, 'profile_photos');
       await _db.updateUser(widget.user.id, {'profilePhoto': url});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,8 +150,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
+      child: ResponsiveWrapper(
+        maxWidth: 700,
+        child: Column(
+          children: [
           // ─── Header / Avatar ───────────────────────
           const SizedBox(height: 8),
           GestureDetector(
@@ -161,18 +163,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: AppTheme.surfaceLight,
-                  backgroundImage: user.profilePhoto != null ? NetworkImage(user.profilePhoto!) : null,
+                  backgroundImage: (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) ? NetworkImage(user.profilePhoto!) : null,
                   child: _uploadingPhoto
                       ? const CircularProgressIndicator(strokeWidth: 2, color: AppTheme.greenLight)
-                      : (user.profilePhoto == null
-                          ? Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                              style: TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 36,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            )
+                      : ((user.profilePhoto == null || user.profilePhoto!.isEmpty)
+                          ? (user.name.isNotEmpty 
+                             ? Text(user.name[0].toUpperCase(), style: TextStyle(color: AppTheme.textMuted, fontSize: 36, fontWeight: FontWeight.w700))
+                             : Icon(Icons.person_outline, color: AppTheme.textMuted, size: 40))
                           : null),
                 ),
                 Positioned(
@@ -213,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Text(
                   user.role,
-                  style: const TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
               if (user.district.isNotEmpty) ...[
@@ -385,6 +382,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 Divider(color: AppTheme.border, height: 24),
 
+                // Share App Link
+                GestureDetector(
+                  onTap: () {
+                    Share.share('Join BFarm - the Bunyoro Agricultural Marketplace! Download now: https://play.google.com/store/apps/details?id=com.buyaff.bivFarm');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.share_outlined, color: AppTheme.textMuted, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Share App Link',
+                          style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Divider(color: AppTheme.border, height: 24),
+
+                // Check for Updates
+                GestureDetector(
+                  onTap: () async {
+                    final url = Uri.parse('https://play.google.com/store/apps/details?id=com.buyaff.bivFarm');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Could not open the Play Store.')),
+                        );
+                      }
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.system_update_alt_outlined, color: AppTheme.textMuted, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Check for Updates',
+                          style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Divider(color: AppTheme.border, height: 24),
+
                 // Sign out
                 GestureDetector(
                   onTap: () {
@@ -491,6 +541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 32),
         ],
+      ),
       ),
     );
   }

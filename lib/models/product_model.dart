@@ -1,4 +1,3 @@
-
 class ProductModel {
   final String id;
   final String sellerId;
@@ -14,7 +13,9 @@ class ProductModel {
   final String district;
   final List<String> imageUrls;
   final bool isActive;
+  final String? agentId;
   final DateTime createdAt;
+  final String sellerRole;
 
   /// Backward-compatible getter: returns first image or null
   String? get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
@@ -35,7 +36,9 @@ class ProductModel {
     List<String>? imageUrls,
     @Deprecated('Use imageUrls instead') String? imageUrl,
     this.isActive = true,
+    this.agentId,
     DateTime? createdAt,
+    this.sellerRole = '',
   })  : imageUrls = imageUrls ?? (imageUrl != null ? [imageUrl] : []),
         createdAt = createdAt ?? DateTime.now();
 
@@ -63,7 +66,9 @@ class ProductModel {
       district: map['district'] ?? '',
       imageUrls: urls,
       isActive: map['isActive'] ?? true,
+      agentId: map['agentId'],
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
+      sellerRole: map['sellerRole'] ?? '',
     );
   }
 
@@ -83,7 +88,9 @@ class ProductModel {
       'imageUrls': imageUrls,
       'imageUrl': imageUrl, // backward compat for old queries
       'isActive': isActive,
+      'agentId': agentId,
       'createdAt': createdAt.toIso8601String(),
+      'sellerRole': sellerRole,
     };
   }
 
@@ -101,6 +108,8 @@ class ProductModel {
     String? district,
     List<String>? imageUrls,
     bool? isActive,
+    String? agentId,
+    String? sellerRole,
   }) {
     return ProductModel(
       id: id,
@@ -117,7 +126,9 @@ class ProductModel {
       district: district ?? this.district,
       imageUrls: imageUrls ?? this.imageUrls,
       isActive: isActive ?? this.isActive,
+      agentId: agentId ?? this.agentId,
       createdAt: createdAt,
+      sellerRole: sellerRole ?? this.sellerRole,
     );
   }
 }

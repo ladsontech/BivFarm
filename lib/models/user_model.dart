@@ -6,7 +6,7 @@ class UserModel {
   final String lastName;
   final String phone;
   final String email;
-  final String role; // Farmer, Buyer, Agent, Registry, Admin
+  final String role; // Farmer, Buyer, Store, Agent, Registry, Admin
   final String gender;
   final String nin;
   final String userCategory; // Farmer, Buyer, Both

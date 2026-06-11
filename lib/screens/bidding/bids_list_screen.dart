@@ -4,6 +4,7 @@ import '../../models/bid_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../models/message_model.dart';
 import '../orders/admin_bulk_orders_tab.dart';
 
@@ -18,119 +19,109 @@ class BidsListScreen extends StatelessWidget {
     final db = DatabaseService();
     final formatter = NumberFormat('#,###');
 
-    Stream<List<BidModel>> bidStream;
     if (userRole == 'Admin' || userRole == 'Registry') {
-      bidStream = db.streamBidsByProduct('').asBroadcastStream(); // will use getAllBids
-    } else if (userRole == 'Agent') {
-      bidStream = db.streamBidsByAgent(userId);
-    } else if (userRole == 'Farmer') {
-      bidStream = db.streamBidsBySeller(userId);
-    } else {
-      bidStream = db.streamBidsByBuyer(userId);
-    }
-
-    final isAdmin = userRole == 'Admin' || userRole == 'Registry';
-    final isAgent = userRole == 'Agent';
-    final canManage = isAdmin || isAgent;
-
-    if (isAdmin) {
       return DefaultTabController(
         length: 2,
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: AppBar(
-              backgroundColor: AppTheme.surface,
-              elevation: 0,
-              bottom: TabBar(
+        child: Column(
+          children: [
+            Container(
+              color: AppTheme.surface,
+              child: TabBar(
                 labelColor: AppTheme.green,
                 unselectedLabelColor: AppTheme.textMuted,
                 indicatorColor: AppTheme.green,
+                indicatorWeight: 3,
                 tabs: const [
                   Tab(text: 'Standard Bids'),
                   Tab(text: 'Bulk Orders'),
                 ],
               ),
             ),
-          ),
-          body: TabBarView(
-            children: [
-              FutureBuilder<List<BidModel>>(
-                future: db.getAllBids(),
-                builder: (ctx, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                  }
-                  return _buildBidList(snap.data ?? [], formatter, userRole, db);
-                },
+            Expanded(
+              child: TabBarView(
+                children: [
+                  FutureBuilder<List<BidModel>>(
+                    future: db.getAllBids(),
+                    builder: (ctx, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+                      }
+                      return _buildBidList(snap.data ?? [], formatter, userRole, db);
+                    },
+                  ),
+                  AdminBulkOrdersTab(db: db),
+                ],
               ),
-              AdminBulkOrdersTab(db: db),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
-    // Agent gets a similar tabbed view scoped to their farmers
-    if (isAgent) {
+    if (userRole == 'Farmer') {
       return DefaultTabController(
         length: 2,
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: AppBar(
-              backgroundColor: AppTheme.surface,
-              elevation: 0,
-              title: Text('My Farmers\' Orders', style: TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
-              bottom: TabBar(
+        child: Column(
+          children: [
+            Container(
+              color: AppTheme.surface,
+              child: TabBar(
                 labelColor: AppTheme.green,
                 unselectedLabelColor: AppTheme.textMuted,
                 indicatorColor: AppTheme.green,
+                indicatorWeight: 2,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 tabs: const [
-                  Tab(text: 'Farmer Bids'),
+                  Tab(text: 'Received Offers'),
                   Tab(text: 'My Bids'),
                 ],
               ),
             ),
-          ),
-          body: TabBarView(
-            children: [
-              // Bids for managed farmers
-              StreamBuilder<List<BidModel>>(
-                stream: bidStream,
-                builder: (ctx, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                  }
-                  return _buildBidList(snap.data ?? [], formatter, 'Agent', db);
-                },
+            Expanded(
+              child: TabBarView(
+                children: [
+                  StreamBuilder<List<BidModel>>(
+                    stream: db.streamBidsBySeller(userId),
+                    builder: (ctx, snap) => _buildStreamContent(snap, formatter, 'Received Offers', db, 'Farmer'),
+                  ),
+                  StreamBuilder<List<BidModel>>(
+                    stream: db.streamBidsByBuyer(userId),
+                    builder: (ctx, snap) => _buildStreamContent(snap, formatter, 'My Placed Bids', db, 'Buyer'),
+                  ),
+                ],
               ),
-              // Agent's own bids (as buyer)
-              StreamBuilder<List<BidModel>>(
-                stream: db.streamBidsByBuyer(userId),
-                builder: (ctx, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                  }
-                  return _buildBidList(snap.data ?? [], formatter, 'Buyer', db);
-                },
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
-    return Scaffold(
-      body: StreamBuilder<List<BidModel>>(
-        stream: bidStream,
-        builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-          }
-          return _buildBidList(snap.data ?? [], formatter, userRole, db);
-        },
-      ),
+    // Standard view for other roles (Agent, Buyer)
+    return StreamBuilder<List<BidModel>>(
+      stream: db.streamBidsByBuyer(userId),
+      builder: (ctx, snap) => _buildStreamContent(snap, formatter, 'My Bids', db, userRole),
+    );
+  }
+
+  Widget _buildStreamContent(AsyncSnapshot<List<BidModel>> snap, NumberFormat formatter, String title, DatabaseService db, String role) {
+    if (snap.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+    }
+    final bids = snap.data ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            title,
+            style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w800),
+          ),
+        ),
+        Expanded(
+          child: _buildBidList(bids, formatter, role, db),
+        ),
+      ],
     );
   }
 
@@ -157,14 +148,16 @@ class BidsListScreen extends StatelessWidget {
         final isAgent = role == 'Agent';
         final canManage = isAdmin || isAgent;
         
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: AppTheme.card,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.border, width: 0.5),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
-          ),
+        return ResponsiveWrapper(
+          maxWidth: 800,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.card,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.border, width: 0.5),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+            ),
           child: Column(
             children: [
               // Price & Status Header
@@ -182,7 +175,7 @@ class BidsListScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('UGX ${formatter.format(bid.offeredPrice)}', style: const TextStyle(color: AppTheme.greenDark, fontSize: 18, fontWeight: FontWeight.w800)),
+                          Text('UGX ${formatter.format(bid.offeredPrice)}', style: TextStyle(color: AppTheme.greenDark, fontSize: 18, fontWeight: FontWeight.w800)),
                           Text('${bid.productName} • Qty: ${bid.quantity}', style: TextStyle(color: AppTheme.greenDark.withOpacity(0.7), fontSize: 12)),
                         ],
                       ),
@@ -336,6 +329,7 @@ class BidsListScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
         );
       },
     );

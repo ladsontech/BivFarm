@@ -6,13 +6,13 @@ class AppTheme {
   static bool isDark = false; // Default: light theme
 
   // ─── Adaptive Colors ───────────────────────────────
-  static Color get background => isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F9FA);
-  static Color get surface => isDark ? const Color(0xFF141414) : Colors.white;
-  static Color get surfaceLight => isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F2F5);
-  static Color get card => isDark ? const Color(0xFF1A1A1A) : Colors.white;
-  static Color get cardHover => isDark ? const Color(0xFF222222) : const Color(0xFFF5F5F5);
-  static Color get border => isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0);
-  static Color get borderLight => isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE);
+  static Color get background => isDark ? const Color(0xFF080D08) : const Color(0xFFF5F9F5);
+  static Color get surface => isDark ? const Color(0xFF0E140E) : Colors.white;
+  static Color get surfaceLight => isDark ? const Color(0xFF141A14) : const Color(0xFFEBF2EB);
+  static Color get card => isDark ? const Color(0xFF121812) : Colors.white;
+  static Color get cardHover => isDark ? const Color(0xFF1A221A) : const Color(0xFFF0F6F0);
+  static Color get border => isDark ? const Color(0xFF1D261D) : const Color(0xFFD4DAD4);
+  static Color get borderLight => isDark ? const Color(0xFF242E24) : const Color(0xFFE6EAE6);
 
   static Color get textPrimary => isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1A1A1A);
   static Color get textSecondary => isDark ? const Color(0xFFB0B0B0) : const Color(0xFF5F6368);
@@ -24,6 +24,41 @@ class AppTheme {
   static const Color greenAccent = Color(0xFF00E676);
   static const Color greenDark = Color(0xFF1B5E20);
   static Color get greenSurface => isDark ? const Color(0xFF0D2818) : const Color(0xFFE8F5E9);
+
+  // ─── Premium Gradients ─────────────────────────────
+  static LinearGradient get primaryGradient => const LinearGradient(
+    colors: [greenDark, green],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static LinearGradient get lightGradient => LinearGradient(
+    colors: [green.withOpacity(0.8), greenLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static LinearGradient get surfaceGradient => LinearGradient(
+    colors: isDark 
+      ? [const Color(0xFF0E140E), const Color(0xFF080D08)]
+      : [Colors.white, const Color(0xFFF5F9F5)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  // ─── Decoration Helpers ─────────────────────────────
+  static BoxDecoration glassDecoration({double opacity = 0.1, double blur = 10}) => BoxDecoration(
+    color: Colors.white.withOpacity(opacity),
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: Colors.white.withOpacity(0.2)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
 
   static const Color error = Color(0xFFCF6679);
   static const Color warning = Color(0xFFFFB74D);
@@ -75,16 +110,16 @@ class AppTheme {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: greenDark,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: GoogleFonts.inter(
-          color: textPrimary,
+          color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: textPrimary),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       cardTheme: CardThemeData(
         color: card,

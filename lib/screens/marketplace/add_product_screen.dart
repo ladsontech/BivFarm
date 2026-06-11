@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../utils/image_source_picker.dart';
@@ -8,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -35,7 +37,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _district;
   
   // Multi-image support
-  final List<File> _newImageFiles = [];
+  final List<XFile> _newImageFiles = [];
   List<String> _existingImageUrls = [];
   bool _loading = false;
 
@@ -74,7 +76,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
     final picked = await showImageSourcePicker(context);
     if (picked != null) {
-      setState(() => _newImageFiles.add(File(picked.path)));
+      setState(() => _newImageFiles.add(picked));
     }
   }
 
@@ -98,20 +100,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
       // Upload new images
       List<String> allUrls = List.from(_existingImageUrls);
       for (final file in _newImageFiles) {
-        final url = await _storage.uploadImage(file, 'products');
+        final url = await _storage.uploadXFile(file, 'products');
         allUrls.add(url);
       }
 
-      // Fetch seller profile for name, photo and phone
+      // Fetch seller profile for name, photo, phone, agentId and role
       String sellerName = '';
       String? sellerPhoto;
       String? sellerPhone;
+      String? agentId;
+      String sellerRole = '';
       try {
         final sellerUser = await _db.getUser(widget.sellerId);
         if (sellerUser != null) {
           sellerName = sellerUser.name.isNotEmpty ? sellerUser.name : (AuthService().currentUser?.email ?? '');
           sellerPhoto = sellerUser.profilePhoto;
           sellerPhone = sellerUser.phone.isNotEmpty ? sellerUser.phone : null;
+          // If the user being edited is an agent themselves, they manage their own
+          agentId = sellerUser.role == 'Agent' ? sellerUser.id : sellerUser.agentId;
+          sellerRole = sellerUser.role;
         }
       } catch (_) {}
 
@@ -121,6 +128,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         sellerName: sellerName,
         sellerPhoto: sellerPhoto,
         sellerPhone: sellerPhone,
+        agentId: agentId,
         category: _category!,
         productName: _nameCtrl.text,
         quantity: double.parse(_quantityCtrl.text),
@@ -130,6 +138,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         district: _district!,
         imageUrls: allUrls,
         createdAt: widget.existingProduct?.createdAt,
+        sellerRole: sellerRole,
       );
 
       if (widget.existingProduct == null) {
@@ -153,9 +162,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       appBar: AppBar(title: Text(widget.existingProduct == null ? 'Add Listing' : 'Edit Listing')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
+        child: ResponsiveWrapper(
+          maxWidth: 600,
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Image Section ──────────────
@@ -177,7 +188,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 label: 'Category', 
                 value: _category,
                 items: AppConstants.productCategories.keys.toList(), 
-                onChanged: (v) => setState(() => _category = v),
+                onChanged: (v) {
+                  setState(() {
+                    _category = v;
+                    // Auto-set unit to the first valid unit for this category
+                    final units = v != null ? (AppConstants.categoryUnits[v] ?? AppConstants.quantityUnits) : AppConstants.quantityUnits;
+                    _unit = units.first;
+                  });
+                },
               ),
               const SizedBox(height: 14),
               CustomTextField(label: 'Product Name', hint: 'Enter product name', controller: _nameCtrl),
@@ -185,7 +203,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
               Row(children: [
                 Expanded(flex: 2, child: CustomTextField(label: 'Quantity', hint: 'e.g. 100', controller: _quantityCtrl, keyboardType: TextInputType.number)),
                 const SizedBox(width: 12),
-                Expanded(child: CustomDropdown(label: 'Unit', value: _unit, items: AppConstants.quantityUnits, onChanged: (v) => setState(() => _unit = v))),
+                Expanded(child: CustomDropdown(
+                  label: 'Unit',
+                  value: _unit,
+                  items: _category != null
+                      ? (AppConstants.categoryUnits[_category!] ?? AppConstants.quantityUnits)
+                      : AppConstants.quantityUnits,
+                  onChanged: (v) => setState(() => _unit = v),
+                )),
               ]),
               const SizedBox(height: 14),
               CustomDropdown(label: 'Availability', value: _availability, items: AppConstants.availabilityOptions, onChanged: (v) => setState(() => _availability = v)),
@@ -209,7 +234,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   child: const Text('Delete Listing', style: TextStyle(color: AppTheme.error)),
                 ),
               ],
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -231,7 +257,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         // New local images
         for (int i = 0; i < _newImageFiles.length; i++)
           _buildImageTile(
-            child: Image.file(_newImageFiles[i], fit: BoxFit.cover),
+            child: kIsWeb ? Image.network(_newImageFiles[i].path, fit: BoxFit.cover) : Image.file(File(_newImageFiles[i].path), fit: BoxFit.cover),
             onRemove: () => _removeNewImage(i),
             isFirst: _existingImageUrls.isEmpty && i == 0,
           ),
