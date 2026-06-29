@@ -1,3 +1,4 @@
+import '../utils/model_parsers.dart';
 
 class UserModel {
   final String id;
@@ -49,26 +50,26 @@ class UserModel {
   factory UserModel.fromMap(Map<String, dynamic> map, String id) {
     return UserModel(
       id: id,
-      name: map['name'] ?? '',
-      firstName: map['firstName'] ?? '',
-      lastName: map['lastName'] ?? '',
-      phone: map['phone'] ?? '',
-      email: map['email'] ?? '',
-      role: map['role'] ?? 'Buyer',
-      gender: map['gender'] ?? '',
-      nin: map['nin'] ?? '',
-      userCategory: map['userCategory'] ?? '',
-      district: map['district'] ?? '',
-      subcounty: map['subcounty'] ?? '',
-      village: map['village'] ?? '',
-      profilePhoto: map['profilePhoto'],
-      bio: map['bio'],
-      agentId: map['agentId'],
-      fcmToken: map['fcmToken'],
-      isProfileComplete: map['isProfileComplete'] ?? false,
-      isVerified: map['isVerified'] ?? false,
-      isActive: map['isActive'] ?? true,
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
+      name: readString(map['name']),
+      firstName: readString(map['firstName']),
+      lastName: readString(map['lastName']),
+      phone: readString(map['phone']),
+      email: readString(map['email']),
+      role: readString(map['role'], fallback: 'Buyer'),
+      gender: readString(map['gender']),
+      nin: readString(map['nin']),
+      userCategory: readString(map['userCategory']),
+      district: readString(map['district']),
+      subcounty: readString(map['subcounty']),
+      village: readString(map['village']),
+      profilePhoto: readNullableString(map['profilePhoto']),
+      bio: readNullableString(map['bio']),
+      agentId: readNullableString(map['agentId']),
+      fcmToken: readNullableString(map['fcmToken']),
+      isProfileComplete: readBool(map['isProfileComplete']),
+      isVerified: readBool(map['isVerified']),
+      isActive: readBool(map['isActive'], fallback: true),
+      createdAt: readDate(map['createdAt']),
     );
   }
 

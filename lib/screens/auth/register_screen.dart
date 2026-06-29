@@ -50,7 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     setState(() => _loading = true);
     try {
-      await _auth.register(_emailCtrl.text.trim(), _passwordCtrl.text, _selectedRole);
+      await _auth.register(
+          _emailCtrl.text.trim(), _passwordCtrl.text, _selectedRole);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) _showError(e.toString().replaceAll('Exception: ', ''));
@@ -100,7 +101,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       onAutoVerified: (credential) async {
         try {
           final cred = await _auth.signInWithPhoneCredential(credential);
-          await _auth.createUserIfNotExists(cred.user!.uid, _fullPhone, _selectedRole);
+          await _auth.createUserIfNotExists(
+              cred.user!.uid, _fullPhone, _selectedRole);
           if (mounted) Navigator.pop(context);
         } catch (e) {
           if (mounted) _showError(e.toString());
@@ -118,7 +120,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
     try {
       final cred = await _auth.signInWithOTP(code);
-      await _auth.createUserIfNotExists(cred.user!.uid, _fullPhone, _selectedRole);
+      await _auth.createUserIfNotExists(
+          cred.user!.uid, _fullPhone, _selectedRole);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -162,109 +165,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ─── Role Picker ───────────────────────
-              Text(
-                'I want to join as a',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Choose how you want to use BFarm',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  _buildRoleCard(
-                    role: 'Farmer',
-                    icon: Icons.grass,
-                    desc: 'List and sell your produce directly to buyers',
-                  ),
-                  const SizedBox(width: 12),
-                  _buildRoleCard(
-                    role: 'Buyer',
-                    icon: Icons.shopping_bag_outlined,
-                    desc: 'Browse products and place bids on listings',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-
-              // ─── Toggle ────────────────────────────
-              _buildToggle(),
-              const SizedBox(height: 24),
-
-              // ─── Form ──────────────────────────────
-              _isEmailRegister ? _buildEmailForm() : _buildPhoneForm(),
-
-              const SizedBox(height: 28),
-
-              // ─── OR Divider ────────────────────────
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppTheme.border)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('OR', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                  ),
-                  Expanded(child: Divider(color: AppTheme.border)),
-                ],
-              ),
-              const SizedBox(height: 28),
-
-              // ─── Google Button ─────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _loading ? null : _signInWithGoogle,
-                  icon: Icon(Icons.g_mobiledata, size: 24, color: AppTheme.textPrimary),
-                  label: Text('Sign Up with Google', style: TextStyle(color: AppTheme.textPrimary)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ─── Login Link ────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
                   Text(
-                    'Already have an account? ',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                    'I want to join as a',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      'Sign In',
-                      style: TextStyle(
-                        color: AppTheme.greenLight,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Choose how you want to use BFarm',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      _buildRoleCard(
+                        role: 'Farmer',
+                        icon: Icons.grass,
+                        desc: 'List and sell your produce directly to buyers',
+                      ),
+                      const SizedBox(width: 12),
+                      _buildRoleCard(
+                        role: 'Buyer',
+                        icon: Icons.shopping_bag_outlined,
+                        desc: 'Browse products and place bids on listings',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ─── Toggle ────────────────────────────
+                  _buildToggle(),
+                  const SizedBox(height: 24),
+
+                  // ─── Form ──────────────────────────────
+                  _isEmailRegister ? _buildEmailForm() : _buildPhoneForm(),
+
+                  const SizedBox(height: 28),
+
+                  // ─── OR Divider ────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppTheme.border)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR',
+                            style: TextStyle(
+                                color: AppTheme.textMuted, fontSize: 12)),
+                      ),
+                      Expanded(child: Divider(color: AppTheme.border)),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ─── Google Button ─────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _loading ? null : _signInWithGoogle,
+                      icon: Icon(Icons.g_mobiledata,
+                          size: 24, color: AppTheme.textPrimary),
+                      label: Text('Sign Up with Google',
+                          style: TextStyle(color: AppTheme.textPrimary)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: AppTheme.border),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // ─── Login Link ────────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Already have an account? ',
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: AppTheme.greenLight,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }
 
-  Widget _buildRoleCard({required String role, required IconData icon, required String desc}) {
+  Widget _buildRoleCard(
+      {required String role, required IconData icon, required String desc}) {
     final selected = _selectedRole == role;
     return Expanded(
       child: GestureDetector(
@@ -286,7 +296,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: selected ? AppTheme.green.withOpacity(0.15) : AppTheme.surfaceLight,
+                  color: selected
+                      ? AppTheme.green.withOpacity(0.15)
+                      : AppTheme.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -299,7 +311,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 role,
                 style: TextStyle(
-                  color: selected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                  color:
+                      selected ? AppTheme.textPrimary : AppTheme.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -307,7 +320,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 4),
               Text(
                 desc,
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11, height: 1.3),
+                style: TextStyle(
+                    color: AppTheme.textMuted, fontSize: 11, height: 1.3),
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
@@ -329,11 +343,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          _toggleTab('Email', _isEmailRegister, () => setState(() {
-            _isEmailRegister = true;
-            _codeSent = false;
-          })),
-          _toggleTab('Phone', !_isEmailRegister, () => setState(() => _isEmailRegister = false)),
+          _toggleTab(
+              'Email',
+              _isEmailRegister,
+              () => setState(() {
+                    _isEmailRegister = true;
+                    _codeSent = false;
+                  })),
+          _toggleTab('Phone', !_isEmailRegister,
+              () => setState(() => _isEmailRegister = false)),
         ],
       ),
     );
@@ -375,7 +393,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _emailCtrl,
             validator: Validators.email,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.email_outlined, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -384,7 +403,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _passwordCtrl,
             validator: Validators.password,
             obscureText: !_showPassword,
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
             suffixIcon: IconButton(
               icon: Icon(
                 _showPassword ? Icons.visibility_off : Icons.visibility,
@@ -401,7 +421,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _confirmPasswordCtrl,
             validator: Validators.password,
             obscureText: !_showPassword,
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 24),
           CustomButton(
@@ -423,7 +444,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hint: '07XX XXX XXX',
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 24),
           CustomButton(
@@ -441,12 +463,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: AppTheme.greenLight, size: 20),
+                const Icon(Icons.check_circle_outline,
+                    color: AppTheme.greenLight, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Code sent to $_fullPhone',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   ),
                 ),
               ],
@@ -458,7 +482,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hint: '123456',
             controller: _otpCtrl,
             keyboardType: TextInputType.number,
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
             autofillHints: const [AutofillHints.oneTimeCode],
           ),
           const SizedBox(height: 24),

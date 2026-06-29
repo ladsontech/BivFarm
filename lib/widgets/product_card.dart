@@ -9,7 +9,8 @@ class ProductCard extends StatefulWidget {
   final VoidCallback? onTap;
   final bool compact; // minimal card: image + name + price only
 
-  const ProductCard({super.key, required this.product, this.onTap, this.compact = false});
+  const ProductCard(
+      {super.key, required this.product, this.onTap, this.compact = false});
 
   @override
   State<ProductCard> createState() => _ProductCardState();
@@ -29,7 +30,8 @@ class _ProductCardState extends State<ProductCard> {
           decoration: BoxDecoration(
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.border.withOpacity(0.35), width: 1),
+            border:
+                Border.all(color: AppTheme.border.withOpacity(0.35), width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -44,7 +46,8 @@ class _ProductCardState extends State<ProductCard> {
             children: [
               // Image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: AspectRatio(
                   aspectRatio: 1.1,
                   child: _buildImage(),
@@ -132,7 +135,8 @@ class _ProductCardState extends State<ProductCard> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
                   child: AspectRatio(
                     aspectRatio: 1.0,
                     child: _buildImage(),
@@ -143,7 +147,8 @@ class _ProductCardState extends State<ProductCard> {
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isAvailableNow
                           ? AppTheme.green.withOpacity(0.9)
@@ -154,7 +159,8 @@ class _ProductCardState extends State<ProductCard> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 5, height: 5,
+                          width: 5,
+                          height: 5,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -230,7 +236,8 @@ class _ProductCardState extends State<ProductCard> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on_outlined, color: AppTheme.textMuted, size: 10),
+                            Icon(Icons.location_on_outlined,
+                                color: AppTheme.textMuted, size: 10),
                             const SizedBox(width: 4),
                             Text(
                               widget.product.district,
@@ -254,9 +261,7 @@ class _ProductCardState extends State<ProductCard> {
         ),
       ),
     );
-
   }
-
 
   Widget _buildImage() {
     final url = widget.product.imageUrl; // uses first image from imageUrls
@@ -283,8 +288,10 @@ class _ProductCardState extends State<ProductCard> {
       color: AppTheme.surfaceLight,
       child: Center(
         child: loading
-            ? const CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)
-            : Icon(_getCategoryIcon(widget.product.category), color: AppTheme.textMuted.withOpacity(0.4), size: 38),
+            ? const CircularProgressIndicator(
+                color: AppTheme.green, strokeWidth: 2)
+            : Icon(_getCategoryIcon(widget.product.category),
+                color: AppTheme.textMuted.withOpacity(0.4), size: 38),
       ),
     );
   }

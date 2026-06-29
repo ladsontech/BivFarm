@@ -21,7 +21,7 @@ class _FloatingMessageWidgetState extends State<FloatingMessageWidget> {
     final size = MediaQuery.of(context).size;
     // Default to bottom right, clearly above the Sell Now FAB
     position ??= Offset(size.width - 76, size.height - 240);
-    
+
     return Positioned(
       left: position!.dx,
       top: position!.dy,
@@ -32,13 +32,13 @@ class _FloatingMessageWidgetState extends State<FloatingMessageWidget> {
           setState(() {
             double dx = details.offset.dx;
             double dy = details.offset.dy;
-            
+
             // Basic boundary checks
             if (dx < 0) dx = 0;
             if (dx > size.width - 60) dx = size.width - 60;
             if (dy < 60) dy = 60;
             if (dy > size.height - 120) dy = size.height - 120;
-            
+
             position = Offset(dx, dy);
           });
         },
@@ -49,9 +49,10 @@ class _FloatingMessageWidgetState extends State<FloatingMessageWidget> {
             if (currentUser != null && context.mounted) {
               if (currentUser.role == 'Admin') {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => FarmerMessagesScreen(userId: currentUser.id))
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            FarmerMessagesScreen(userId: currentUser.id)));
               } else {
                 final supportUser = UserModel(
                   id: 'support',
@@ -68,9 +69,10 @@ class _FloatingMessageWidgetState extends State<FloatingMessageWidget> {
                   isProfileComplete: true,
                 );
                 Navigator.push(
-                  context, 
-                  MaterialPageRoute(builder: (_) => ChatScreen(currentUser: currentUser, otherUser: supportUser))
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                            currentUser: currentUser, otherUser: supportUser)));
               }
             }
           },
@@ -97,7 +99,8 @@ class _FloatingMessageWidgetState extends State<FloatingMessageWidget> {
             ),
           ],
         ),
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 28),
+        child: const Icon(Icons.chat_bubble_outline,
+            color: Colors.white, size: 28),
       ),
     );
   }

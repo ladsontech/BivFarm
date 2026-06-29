@@ -17,7 +17,8 @@ class MyListingsTab extends StatelessWidget {
       stream: db.streamProductsBySeller(userId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.green));
         }
         final products = snap.data ?? [];
         if (products.isEmpty) {
@@ -25,9 +26,13 @@ class MyListingsTab extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.textMuted.withOpacity(0.3)),
+                Icon(Icons.inventory_2_outlined,
+                    size: 64, color: AppTheme.textMuted.withOpacity(0.3)),
                 const SizedBox(height: 16),
-                Text('You haven\'t uploaded any products yet', style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+                Text('You haven\'t uploaded any products yet',
+                    style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500)),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -41,7 +46,8 @@ class MyListingsTab extends StatelessWidget {
                   icon: const Icon(Icons.add),
                   label: const Text('Upload your first product'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     backgroundColor: AppTheme.green,
                   ),
                 ),
@@ -67,43 +73,58 @@ class MyListingsTab extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: p.imageUrl != null 
-                      ? AppNetworkImage(
-                          imageUrl: p.imageUrl!, 
-                          width: 60, 
-                          height: 60, 
-                          fit: BoxFit.cover,
-                          memCacheWidth: 200, // Small view, small cache
-                        )
-                      : Container(width: 60, height: 60, color: AppTheme.surfaceLight, child: const Icon(Icons.image_not_supported)),
+                    child: p.imageUrl != null
+                        ? AppNetworkImage(
+                            imageUrl: p.imageUrl!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 200, // Small view, small cache
+                          )
+                        : Container(
+                            width: 60,
+                            height: 60,
+                            color: AppTheme.surfaceLight,
+                            child: const Icon(Icons.image_not_supported)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text('${p.category} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                        Text(p.productName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('${p.category} • ${p.district}',
+                            style: TextStyle(
+                                color: AppTheme.textMuted, fontSize: 12)),
                         const SizedBox(height: 4),
-                        Text('UGX ${p.price.toInt()}', style: TextStyle(color: AppTheme.greenLight, fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('UGX ${p.price.toInt()}',
+                            style: TextStyle(
+                                color: AppTheme.greenLight,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13)),
                       ],
                     ),
                   ),
                   Column(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, color: AppTheme.greenLight, size: 20),
+                        icon: const Icon(Icons.edit_outlined,
+                            color: AppTheme.greenLight, size: 20),
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => AddProductScreen(sellerId: userId, existingProduct: p),
+                              builder: (_) => AddProductScreen(
+                                  sellerId: userId, existingProduct: p),
                             ),
                           );
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: AppTheme.error, size: 20),
+                        icon: const Icon(Icons.delete_outline,
+                            color: AppTheme.error, size: 20),
                         onPressed: () => _confirmDelete(context, db, p),
                       ),
                     ],
@@ -117,20 +138,23 @@ class MyListingsTab extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, DatabaseService db, ProductModel p) {
+  void _confirmDelete(
+      BuildContext context, DatabaseService db, ProductModel p) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Listing?'),
         content: Text('Are you sure you want to delete "${p.productName}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               await db.deleteProduct(p.id);
               if (context.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
+            child:
+                const Text('Delete', style: TextStyle(color: AppTheme.error)),
           ),
         ],
       ),

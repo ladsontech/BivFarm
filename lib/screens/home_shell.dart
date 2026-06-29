@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../theme/app_theme.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/network_image_widget.dart';
+import '../widgets/common_widgets.dart';
+import '../widgets/responsive_wrapper.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'marketplace/add_product_screen.dart';
 import 'bidding/bids_list_screen.dart';
@@ -19,7 +22,7 @@ import 'auth/login_screen.dart';
 import 'notifications/notifications_screen.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import '../widgets/my_listings_tab.dart';
 import 'common/management_screen.dart';
 import '../widgets/floating_message_widget.dart';
@@ -35,20 +38,22 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
-  final GlobalKey<State<MarketplaceScreen>> _marketKey = GlobalKey();
+  final MarketplaceController _marketController = MarketplaceController();
   final GlobalKey<NavigatorState> _desktopNavKey = GlobalKey<NavigatorState>();
   String? _selectedCategoryForTab;
+  String? _tokenStoredForUser;
+  int _profileRetryVersion = 0;
 
   void _onCategorySelected(String category) {
-    _currentIndexNotifier.value = 0; // Switch to Marketplace tab
-    // Use post frame callback to ensure the state is available if we just switched
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final marketState = _marketKey.currentState;
-      if (marketState != null) {
-        // Use forced dynamic cast to access the custom method on the private state class
-        (marketState as dynamic).applyExternalFilter(category);
-      }
-    });
+    _marketController.showCategory(category);
+    _currentIndexNotifier.value = 0;
+  }
+
+  @override
+  void dispose() {
+    _currentIndexNotifier.dispose();
+    _marketController.dispose();
+    super.dispose();
   }
 
   void _onViewAllCategory(String category) {
@@ -65,11 +70,20 @@ class _HomeShellState extends State<HomeShell> {
     if (uid == null) return const LoginScreen();
 
     return StreamBuilder<UserModel?>(
+      key: ValueKey(_profileRetryVersion),
       stream: DatabaseService().streamUser(uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: AppErrorState(
+              title: 'Unable to load your account',
+              onRetry: () => setState(() => _profileRetryVersion++),
+            ),
           );
         }
 
@@ -89,10 +103,16 @@ class _HomeShellState extends State<HomeShell> {
         }
 
         // Store FCM token for push notifications
-        if (!kIsWeb) {
-          NotificationService().storeToken(user.id);
+        if (!kIsWeb && _tokenStoredForUser != user.id) {
+          _tokenStoredForUser = user.id;
+          unawaited(
+            NotificationService()
+                .storeToken(user.id)
+                .catchError((error, stack) {
+              debugPrint('Unable to store notification token: $error');
+            }),
+          );
         }
-
 
         return ValueListenableBuilder<int>(
           valueListenable: _currentIndexNotifier,
@@ -103,7 +123,10 @@ class _HomeShellState extends State<HomeShell> {
 
             return LayoutBuilder(
               builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth >= 800;
+                final isDesktop =
+                    constraints.maxWidth >= AppBreakpoints.desktop;
+                final showExtendedRail =
+                    constraints.maxWidth >= AppBreakpoints.wide;
 
                 final actions = [
                   StreamBuilder<List<NotificationModel>>(
@@ -115,7 +138,8 @@ class _HomeShellState extends State<HomeShell> {
                         alignment: Alignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.notifications_none, color: Colors.white),
+                            icon: const Icon(Icons.notifications_none,
+                                color: Colors.white),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -161,6 +185,8 @@ class _HomeShellState extends State<HomeShell> {
                     body: Row(
                       children: [
                         NavigationRail(
+                          extended: showExtendedRail,
+                          minExtendedWidth: 220,
                           selectedIndex: safeIndex,
                           onDestinationSelected: (i) {
                             // If we are deep into the nested navigator, pop back to root when switching tabs
@@ -171,7 +197,9 @@ class _HomeShellState extends State<HomeShell> {
                             }
                             _currentIndexNotifier.value = i;
                           },
-                          labelType: NavigationRailLabelType.all,
+                          labelType: showExtendedRail
+                              ? NavigationRailLabelType.none
+                              : NavigationRailLabelType.all,
                           backgroundColor: AppTheme.surfaceLight,
                           selectedIconTheme:
                               const IconThemeData(color: AppTheme.green),
@@ -205,24 +233,32 @@ class _HomeShellState extends State<HomeShell> {
                                   return ValueListenableBuilder<int>(
                                     valueListenable: _currentIndexNotifier,
                                     builder: (context, idx, _) {
-                                      final safeIdx = idx.clamp(0, screens.length - 1);
+                                      final safeIdx =
+                                          idx.clamp(0, screens.length - 1);
                                       // Hide AppBar for admin/agent dashboards which have their own headers
-                                      final isAdminOrAgentDashboard = (user.role == 'Admin' || user.role == 'Registry' || user.role == 'Agent') && safeIdx == 3;
-                                      
+                                      final isAdminOrAgentDashboard =
+                                          (user.role == 'Admin' ||
+                                                  user.role == 'Registry' ||
+                                                  user.role == 'Agent') &&
+                                              safeIdx == 3;
+
                                       return Scaffold(
-                                        appBar: !isAdminOrAgentDashboard
+                                        appBar: !isAdminOrAgentDashboard &&
+                                                safeIdx != 0
                                             ? AppBar(
                                                 toolbarHeight: 64,
-                                                title: Text('BFarm Dashboard',
-                                                    style: TextStyle(
-                                                        color: AppTheme.textPrimary,
-                                                        fontWeight: FontWeight.w700)),
+                                                title: Text(
+                                                    navItems[safeIdx].label ??
+                                                        'BFarm',
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700)),
                                                 actions: actions,
                                               )
                                             : null,
                                         body: IndexedStack(
-                                            index: safeIdx,
-                                            children: screens),
+                                            index: safeIdx, children: screens),
                                       );
                                     },
                                   );
@@ -239,21 +275,24 @@ class _HomeShellState extends State<HomeShell> {
                 return Stack(
                   children: [
                     Scaffold(
-                      appBar: safeIndex == 0 ? null : AppBar(
-                        toolbarHeight: 64,
-                        title: Image.asset(
-                          'assets/images/bfarm_premium_logo.png',
-                          height: 64,
-                          fit: BoxFit.contain,
-                          alignment: Alignment.centerLeft,
-                        ),
-                        actions: actions,
-                      ),
+                      appBar: safeIndex == 0
+                          ? null
+                          : AppBar(
+                              toolbarHeight: 64,
+                              title: Image.asset(
+                                'assets/images/bfarm_premium_logo.png',
+                                height: 64,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.centerLeft,
+                              ),
+                              actions: actions,
+                            ),
                       body: IndexedStack(
                         index: safeIndex,
                         children: screens,
                       ),
-                      bottomNavigationBar: _buildCustomBottomNav(safeIndex, navItems, context),
+                      bottomNavigationBar:
+                          _buildCustomBottomNav(safeIndex, navItems, context),
                     ),
                     FloatingMessageWidget(userId: user.id),
                   ],
@@ -266,7 +305,8 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _buildCustomBottomNav(int currentIndex, List<BottomNavigationBarItem> items, BuildContext context) {
+  Widget _buildCustomBottomNav(int currentIndex,
+      List<BottomNavigationBarItem> items, BuildContext context) {
     return Container(
       height: 70,
       decoration: BoxDecoration(
@@ -287,7 +327,7 @@ class _HomeShellState extends State<HomeShell> {
         children: List.generate(items.length, (index) {
           final item = items[index];
           final isSelected = currentIndex == index;
-          
+
           return Expanded(
             child: InkWell(
               onTap: () => _currentIndexNotifier.value = index,
@@ -311,7 +351,8 @@ class _HomeShellState extends State<HomeShell> {
                     style: TextStyle(
                       color: isSelected ? AppTheme.green : AppTheme.textMuted,
                       fontSize: 10,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                       letterSpacing: -0.2,
                     ),
                     child: Text(item.label ?? ''),
@@ -330,7 +371,9 @@ class _HomeShellState extends State<HomeShell> {
       case 'Admin':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -338,9 +381,14 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
           ProfileScreen(user: user),
@@ -348,7 +396,9 @@ class _HomeShellState extends State<HomeShell> {
       case 'Registry':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -356,9 +406,14 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
           ProfileScreen(user: user),
@@ -366,7 +421,9 @@ class _HomeShellState extends State<HomeShell> {
       case 'Agent':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -374,9 +431,14 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           AgentDashboardScreen(agentId: user.id),
           ProfileScreen(user: user),
@@ -384,7 +446,9 @@ class _HomeShellState extends State<HomeShell> {
       case 'Farmer':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -392,16 +456,23 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           ManagementScreen(user: user),
           ProfileScreen(user: user),
         ];
       case 'Buyer':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -409,16 +480,23 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           BidsListScreen(userId: user.id, userRole: user.role),
           ProfileScreen(user: user),
         ];
       case 'Store':
         return [
           MarketplaceScreen(
-              key: _marketKey, userRole: user.role, userId: user.id,
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
               actions: actions,
               onViewAllCategory: _onViewAllCategory),
           CategoriesScreen(
@@ -426,15 +504,26 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ProductDetailScreen(product: p, currentUserId: user.id, currentUserRole: user.role),
-              ))),
-          ManagementScreen(user: user, initialTabIndex: 1), // Default to Listings for Store
+              onProductSelected: (p) => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
+          ManagementScreen(
+              user: user, initialTabIndex: 1), // Default to Listings for Store
           ProfileScreen(user: user),
         ];
       default:
         return [
-          MarketplaceScreen(userRole: user.role, userId: user.id, actions: actions),
+          MarketplaceScreen(
+            controller: _marketController,
+            userRole: user.role,
+            userId: user.id,
+            actions: actions,
+          ),
           ProfileScreen(user: user),
         ];
     }
@@ -465,7 +554,8 @@ class _HomeShellState extends State<HomeShell> {
         break;
       case 'Agent':
         items.addAll([
-          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'My Bids'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.gavel), label: 'My Bids'),
           const BottomNavigationBarItem(
               icon: Icon(Icons.people), label: 'Dashboard'),
         ]);
@@ -491,7 +581,6 @@ class _HomeShellState extends State<HomeShell> {
     return items;
   }
 }
-
 
 // ─── New User Role Selector (for Firebase Auth users without Firestore profile) ───
 class _NewUserRoleSelector extends StatefulWidget {

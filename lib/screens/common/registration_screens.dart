@@ -6,6 +6,7 @@ import '../../services/database_service.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/validators.dart';
 import '../../utils/constants.dart';
 
@@ -18,7 +19,8 @@ String sanitizeEmailPart(String name) {
 class RegisterUserScreen extends StatefulWidget {
   final String role; // Farmer or Buyer
   final String agentId;
-  const RegisterUserScreen({super.key, required this.role, required this.agentId});
+  const RegisterUserScreen(
+      {super.key, required this.role, required this.agentId});
 
   @override
   State<RegisterUserScreen> createState() => _RegisterUserScreenState();
@@ -38,12 +40,14 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   String _nin = '';
   bool _loading = false;
 
-  String get _defaultPassword => _phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+  String get _defaultPassword =>
+      _phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     if (_gender == null || _district == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fill all required fields')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fill all required fields')));
       return;
     }
     setState(() => _loading = true);
@@ -61,7 +65,8 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
           profileData: {
             'firstName': _firstNameCtrl.text.trim(),
             'lastName': _lastNameCtrl.text.trim(),
-            'name': '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
+            'name':
+                '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
             'phone': _phoneCtrl.text.trim(),
             'gender': _gender,
             'district': _district,
@@ -74,7 +79,8 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
         );
       } else {
         final phone = _phoneCtrl.text.trim();
-        final uid = 'phone_${phone.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
+        final uid =
+            'phone_${phone.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
         await db.setUser(uid, {
           'firstName': _firstNameCtrl.text.trim(),
           'lastName': _lastNameCtrl.text.trim(),
@@ -99,7 +105,9 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
       if (mounted) _showSuccessDialog();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -122,19 +130,26 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(8)),
               child: Column(
                 children: [
-                   if (hasEmail) Text('Email: $email'),
-                   Text('Phone: $phone'),
-                   if (hasEmail) Text('Password: $_defaultPassword'),
+                  if (hasEmail) Text('Email: $email'),
+                  Text('Phone: $phone'),
+                  if (hasEmail) Text('Password: $_defaultPassword'),
                 ],
               ),
             ),
           ],
         ),
         actions: [
-          ElevatedButton(onPressed: () { Navigator.pop(ctx); Navigator.pop(context); }, child: const Text('Done'))
+          ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('Done'))
         ],
       ),
     );
@@ -146,20 +161,38 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
       appBar: AppBar(title: Text('Register ${widget.role}')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              CustomTextField(label: 'First Name', controller: _firstNameCtrl),
-              CustomTextField(label: 'Last Name', controller: _lastNameCtrl),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl),
-              CustomTextField(label: 'Email (Optional)', controller: _emailCtrl),
-              CustomDropdown(label: 'Gender', value: _gender, items: AppConstants.genderOptions, onChanged: (v) => setState(() => _gender = v)),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
-              CustomTextField(label: 'Subcounty', onChanged: (v) => _subcounty = v),
-              CustomTextField(label: 'Village', onChanged: (v) => _village = v),
-              CustomButton(text: 'Register', onPressed: _register, isLoading: _loading),
-            ],
+        child: ResponsiveWrapper(
+          maxWidth: 700,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                CustomTextField(
+                    label: 'First Name', controller: _firstNameCtrl),
+                CustomTextField(label: 'Last Name', controller: _lastNameCtrl),
+                CustomTextField(label: 'Phone', controller: _phoneCtrl),
+                CustomTextField(
+                    label: 'Email (Optional)', controller: _emailCtrl),
+                CustomDropdown(
+                    label: 'Gender',
+                    value: _gender,
+                    items: AppConstants.genderOptions,
+                    onChanged: (v) => setState(() => _gender = v)),
+                CustomDropdown(
+                    label: 'District',
+                    value: _district,
+                    items: AppConstants.bunyoroDistricts,
+                    onChanged: (v) => setState(() => _district = v)),
+                CustomTextField(
+                    label: 'Subcounty', onChanged: (v) => _subcounty = v),
+                CustomTextField(
+                    label: 'Village', onChanged: (v) => _village = v),
+                CustomButton(
+                    text: 'Register',
+                    onPressed: _register,
+                    isLoading: _loading),
+              ],
+            ),
           ),
         ),
       ),
@@ -237,14 +270,19 @@ class _RegisterGroupScreenState extends State<RegisterGroupScreen> {
         userId: userId,
         registeredBy: widget.agentId,
       ));
-      if (mounted) _showGroupSuccessDialog(groupName, email, password, phone, userId != null);
+      if (mounted)
+        _showGroupSuccessDialog(
+            groupName, email, password, phone, userId != null);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
 
-  void _showGroupSuccessDialog(String name, String email, String password, String phone, bool hasAccount) {
+  void _showGroupSuccessDialog(String name, String email, String password,
+      String phone, bool hasAccount) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -257,7 +295,12 @@ class _RegisterGroupScreenState extends State<RegisterGroupScreen> {
           ],
         ),
         actions: [
-          ElevatedButton(onPressed: () { Navigator.pop(ctx); Navigator.pop(context); }, child: const Text('Done'))
+          ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('Done'))
         ],
       ),
     );
@@ -269,25 +312,44 @@ class _RegisterGroupScreenState extends State<RegisterGroupScreen> {
       appBar: AppBar(title: const Text('Register Farmer Group')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              CustomTextField(label: 'Group Name', controller: _nameCtrl),
-              CustomTextField(label: 'Leader Name', controller: _leaderCtrl),
-              CustomTextField(label: 'Leader Phone', controller: _phoneCtrl),
-              CustomTextField(label: 'Number of Members', controller: _membersCtrl, keyboardType: TextInputType.number),
-              CustomDropdown(
-                label: 'Category',
-                value: _category,
-                items: const ['Produce', 'Poultry', 'Livestock', 'Fruits & Vegetables', 'All'],
-                onChanged: (v) => setState(() => _category = v),
-              ),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
-              CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
-              CustomTextField(label: 'Village', controller: _villageCtrl),
-              CustomButton(text: 'Register Group', onPressed: _save, isLoading: _loading),
-            ],
+        child: ResponsiveWrapper(
+          maxWidth: 700,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                CustomTextField(label: 'Group Name', controller: _nameCtrl),
+                CustomTextField(label: 'Leader Name', controller: _leaderCtrl),
+                CustomTextField(label: 'Leader Phone', controller: _phoneCtrl),
+                CustomTextField(
+                    label: 'Number of Members',
+                    controller: _membersCtrl,
+                    keyboardType: TextInputType.number),
+                CustomDropdown(
+                  label: 'Category',
+                  value: _category,
+                  items: const [
+                    'Produce',
+                    'Poultry',
+                    'Livestock',
+                    'Fruits & Vegetables',
+                    'All'
+                  ],
+                  onChanged: (v) => setState(() => _category = v),
+                ),
+                CustomDropdown(
+                    label: 'District',
+                    value: _district,
+                    items: AppConstants.bunyoroDistricts,
+                    onChanged: (v) => setState(() => _district = v)),
+                CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
+                CustomTextField(label: 'Village', controller: _villageCtrl),
+                CustomButton(
+                    text: 'Register Group',
+                    onPressed: _save,
+                    isLoading: _loading),
+              ],
+            ),
           ),
         ),
       ),
@@ -326,7 +388,9 @@ class _RegisterStoreScreenState extends State<RegisterStoreScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _district == null || _storeType == null) return;
+    if (!_formKey.currentState!.validate() ||
+        _district == null ||
+        _storeType == null) return;
     setState(() => _loading = true);
     try {
       final db = DatabaseService();
@@ -376,7 +440,9 @@ class _RegisterStoreScreenState extends State<RegisterStoreScreen> {
       });
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -387,24 +453,40 @@ class _RegisterStoreScreenState extends State<RegisterStoreScreen> {
       appBar: AppBar(title: const Text('Register Store')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              CustomTextField(label: 'Store Name', controller: _storeNameCtrl),
-              CustomTextField(label: 'Owner Name', controller: _ownerNameCtrl),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl),
-              CustomDropdown(
-                label: 'Store Type',
-                value: _storeType,
-                items: const ['Farm Store', 'Produce Store', 'Wholesale Store'],
-                onChanged: (v) => setState(() => _storeType = v),
-              ),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
-              CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
-              CustomTextField(label: 'Village', controller: _villageCtrl),
-              CustomButton(text: 'Register Store', onPressed: _save, isLoading: _loading),
-            ],
+        child: ResponsiveWrapper(
+          maxWidth: 700,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                CustomTextField(
+                    label: 'Store Name', controller: _storeNameCtrl),
+                CustomTextField(
+                    label: 'Owner Name', controller: _ownerNameCtrl),
+                CustomTextField(label: 'Phone', controller: _phoneCtrl),
+                CustomDropdown(
+                  label: 'Store Type',
+                  value: _storeType,
+                  items: const [
+                    'Farm Store',
+                    'Produce Store',
+                    'Wholesale Store'
+                  ],
+                  onChanged: (v) => setState(() => _storeType = v),
+                ),
+                CustomDropdown(
+                    label: 'District',
+                    value: _district,
+                    items: AppConstants.bunyoroDistricts,
+                    onChanged: (v) => setState(() => _district = v)),
+                CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
+                CustomTextField(label: 'Village', controller: _villageCtrl),
+                CustomButton(
+                    text: 'Register Store',
+                    onPressed: _save,
+                    isLoading: _loading),
+              ],
+            ),
           ),
         ),
       ),
@@ -445,7 +527,9 @@ class _RegisterDealerScreenState extends State<RegisterDealerScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _district == null || _productType == null) return;
+    if (!_formKey.currentState!.validate() ||
+        _district == null ||
+        _productType == null) return;
     setState(() => _loading = true);
     try {
       final db = DatabaseService();
@@ -493,7 +577,9 @@ class _RegisterDealerScreenState extends State<RegisterDealerScreen> {
       ));
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -504,18 +590,33 @@ class _RegisterDealerScreenState extends State<RegisterDealerScreen> {
       appBar: AppBar(title: const Text('Register Dealer')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              CustomTextField(label: 'Business Name', controller: _bizNameCtrl),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl),
-              CustomDropdown(label: 'Product Type', value: _productType, items: AppConstants.inputProductTypes, onChanged: (v) => setState(() => _productType = v)),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
-              CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
-              CustomTextField(label: 'Village', controller: _villageCtrl),
-              CustomButton(text: 'Register Dealer', onPressed: _save, isLoading: _loading),
-            ],
+        child: ResponsiveWrapper(
+          maxWidth: 700,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                CustomTextField(
+                    label: 'Business Name', controller: _bizNameCtrl),
+                CustomTextField(label: 'Phone', controller: _phoneCtrl),
+                CustomDropdown(
+                    label: 'Product Type',
+                    value: _productType,
+                    items: AppConstants.inputProductTypes,
+                    onChanged: (v) => setState(() => _productType = v)),
+                CustomDropdown(
+                    label: 'District',
+                    value: _district,
+                    items: AppConstants.bunyoroDistricts,
+                    onChanged: (v) => setState(() => _district = v)),
+                CustomTextField(label: 'Subcounty', controller: _subcountyCtrl),
+                CustomTextField(label: 'Village', controller: _villageCtrl),
+                CustomButton(
+                    text: 'Register Dealer',
+                    onPressed: _save,
+                    isLoading: _loading),
+              ],
+            ),
           ),
         ),
       ),

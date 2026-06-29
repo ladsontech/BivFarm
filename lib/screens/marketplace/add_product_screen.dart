@@ -16,7 +16,8 @@ class AddProductScreen extends StatefulWidget {
   final String sellerId;
   final ProductModel? existingProduct;
 
-  const AddProductScreen({super.key, required this.sellerId, this.existingProduct});
+  const AddProductScreen(
+      {super.key, required this.sellerId, this.existingProduct});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -30,12 +31,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   late TextEditingController _nameCtrl;
   late TextEditingController _quantityCtrl;
   late TextEditingController _priceCtrl;
-  
+
   String? _category;
   String? _unit;
   String? _availability;
   String? _district;
-  
+
   // Multi-image support
   final List<XFile> _newImageFiles = [];
   List<String> _existingImageUrls = [];
@@ -90,8 +91,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_category == null || _unit == null || _availability == null || _district == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all dropdowns')));
+    if (_category == null ||
+        _unit == null ||
+        _availability == null ||
+        _district == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill all dropdowns')));
       return;
     }
 
@@ -113,11 +118,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       try {
         final sellerUser = await _db.getUser(widget.sellerId);
         if (sellerUser != null) {
-          sellerName = sellerUser.name.isNotEmpty ? sellerUser.name : (AuthService().currentUser?.email ?? '');
+          sellerName = sellerUser.name.isNotEmpty
+              ? sellerUser.name
+              : (AuthService().currentUser?.email ?? '');
           sellerPhoto = sellerUser.profilePhoto;
           sellerPhone = sellerUser.phone.isNotEmpty ? sellerUser.phone : null;
           // If the user being edited is an agent themselves, they manage their own
-          agentId = sellerUser.role == 'Agent' ? sellerUser.id : sellerUser.agentId;
+          agentId =
+              sellerUser.role == 'Agent' ? sellerUser.id : sellerUser.agentId;
           sellerRole = sellerUser.role;
         }
       } catch (_) {}
@@ -150,7 +158,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -159,7 +168,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.existingProduct == null ? 'Add Listing' : 'Edit Listing')),
+      appBar: AppBar(
+          title: Text(
+              widget.existingProduct == null ? 'Add Listing' : 'Edit Listing')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: ResponsiveWrapper(
@@ -167,73 +178,105 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Form(
             key: _formKey,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Image Section ──────────────
-              Text(
-                'Product Photos',
-                style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$_totalImages / $_maxImages photos',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              _buildImageGrid(),
-              const SizedBox(height: 20),
-
-              // ── Form Fields ────────────────
-              CustomDropdown(
-                label: 'Category', 
-                value: _category,
-                items: AppConstants.productCategories.keys.toList(), 
-                onChanged: (v) {
-                  setState(() {
-                    _category = v;
-                    // Auto-set unit to the first valid unit for this category
-                    final units = v != null ? (AppConstants.categoryUnits[v] ?? AppConstants.quantityUnits) : AppConstants.quantityUnits;
-                    _unit = units.first;
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-              CustomTextField(label: 'Product Name', hint: 'Enter product name', controller: _nameCtrl),
-              const SizedBox(height: 14),
-              Row(children: [
-                Expanded(flex: 2, child: CustomTextField(label: 'Quantity', hint: 'e.g. 100', controller: _quantityCtrl, keyboardType: TextInputType.number)),
-                const SizedBox(width: 12),
-                Expanded(child: CustomDropdown(
-                  label: 'Unit',
-                  value: _unit,
-                  items: _category != null
-                      ? (AppConstants.categoryUnits[_category!] ?? AppConstants.quantityUnits)
-                      : AppConstants.quantityUnits,
-                  onChanged: (v) => setState(() => _unit = v),
-                )),
-              ]),
-              const SizedBox(height: 14),
-              CustomDropdown(label: 'Availability', value: _availability, items: AppConstants.availabilityOptions, onChanged: (v) => setState(() => _availability = v)),
-              const SizedBox(height: 14),
-              CustomTextField(label: 'Price (UGX)', hint: 'e.g. 50000', controller: _priceCtrl, keyboardType: TextInputType.number),
-              const SizedBox(height: 14),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
-              const SizedBox(height: 28),
-              CustomButton(
-                text: widget.existingProduct == null ? 'Create Listing' : 'Save Changes',
-                onPressed: _save,
-                isLoading: _loading,
-              ),
-              if (widget.existingProduct != null) ...[
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () async {
-                    await _db.deleteProduct(widget.existingProduct!.id);
-                    if (mounted) Navigator.pop(context);
-                  },
-                  child: const Text('Delete Listing', style: TextStyle(color: AppTheme.error)),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Image Section ──────────────
+                Text(
+                  'Product Photos',
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                 ),
-              ],
+                const SizedBox(height: 4),
+                Text(
+                  '$_totalImages / $_maxImages photos',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                _buildImageGrid(),
+                const SizedBox(height: 20),
+
+                // ── Form Fields ────────────────
+                CustomDropdown(
+                  label: 'Category',
+                  value: _category,
+                  items: AppConstants.productCategories.keys.toList(),
+                  onChanged: (v) {
+                    setState(() {
+                      _category = v;
+                      // Auto-set unit to the first valid unit for this category
+                      final units = v != null
+                          ? (AppConstants.categoryUnits[v] ??
+                              AppConstants.quantityUnits)
+                          : AppConstants.quantityUnits;
+                      _unit = units.first;
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                CustomTextField(
+                    label: 'Product Name',
+                    hint: 'Enter product name',
+                    controller: _nameCtrl),
+                const SizedBox(height: 14),
+                Row(children: [
+                  Expanded(
+                      flex: 2,
+                      child: CustomTextField(
+                          label: 'Quantity',
+                          hint: 'e.g. 100',
+                          controller: _quantityCtrl,
+                          keyboardType: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                      child: CustomDropdown(
+                    label: 'Unit',
+                    value: _unit,
+                    items: _category != null
+                        ? (AppConstants.categoryUnits[_category!] ??
+                            AppConstants.quantityUnits)
+                        : AppConstants.quantityUnits,
+                    onChanged: (v) => setState(() => _unit = v),
+                  )),
+                ]),
+                const SizedBox(height: 14),
+                CustomDropdown(
+                    label: 'Availability',
+                    value: _availability,
+                    items: AppConstants.availabilityOptions,
+                    onChanged: (v) => setState(() => _availability = v)),
+                const SizedBox(height: 14),
+                CustomTextField(
+                    label: 'Price (UGX)',
+                    hint: 'e.g. 50000',
+                    controller: _priceCtrl,
+                    keyboardType: TextInputType.number),
+                const SizedBox(height: 14),
+                CustomDropdown(
+                    label: 'District',
+                    value: _district,
+                    items: AppConstants.bunyoroDistricts,
+                    onChanged: (v) => setState(() => _district = v)),
+                const SizedBox(height: 28),
+                CustomButton(
+                  text: widget.existingProduct == null
+                      ? 'Create Listing'
+                      : 'Save Changes',
+                  onPressed: _save,
+                  isLoading: _loading,
+                ),
+                if (widget.existingProduct != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () async {
+                      await _db.deleteProduct(widget.existingProduct!.id);
+                      if (mounted) Navigator.pop(context);
+                    },
+                    child: const Text('Delete Listing',
+                        style: TextStyle(color: AppTheme.error)),
+                  ),
+                ],
               ],
             ),
           ),
@@ -257,7 +300,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         // New local images
         for (int i = 0; i < _newImageFiles.length; i++)
           _buildImageTile(
-            child: kIsWeb ? Image.network(_newImageFiles[i].path, fit: BoxFit.cover) : Image.file(File(_newImageFiles[i].path), fit: BoxFit.cover),
+            child: kIsWeb
+                ? Image.network(_newImageFiles[i].path, fit: BoxFit.cover)
+                : Image.file(File(_newImageFiles[i].path), fit: BoxFit.cover),
             onRemove: () => _removeNewImage(i),
             isFirst: _existingImageUrls.isEmpty && i == 0,
           ),
@@ -271,16 +316,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.surfaceLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.border, style: BorderStyle.solid),
+                border: Border.all(
+                    color: AppTheme.border, style: BorderStyle.solid),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_a_photo, color: AppTheme.textMuted, size: _totalImages == 0 ? 32 : 24),
+                  Icon(Icons.add_a_photo,
+                      color: AppTheme.textMuted,
+                      size: _totalImages == 0 ? 32 : 24),
                   const SizedBox(height: 6),
                   Text(
                     _totalImages == 0 ? 'Add Product Photos' : 'Add More',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: _totalImages == 0 ? 13 : 11),
+                    style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: _totalImages == 0 ? 13 : 11),
                   ),
                 ],
               ),
@@ -339,7 +389,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 color: AppTheme.greenLight,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+              child: const Text('Cover',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700)),
             ),
           ),
       ],

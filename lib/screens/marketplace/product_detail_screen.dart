@@ -6,8 +6,8 @@ import '../../models/bid_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../widgets/network_image_widget.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../bidding/bid_form_screen.dart';
 import '../../widgets/product_card.dart';
 import 'add_product_screen.dart';
@@ -35,7 +35,15 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final PageController _pageCtrl = PageController();
+  final DatabaseService _db = DatabaseService();
+  late final Future<UserModel?> _sellerFuture;
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _sellerFuture = _db.getUser(widget.product.sellerId);
+  }
 
   @override
   void dispose() {
@@ -46,469 +54,662 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###');
-    final db = DatabaseService();
+    final db = _db;
     final images = widget.product.imageUrls;
     final role = widget.currentUserRole;
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final imageHeight = widget.isEmbedded
+        ? 280.0
+        : viewportWidth >= AppBreakpoints.desktop
+            ? 480.0
+            : (viewportWidth * 0.78).clamp(260.0, 360.0);
 
     final scaffold = Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // ── Image Carousel Header ──────────────
-          SliverAppBar(
-            expandedHeight: widget.isEmbedded ? 220 : 300,
-            pinned: true,
-            automaticallyImplyLeading: !widget.isEmbedded,
-            backgroundColor: AppTheme.background,
-            actions: [
-              FutureBuilder<UserModel?>(
-                future: db.getUser(widget.product.sellerId),
-                builder: (context, userSnap) {
-                  final seller = userSnap.data;
-                  final isAgentOfSeller = role == 'Agent' && (widget.product.agentId == widget.currentUserId || seller?.agentId == widget.currentUserId);
-                  final canEdit = role == 'Admin' || isAgentOfSeller || widget.product.sellerId == widget.currentUserId;
-                  if (canEdit) {
-                    return IconButton(
-                      icon: const Icon(Icons.edit_outlined),
-                      tooltip: 'Edit Listing',
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: widget.product.sellerId, existingProduct: widget.product)),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              if (widget.isEmbedded)
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: widget.onClose,
-                )
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: images.isNotEmpty
-                  ? Stack(
-                      children: [
-                        PageView.builder(
-                          controller: _pageCtrl,
-                          itemCount: images.length,
-                          onPageChanged: (i) => setState(() => _currentPage = i),
-                          itemBuilder: (ctx, i) {
-                            return GestureDetector(
-                              onTap: () => _showFullScreenImage(context, images, i),
-                              child: _buildImage(images[i]),
-                            );
-                          },
-                        ),
-                        // Dot indicators
-                        if (images.length > 1)
-                          Positioned(
-                            bottom: 16,
-                            left: 0,
-                            right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(images.length, (i) {
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                                  width: _currentPage == i ? 20 : 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: _currentPage == i
-                                        ? AppTheme.greenLight
-                                        : Colors.white.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                        // Image counter badge
-                        if (images.length > 1)
-                          Positioned(
-                            top: 80,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.photo_library, color: Colors.white, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${_currentPage + 1}/${images.length}',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    )
-                  : Container(
-                      color: AppTheme.surfaceLight,
-                      child: Icon(Icons.inventory_2, color: AppTheme.textMuted, size: 64),
-                    ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.greenSurface,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      widget.product.category,
-                      style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Product Name
-                  Text(
-                    widget.product.productName,
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Price
-                  Text(
-                    'UGX ${formatter.format(widget.product.price)} / ${widget.product.quantityUnit.toLowerCase() == 'pieces' ? 'Piece' : (widget.product.quantityUnit.toLowerCase() == 'crates' ? 'Crate' : widget.product.quantityUnit)}',
-                    style: const TextStyle(
-                      color: AppTheme.greenLight,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Details
-                  _detailRow(Icons.scale, 'Quantity', '${widget.product.quantity} ${widget.product.quantityUnit}'),
-                  _detailRow(Icons.location_on_outlined, 'District', widget.product.district),
-                  _detailRow(Icons.schedule, 'Availability', widget.product.availability),
-                  _detailRow(Icons.calendar_today, 'Listed', DateFormat('MMM d, yyyy').format(widget.product.createdAt)),
-                  const SizedBox(height: 32),
-
-                  // About the Farmer UI
-                  Text(
-                    'About the Farmer',
-                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 16),
-                  FutureBuilder<UserModel?>(
-                    future: db.getUser(widget.product.sellerId),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                      }
-                      final user = snapshot.data;
-                      if (user == null) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppTheme.card,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.border, width: 0.5),
-                          ),
-                          child: Text('Farmer details not found.', style: TextStyle(color: AppTheme.textMuted)),
-                        );
-                      }
-                      
-                      return Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppTheme.card,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.border, width: 0.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: AppTheme.greenSurface,
-                                  backgroundImage: user.profilePhoto != null ? NetworkImage(user.profilePhoto!) : null,
-                                  child: user.profilePhoto == null
-                                      ? Text(
-                                          user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                                          style: TextStyle(color: AppTheme.greenDark, fontSize: 20, fontWeight: FontWeight.bold),
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user.name.isNotEmpty ? user.name : 'Unknown Farmer',
-                                        style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(color: AppTheme.greenSurface, borderRadius: BorderRadius.circular(4)),
-                                            child: Text(user.role, style: TextStyle(color: AppTheme.greenLight, fontSize: 10, fontWeight: FontWeight.w600)),
-                                          ),
-                                          if (user.bio != null && user.bio!.isNotEmpty) ...[
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                user.bio!,
-                                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            
-                            // Location Row
-                            Builder(
-                              builder: (context) {
-                                final isPrivileged = role == 'Admin' || role == 'Registry' || (role == 'Agent' && user.agentId == widget.currentUserId);
-                                final displayLocation = isPrivileged 
-                                    ? '${user.village.isNotEmpty ? '${user.village}, ' : ''}${user.subcounty.isNotEmpty ? '${user.subcounty}, ' : ''}${user.district}'
-                                    : user.district;
-                                
-                                return Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(Icons.location_on_rounded, color: AppTheme.textMuted, size: 20),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('Location', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            displayLocation,
-                                            style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                            
-                            // Admin / Agent Contact Info
-                            if (role == 'Admin' || (role == 'Agent' && user.agentId == widget.currentUserId)) ...[
-                              const SizedBox(height: 16),
-                              const Divider(),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    role == 'Admin' ? Icons.admin_panel_settings : Icons.support_agent,
-                                    color: Colors.orange,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    role == 'Admin' ? 'Admin Contact Data' : 'Your Farmer\'s Contact Data',
-                                    style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Icon(Icons.phone, color: AppTheme.textMuted, size: 16),
-                                  const SizedBox(width: 12),
-                                  Text(user.phone.isNotEmpty ? user.phone : 'N/A', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.email, color: AppTheme.textMuted, size: 16),
-                                  const SizedBox(width: 12),
-                                  Text(user.email.isNotEmpty ? user.email : 'N/A', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.badge, color: AppTheme.textMuted, size: 16),
-                                  const SizedBox(width: 12),
-                                  Text(user.nin.isNotEmpty ? user.nin : 'N/A', style: TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
-                                ],
-                              ),
-                            ] else ...[
-                              const SizedBox.shrink(),
-                            ],
-                          ],
+      body: ResponsiveWrapper(
+        maxWidth: 960,
+        child: CustomScrollView(
+          slivers: [
+            // ── Image Carousel Header ──────────────
+            SliverAppBar(
+              expandedHeight: imageHeight,
+              pinned: true,
+              automaticallyImplyLeading: !widget.isEmbedded,
+              backgroundColor: AppTheme.background,
+              actions: [
+                FutureBuilder<UserModel?>(
+                  future: _sellerFuture,
+                  builder: (context, userSnap) {
+                    final seller = userSnap.data;
+                    final isAgentOfSeller = role == 'Agent' &&
+                        (widget.product.agentId == widget.currentUserId ||
+                            seller?.agentId == widget.currentUserId);
+                    final canEdit = role == 'Admin' ||
+                        isAgentOfSeller ||
+                        widget.product.sellerId == widget.currentUserId;
+                    if (canEdit) {
+                      return IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: 'Edit Listing',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => AddProductScreen(
+                                  sellerId: widget.product.sellerId,
+                                  existingProduct: widget.product)),
                         ),
                       );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Bids section (admin + agent view)
-                  if (role == 'Admin' || role == 'Registry' || (role == 'Agent' && widget.product.sellerId == widget.currentUserId)) ...[
-                    // Wait, sellerId is the farmer ID. If the agent is managing the farmer, they should see.
-                    // Let's use a more robust check: does this product's seller have this agent?
-                  ] else if (role == 'Agent') ...[
-                    // Temporary placeholder or just hide it
-                  ],
-
-                  // Let's re-implement the Bids section with actual agent-farmer check
-                  FutureBuilder<UserModel?>(
-                    future: db.getUser(widget.product.sellerId),
-                    builder: (ctx, farmerSnap) {
-                      final farmer = farmerSnap.data;
-                      final canSeeBids = role == 'Admin' || role == 'Registry' || (role == 'Agent' && farmer?.agentId == widget.currentUserId);
-                      
-                      if (!canSeeBids) return const SizedBox.shrink();
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                if (widget.isEmbedded)
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onClose,
+                  )
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                background: images.isNotEmpty
+                    ? Stack(
                         children: [
-                          const Divider(),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Bids on this product',
-                            style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 12),
-                          StreamBuilder<List<BidModel>>(
-                            stream: db.streamBidsByProduct(widget.product.id),
-                            builder: (ctx, snap) {
-                              if (snap.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-                              }
-                              final bids = snap.data ?? [];
-                              if (bids.isEmpty) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                  child: Center(child: Text('No bids yet', style: TextStyle(color: AppTheme.textMuted))),
-                                );
-                              }
-                              return Column(
-                                children: bids.map((bid) => _bidTile(bid, formatter)).toList(),
+                          PageView.builder(
+                            controller: _pageCtrl,
+                            itemCount: images.length,
+                            onPageChanged: (i) {
+                              if (mounted) setState(() => _currentPage = i);
+                            },
+                            itemBuilder: (ctx, i) {
+                              return GestureDetector(
+                                onTap: () =>
+                                    _showFullScreenImage(context, images, i),
+                                child: _buildImage(images[i]),
                               );
                             },
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // More Products from this Farmer
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'More products from ${widget.product.sellerName.isNotEmpty ? widget.product.sellerName.split(' ').first : "this farmer"}',
-                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 16),
-                  StreamBuilder<List<ProductModel>>(
-                    stream: db.streamProductsBySeller(widget.product.sellerId),
-                    builder: (ctx, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(
-                          height: 100,
-                          child: Center(child: CircularProgressIndicator(color: AppTheme.green)),
-                        );
-                      }
-                      final otherProducts = (snap.data ?? []).where((p) => p.id != widget.product.id).toList();
-                      
-                      if (otherProducts.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Center(
-                            child: Text(
-                              'No other products available.',
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                          // Dot indicators
+                          if (images.length > 1)
+                            Positioned(
+                              bottom: 16,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(images.length, (i) {
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 3),
+                                    width: _currentPage == i ? 20 : 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: _currentPage == i
+                                          ? AppTheme.greenLight
+                                          : Colors.white.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  );
+                                }),
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                      
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.60, 
-                        ),
-                        itemCount: otherProducts.length,
-                        itemBuilder: (ctx, i) {
-                          final p = otherProducts[i];
-                          return ProductCard(
-                            product: p,
-                            onTap: () {
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(
-                                product: p,
-                                currentUserId: widget.currentUserId,
-                                currentUserRole: widget.currentUserRole,
-                              )));
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 40),
-                ],
+                          // Image counter badge
+                          if (images.length > 1)
+                            Positioned(
+                              top: 80,
+                              right: 16,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.photo_library,
+                                        color: Colors.white, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${_currentPage + 1}/${images.length}',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      )
+                    : Container(
+                        color: AppTheme.surfaceLight,
+                        child: Icon(Icons.inventory_2,
+                            color: AppTheme.textMuted, size: 64),
+                      ),
               ),
             ),
-          ),
-        ],
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Category chip
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.greenSurface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        widget.product.category,
+                        style: TextStyle(
+                            color: AppTheme.greenLight,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Product Name
+                    Text(
+                      widget.product.productName,
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Price
+                    Text(
+                      'UGX ${formatter.format(widget.product.price)} / ${widget.product.quantityUnit.toLowerCase() == 'pieces' ? 'Piece' : (widget.product.quantityUnit.toLowerCase() == 'crates' ? 'Crate' : widget.product.quantityUnit)}',
+                      style: const TextStyle(
+                        color: AppTheme.greenLight,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Details
+                    _detailRow(Icons.scale, 'Quantity',
+                        '${widget.product.quantity} ${widget.product.quantityUnit}'),
+                    _detailRow(Icons.location_on_outlined, 'District',
+                        widget.product.district),
+                    _detailRow(Icons.schedule, 'Availability',
+                        widget.product.availability),
+                    _detailRow(
+                        Icons.calendar_today,
+                        'Listed',
+                        DateFormat('MMM d, yyyy')
+                            .format(widget.product.createdAt)),
+                    const SizedBox(height: 32),
+
+                    // About the Farmer UI
+                    Text(
+                      'About the Farmer',
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<UserModel?>(
+                      future: _sellerFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator(
+                                  color: AppTheme.green));
+                        }
+                        if (snapshot.hasError) {
+                          return const SizedBox(
+                            height: 240,
+                            child: AppErrorState(
+                              title: 'Unable to load farmer details',
+                            ),
+                          );
+                        }
+                        final user = snapshot.data;
+                        if (user == null) {
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.card,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: AppTheme.border, width: 0.5),
+                            ),
+                            child: Text('Farmer details not found.',
+                                style: TextStyle(color: AppTheme.textMuted)),
+                          );
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.card,
+                            borderRadius: BorderRadius.circular(16),
+                            border:
+                                Border.all(color: AppTheme.border, width: 0.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 28,
+                                    backgroundColor: AppTheme.greenSurface,
+                                    backgroundImage: user.profilePhoto != null
+                                        ? NetworkImage(user.profilePhoto!)
+                                        : null,
+                                    child: user.profilePhoto == null
+                                        ? Text(
+                                            user.name.isNotEmpty
+                                                ? user.name[0].toUpperCase()
+                                                : '?',
+                                            style: TextStyle(
+                                                color: AppTheme.greenDark,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user.name.isNotEmpty
+                                              ? user.name
+                                              : 'Unknown Farmer',
+                                          style: TextStyle(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                  color: AppTheme.greenSurface,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4)),
+                                              child: Text(user.role,
+                                                  style: TextStyle(
+                                                      color:
+                                                          AppTheme.greenLight,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w600)),
+                                            ),
+                                            if (user.bio != null &&
+                                                user.bio!.isNotEmpty) ...[
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  user.bio!,
+                                                  style: TextStyle(
+                                                      color: AppTheme
+                                                          .textSecondary,
+                                                      fontSize: 12,
+                                                      fontStyle:
+                                                          FontStyle.italic),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Location Row
+                              Builder(
+                                builder: (context) {
+                                  final isPrivileged = role == 'Admin' ||
+                                      role == 'Registry' ||
+                                      (role == 'Agent' &&
+                                          user.agentId == widget.currentUserId);
+                                  final displayLocation = isPrivileged
+                                      ? '${user.village.isNotEmpty ? '${user.village}, ' : ''}${user.subcounty.isNotEmpty ? '${user.subcounty}, ' : ''}${user.district}'
+                                      : user.district;
+
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.location_on_rounded,
+                                          color: AppTheme.textMuted, size: 20),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('Location',
+                                                style: TextStyle(
+                                                    color:
+                                                        AppTheme.textSecondary,
+                                                    fontSize: 11)),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              displayLocation,
+                                              style: TextStyle(
+                                                  color: AppTheme.textPrimary,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+
+                              // Admin / Agent Contact Info
+                              if (role == 'Admin' ||
+                                  (role == 'Agent' &&
+                                      user.agentId ==
+                                          widget.currentUserId)) ...[
+                                const SizedBox(height: 16),
+                                const Divider(),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      role == 'Admin'
+                                          ? Icons.admin_panel_settings
+                                          : Icons.support_agent,
+                                      color: Colors.orange,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      role == 'Admin'
+                                          ? 'Admin Contact Data'
+                                          : 'Your Farmer\'s Contact Data',
+                                      style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Icon(Icons.phone,
+                                        color: AppTheme.textMuted, size: 16),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                        child: Text(
+                                            user.phone.isNotEmpty
+                                                ? user.phone
+                                                : 'N/A',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                color: AppTheme.textPrimary,
+                                                fontSize: 13))),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.email,
+                                        color: AppTheme.textMuted, size: 16),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                        child: Text(
+                                            user.email.isNotEmpty
+                                                ? user.email
+                                                : 'N/A',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                color: AppTheme.textPrimary,
+                                                fontSize: 13))),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.badge,
+                                        color: AppTheme.textMuted, size: 16),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                        child: Text(
+                                            user.nin.isNotEmpty
+                                                ? user.nin
+                                                : 'N/A',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                color: AppTheme.textPrimary,
+                                                fontSize: 13))),
+                                  ],
+                                ),
+                              ] else ...[
+                                const SizedBox.shrink(),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Bids section (admin + agent view)
+                    if (role == 'Admin' ||
+                        role == 'Registry' ||
+                        (role == 'Agent' &&
+                            widget.product.sellerId ==
+                                widget.currentUserId)) ...[
+                      // Wait, sellerId is the farmer ID. If the agent is managing the farmer, they should see.
+                      // Let's use a more robust check: does this product's seller have this agent?
+                    ] else if (role == 'Agent') ...[
+                      // Temporary placeholder or just hide it
+                    ],
+
+                    // Let's re-implement the Bids section with actual agent-farmer check
+                    FutureBuilder<UserModel?>(
+                      future: _sellerFuture,
+                      builder: (ctx, farmerSnap) {
+                        final farmer = farmerSnap.data;
+                        final canSeeBids = role == 'Admin' ||
+                            role == 'Registry' ||
+                            (role == 'Agent' &&
+                                farmer?.agentId == widget.currentUserId);
+
+                        if (!canSeeBids) return const SizedBox.shrink();
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Divider(),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Bids on this product',
+                              style: TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 12),
+                            StreamBuilder<List<BidModel>>(
+                              stream: db.streamBidsByProduct(widget.product.id),
+                              builder: (ctx, snap) {
+                                if (snap.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator(
+                                          color: AppTheme.green));
+                                }
+                                if (snap.hasError) {
+                                  return const AppErrorState(
+                                    title: 'Unable to load bids',
+                                  );
+                                }
+                                final bids = snap.data ?? [];
+                                if (bids.isEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 20),
+                                    child: Center(
+                                        child: Text('No bids yet',
+                                            style: TextStyle(
+                                                color: AppTheme.textMuted))),
+                                  );
+                                }
+                                return Column(
+                                  children: bids
+                                      .map((bid) => _bidTile(bid, formatter))
+                                      .toList(),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // More Products from this Farmer
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'More products from ${widget.product.sellerName.isNotEmpty ? widget.product.sellerName.split(' ').first : "this farmer"}',
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<List<ProductModel>>(
+                      stream:
+                          db.streamProductsBySeller(widget.product.sellerId),
+                      builder: (ctx, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 100,
+                            child: Center(
+                                child: CircularProgressIndicator(
+                                    color: AppTheme.green)),
+                          );
+                        }
+                        if (snap.hasError) {
+                          return const SizedBox(
+                            height: 220,
+                            child: AppErrorState(
+                              title: 'Unable to load more products',
+                            ),
+                          );
+                        }
+                        final otherProducts = (snap.data ?? [])
+                            .where((p) => p.id != widget.product.id)
+                            .toList();
+
+                        if (otherProducts.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Center(
+                              child: Text(
+                                'No other products available.',
+                                style: TextStyle(
+                                    color: AppTheme.textMuted, fontSize: 13),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          gridDelegate: responsiveGridDelegate(
+                            context,
+                            compactExtent: 180,
+                            desktopExtent: 230,
+                            compactAspectRatio: 0.60,
+                            desktopAspectRatio: 0.68,
+                          ),
+                          itemCount: otherProducts.length,
+                          itemBuilder: (ctx, i) {
+                            final p = otherProducts[i];
+                            return ProductCard(
+                              product: p,
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => ProductDetailScreen(
+                                              product: p,
+                                              currentUserId:
+                                                  widget.currentUserId,
+                                              currentUserRole:
+                                                  widget.currentUserRole,
+                                            )));
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       // Bid button — visible for Buyer, Admin, Agent, and Farmer (not on own products)
-      bottomNavigationBar: (role == 'Buyer' || role == 'Admin' || role == 'Agent' || role == 'Farmer') && widget.currentUserId != widget.product.sellerId
+      bottomNavigationBar: (role == 'Buyer' ||
+                  role == 'Admin' ||
+                  role == 'Agent' ||
+                  role == 'Farmer') &&
+              widget.currentUserId != widget.product.sellerId
           ? SafeArea(
-              child: Padding(
+              child: ResponsiveWrapper(
+                maxWidth: 960,
                 padding: const EdgeInsets.all(16),
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => BidFormScreen(product: widget.product, buyerId: widget.currentUserId),
+                        builder: (_) => BidFormScreen(
+                            product: widget.product,
+                            buyerId: widget.currentUserId),
                       ),
                     );
                   },
@@ -522,14 +723,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             )
           : null,
     );
-    
+
     if (widget.isEmbedded) {
       return Container(
         color: AppTheme.background,
         child: scaffold,
       );
     }
-    
+
     return scaffold;
   }
 
@@ -549,7 +750,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       fit: BoxFit.cover,
       placeholder: Container(
         color: AppTheme.surfaceLight,
-        child: const Center(child: CircularProgressIndicator(color: AppTheme.green, strokeWidth: 2)),
+        child: const Center(
+            child: CircularProgressIndicator(
+                color: AppTheme.green, strokeWidth: 2)),
       ),
       errorWidget: Container(
         color: AppTheme.surfaceLight,
@@ -558,11 +761,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _showFullScreenImage(BuildContext context, List<String> images, int initialIndex) {
+  void _showFullScreenImage(
+      BuildContext context, List<String> images, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _FullScreenGallery(images: images, initialIndex: initialIndex),
+        builder: (_) =>
+            _FullScreenGallery(images: images, initialIndex: initialIndex),
       ),
     );
   }
@@ -581,13 +786,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Icon(icon, color: AppTheme.textMuted, size: 18),
           ),
           const SizedBox(width: 12),
-          Column(
+          Expanded(
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-              Text(value, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(label,
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+              Text(value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
             ],
-          ),
+          )),
         ],
       ),
     );
@@ -609,8 +822,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  (bid.buyerName.isNotEmpty ? bid.buyerName : 'Buyer') + (bid.buyerPhone.isNotEmpty ? ' • ${bid.buyerPhone}' : ''),
-                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                  (bid.buyerName.isNotEmpty ? bid.buyerName : 'Buyer') +
+                      (bid.buyerPhone.isNotEmpty ? ' • ${bid.buyerPhone}' : ''),
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -619,7 +836,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 if (bid.notes != null && bid.notes!.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(bid.notes!, style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                  Text(bid.notes!,
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                 ],
               ],
             ),
@@ -690,7 +909,8 @@ class _FullScreenGalleryState extends State<_FullScreenGallery> {
                       placeholder: const Center(
                         child: CircularProgressIndicator(color: AppTheme.green),
                       ),
-                      errorWidget: const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                      errorWidget: const Icon(Icons.broken_image,
+                          color: Colors.white54, size: 64),
                     ),
             ),
           );

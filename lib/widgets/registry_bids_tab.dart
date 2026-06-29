@@ -5,13 +5,25 @@ import '../services/database_service.dart';
 import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
-enum DateFilterType { all, today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth, custom, customRange }
+enum DateFilterType {
+  all,
+  today,
+  yesterday,
+  thisWeek,
+  lastWeek,
+  thisMonth,
+  lastMonth,
+  custom,
+  customRange
+}
+
 enum SortType { dateNewest, dateOldest, priceHigh, priceLow }
 
-bool matchesDateFilter(DateTime date, DateFilterType filter, DateTime? customDate, DateTime? customEndDate) {
+bool matchesDateFilter(DateTime date, DateFilterType filter,
+    DateTime? customDate, DateTime? customEndDate) {
   final now = DateTime.now();
   final todayStart = DateTime(now.year, now.month, now.day);
-  
+
   switch (filter) {
     case DateFilterType.all:
       return true;
@@ -41,32 +53,39 @@ bool matchesDateFilter(DateTime date, DateFilterType filter, DateTime? customDat
       return date.isAfter(lastMonthStart) && date.isBefore(thisMonthStart);
     case DateFilterType.custom:
       if (customDate == null) return true;
-      final customStart = DateTime(customDate.year, customDate.month, customDate.day);
+      final customStart =
+          DateTime(customDate.year, customDate.month, customDate.day);
       final customEnd = customStart.add(const Duration(days: 1));
       return date.isAfter(customStart) && date.isBefore(customEnd);
     case DateFilterType.customRange:
       if (customDate == null || customEndDate == null) return true;
-      final rangeStart = DateTime(customDate.year, customDate.month, customDate.day);
-      final rangeEnd = DateTime(customEndDate.year, customEndDate.month, customEndDate.day + 1);
+      final rangeStart =
+          DateTime(customDate.year, customDate.month, customDate.day);
+      final rangeEnd = DateTime(
+          customEndDate.year, customEndDate.month, customEndDate.day + 1);
       return date.isAfter(rangeStart) && date.isBefore(rangeEnd);
   }
 }
 
 List<T> sortBids<T>(List<T> items, SortType sortType) {
   final sorted = List<T>.from(items);
-  
+
   switch (sortType) {
     case SortType.dateNewest:
       sorted.sort((a, b) {
-        DateTime dateA = (a is BidModel) ? a.createdAt : (a as BulkOrderModel).createdAt;
-        DateTime dateB = (b is BidModel) ? b.createdAt : (b as BulkOrderModel).createdAt;
+        DateTime dateA =
+            (a is BidModel) ? a.createdAt : (a as BulkOrderModel).createdAt;
+        DateTime dateB =
+            (b is BidModel) ? b.createdAt : (b as BulkOrderModel).createdAt;
         return dateB.compareTo(dateA);
       });
       break;
     case SortType.dateOldest:
       sorted.sort((a, b) {
-        DateTime dateA = (a is BidModel) ? a.createdAt : (a as BulkOrderModel).createdAt;
-        DateTime dateB = (b is BidModel) ? b.createdAt : (b as BulkOrderModel).createdAt;
+        DateTime dateA =
+            (a is BidModel) ? a.createdAt : (a as BulkOrderModel).createdAt;
+        DateTime dateB =
+            (b is BidModel) ? b.createdAt : (b as BulkOrderModel).createdAt;
         return dateA.compareTo(dateB);
       });
       break;
@@ -85,7 +104,7 @@ List<T> sortBids<T>(List<T> items, SortType sortType) {
       });
       break;
   }
-  
+
   return sorted;
 }
 
@@ -123,7 +142,8 @@ class RegistryBidsTab extends StatefulWidget {
   State<RegistryBidsTab> createState() => _RegistryBidsTabState();
 }
 
-class _RegistryBidsTabState extends State<RegistryBidsTab> with SingleTickerProviderStateMixin {
+class _RegistryBidsTabState extends State<RegistryBidsTab>
+    with SingleTickerProviderStateMixin {
   late TabController _typeCtrl;
   DateFilterType _selectedFilter = DateFilterType.all;
   DateTime? _selectedCustomDate;
@@ -155,7 +175,7 @@ class _RegistryBidsTabState extends State<RegistryBidsTab> with SingleTickerProv
 
   Widget _buildEnhancedFilterBar() {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    
+
     return Column(
       children: [
         // Date filters
@@ -167,37 +187,44 @@ class _RegistryBidsTabState extends State<RegistryBidsTab> with SingleTickerProv
               _FilterChip(
                 label: 'All Time',
                 isSelected: _selectedFilter == DateFilterType.all,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.all),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.all),
               ),
               _FilterChip(
                 label: 'Today',
                 isSelected: _selectedFilter == DateFilterType.today,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.today),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.today),
               ),
               _FilterChip(
                 label: 'Yesterday',
                 isSelected: _selectedFilter == DateFilterType.yesterday,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.yesterday),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.yesterday),
               ),
               _FilterChip(
                 label: 'This Week',
                 isSelected: _selectedFilter == DateFilterType.thisWeek,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.thisWeek),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.thisWeek),
               ),
               _FilterChip(
                 label: 'Last Week',
                 isSelected: _selectedFilter == DateFilterType.lastWeek,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.lastWeek),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.lastWeek),
               ),
               _FilterChip(
                 label: 'This Month',
                 isSelected: _selectedFilter == DateFilterType.thisMonth,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.thisMonth),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.thisMonth),
               ),
               _FilterChip(
                 label: 'Last Month',
                 isSelected: _selectedFilter == DateFilterType.lastMonth,
-                onTap: () => setState(() => _selectedFilter = DateFilterType.lastMonth),
+                onTap: () =>
+                    setState(() => _selectedFilter = DateFilterType.lastMonth),
               ),
               _FilterChip(
                 label: 'Pick Date',
@@ -237,26 +264,32 @@ class _RegistryBidsTabState extends State<RegistryBidsTab> with SingleTickerProv
                     children: [
                       _SortDropdown(
                         selectedSort: _selectedSort,
-                        onSortChanged: (sort) => setState(() => _selectedSort = sort),
+                        onSortChanged: (sort) =>
+                            setState(() => _selectedSort = sort),
                       ),
                       const SizedBox(width: 8),
-                      if (_selectedFilter == DateFilterType.custom && _selectedCustomDate != null)
+                      if (_selectedFilter == DateFilterType.custom &&
+                          _selectedCustomDate != null)
                         Chip(
                           label: Text(
                             'Date: ${DateFormat('MMM dd, yyyy').format(_selectedCustomDate!)}',
                             style: const TextStyle(fontSize: 12),
                           ),
-                          onDeleted: () => setState(() => _selectedFilter = DateFilterType.all),
+                          onDeleted: () => setState(
+                              () => _selectedFilter = DateFilterType.all),
                           backgroundColor: AppTheme.green.withOpacity(0.1),
                           labelStyle: TextStyle(color: AppTheme.green),
                         ),
-                      if (_selectedFilter == DateFilterType.customRange && _selectedCustomDate != null && _selectedCustomEndDate != null)
+                      if (_selectedFilter == DateFilterType.customRange &&
+                          _selectedCustomDate != null &&
+                          _selectedCustomEndDate != null)
                         Chip(
                           label: Text(
                             '${DateFormat('MMM dd').format(_selectedCustomDate!)} - ${DateFormat('MMM dd, yyyy').format(_selectedCustomEndDate!)}',
                             style: const TextStyle(fontSize: 12),
                           ),
-                          onDeleted: () => setState(() => _selectedFilter = DateFilterType.all),
+                          onDeleted: () => setState(
+                              () => _selectedFilter = DateFilterType.all),
                           backgroundColor: AppTheme.green.withOpacity(0.1),
                           labelStyle: TextStyle(color: AppTheme.green),
                         ),
@@ -431,19 +464,23 @@ class _BulkRequestsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 800;
-    
+
     return StreamBuilder<List<BulkOrderModel>>(
       stream: db.streamBulkOrders(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
         var orders = snap.data!;
-        
+
         // Date filtering
-        orders = orders.where((o) => matchesDateFilter(o.createdAt, selectedFilter, selectedCustomDate, selectedCustomEndDate)).toList();
-        
+        orders = orders
+            .where((o) => matchesDateFilter(o.createdAt, selectedFilter,
+                selectedCustomDate, selectedCustomEndDate))
+            .toList();
+
         // Sorting
         orders = sortBids(orders, selectedSort) as List<BulkOrderModel>;
-        
+
         if (orders.isEmpty) {
           return Center(
             child: Padding(
@@ -451,11 +488,15 @@ class _BulkRequestsList extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox_outlined, size: 64, color: AppTheme.textMuted),
+                  Icon(Icons.inbox_outlined,
+                      size: 64, color: AppTheme.textMuted),
                   const SizedBox(height: 16),
                   Text(
                     'No bulk requests matching your filters',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -464,9 +505,7 @@ class _BulkRequestsList extends StatelessWidget {
           );
         }
 
-        return isWide
-            ? _buildWideLayout(orders)
-            : _buildMobileLayout(orders);
+        return isWide ? _buildWideLayout(orders) : _buildMobileLayout(orders);
       },
     );
   }
@@ -474,12 +513,15 @@ class _BulkRequestsList extends StatelessWidget {
   Widget _buildWideLayout(List<BulkOrderModel> orders) {
     return Column(
       children: [
-        _buildTableHeader(['Date', 'Item & Category', 'Qty', 'Buyer', 'Status', ''], [2, 3, 2, 2, 2, 1]),
+        _buildTableHeader(
+            ['Date', 'Item & Category', 'Qty', 'Buyer', 'Status', ''],
+            [2, 3, 2, 2, 2, 1]),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: orders.length,
-            separatorBuilder: (ctx, i) => Divider(height: 0, color: AppTheme.border, thickness: 0.5),
+            separatorBuilder: (ctx, i) =>
+                Divider(height: 0, color: AppTheme.border, thickness: 0.5),
             itemBuilder: (ctx, i) {
               return _BulkOrderRow(order: orders[i], db: db);
             },
@@ -518,19 +560,23 @@ class _IndividualBidsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 800;
-    
+
     return StreamBuilder<List<BidModel>>(
       stream: db.streamAllBids(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
         var bids = snap.data!;
-        
+
         // Date filtering
-        bids = bids.where((b) => matchesDateFilter(b.createdAt, selectedFilter, selectedCustomDate, selectedCustomEndDate)).toList();
-        
+        bids = bids
+            .where((b) => matchesDateFilter(b.createdAt, selectedFilter,
+                selectedCustomDate, selectedCustomEndDate))
+            .toList();
+
         // Sorting
         bids = sortBids(bids, selectedSort) as List<BidModel>;
-        
+
         if (bids.isEmpty) {
           return Center(
             child: Padding(
@@ -538,11 +584,15 @@ class _IndividualBidsList extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.gavel_outlined, size: 64, color: AppTheme.textMuted),
+                  Icon(Icons.gavel_outlined,
+                      size: 64, color: AppTheme.textMuted),
                   const SizedBox(height: 16),
                   Text(
                     'No individual bids matching your filters',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -551,9 +601,7 @@ class _IndividualBidsList extends StatelessWidget {
           );
         }
 
-        return isWide
-            ? _buildWideLayout(bids)
-            : _buildMobileLayout(bids);
+        return isWide ? _buildWideLayout(bids) : _buildMobileLayout(bids);
       },
     );
   }
@@ -561,12 +609,15 @@ class _IndividualBidsList extends StatelessWidget {
   Widget _buildWideLayout(List<BidModel> bids) {
     return Column(
       children: [
-        _buildTableHeader(['Date', 'Product', 'Buyer', 'Price (UGX)', 'Status', ''], [2, 3, 2, 2, 2, 1]),
+        _buildTableHeader(
+            ['Date', 'Product', 'Buyer', 'Price (UGX)', 'Status', ''],
+            [2, 3, 2, 2, 2, 1]),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: bids.length,
-            separatorBuilder: (ctx, i) => Divider(height: 0, color: AppTheme.border, thickness: 0.5),
+            separatorBuilder: (ctx, i) =>
+                Divider(height: 0, color: AppTheme.border, thickness: 0.5),
             itemBuilder: (ctx, i) {
               return _BidRow(bid: bids[i], db: db);
             },
@@ -611,14 +662,20 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
         title: const Text('Update Status'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ['Pending', 'Processing', 'Distributor Assigned', 'Completed']
+          children: [
+            'Pending',
+            'Processing',
+            'Distributor Assigned',
+            'Completed'
+          ]
               .map((status) => ListTile(
                     title: Text(status),
                     onTap: () async {
                       Navigator.pop(ctx);
                       setState(() => _updating = true);
                       try {
-                        await widget.db.updateBulkOrderStatus(widget.order.id, status);
+                        await widget.db
+                            .updateBulkOrderStatus(widget.order.id, status);
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error updating status: $e')),
@@ -637,7 +694,7 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
   Widget build(BuildContext context) {
     final o = widget.order;
     final formattedDate = DateFormat('MMM dd, yyyy').format(o.createdAt);
-    
+
     Color statusColor = AppTheme.warning;
     if (o.status == 'Completed') {
       statusColor = AppTheme.green;
@@ -679,21 +736,26 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                             const SizedBox(height: 4),
                             Text(
                               formattedDate,
-                              style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.textMuted),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           o.status,
-                          style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: statusColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -702,7 +764,8 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _mobileDetailItem('Qty', '${o.quantity} ${o.quantityUnit}'),
+                      _mobileDetailItem(
+                          'Qty', '${o.quantity} ${o.quantityUnit}'),
                       _mobileDetailItem('Buyer', o.buyerName),
                     ],
                   ),
@@ -724,7 +787,8 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                           backgroundColor: AppTheme.green,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
-                        child: const Text('Update Status', style: TextStyle(fontSize: 12)),
+                        child: const Text('Update Status',
+                            style: TextStyle(fontSize: 12)),
                       ),
                     ),
                   ],
@@ -745,7 +809,10 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -773,10 +840,15 @@ class _BidMobileCardState extends State<_BidMobileCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Verify Bid'),
-        content: Text('Verify bid for ${widget.bid.productName} (UGX ${widget.bid.offeredPrice.toInt()})?'),
+        content: Text(
+            'Verify bid for ${widget.bid.productName} (UGX ${widget.bid.offeredPrice.toInt()})?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Verify')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Verify')),
         ],
       ),
     );
@@ -784,9 +856,11 @@ class _BidMobileCardState extends State<_BidMobileCard> {
     if (confirmed == true) {
       setState(() => _updating = true);
       try {
-        await widget.db.updateBid(widget.bid.id, {'isRegistryVerified': true, 'status': 'Under Review'});
+        await widget.db.updateBid(widget.bid.id,
+            {'isRegistryVerified': true, 'status': 'Under Review'});
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
       if (mounted) setState(() => _updating = false);
     }
@@ -799,7 +873,13 @@ class _BidMobileCardState extends State<_BidMobileCard> {
         title: const Text('Update Bid Status'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ['Pending', 'Under Review', 'Accepted', 'Rejected', 'Completed']
+          children: [
+            'Pending',
+            'Under Review',
+            'Accepted',
+            'Rejected',
+            'Completed'
+          ]
               .map((status) => ListTile(
                     title: Text(status),
                     onTap: () async {
@@ -825,9 +905,11 @@ class _BidMobileCardState extends State<_BidMobileCard> {
   Widget build(BuildContext context) {
     final b = widget.bid;
     final formattedDate = DateFormat('MMM dd, yyyy').format(b.createdAt);
-    
+
     Color statusColor = AppTheme.info;
-    if (b.status == 'Accepted' || b.status == 'Completed' || b.isRegistryVerified) {
+    if (b.status == 'Accepted' ||
+        b.status == 'Completed' ||
+        b.isRegistryVerified) {
       statusColor = AppTheme.green;
     } else if (b.status == 'Rejected') {
       statusColor = AppTheme.error;
@@ -871,21 +953,26 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                             const SizedBox(height: 4),
                             Text(
                               formattedDate,
-                              style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.textMuted),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           displayStatus,
-                          style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: statusColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -896,7 +983,8 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _mobileDetailItem('Price', 'UGX ${b.offeredPrice.toInt()}'),
+                      _mobileDetailItem(
+                          'Price', 'UGX ${b.offeredPrice.toInt()}'),
                       _mobileDetailItem('Buyer', b.buyerName),
                     ],
                   ),
@@ -910,7 +998,8 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                     const SizedBox(height: 8),
                     _mobileDetailItem('Seller', b.sellerName),
                     const SizedBox(height: 8),
-                    _mobileDetailItem('Registry', b.isRegistryVerified ? 'Verified' : 'Not Verified'),
+                    _mobileDetailItem('Registry',
+                        b.isRegistryVerified ? 'Verified' : 'Not Verified'),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -922,9 +1011,11 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                                 onPressed: _verifyBid,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
                                 ),
-                                child: const Text('Verify', style: TextStyle(fontSize: 11)),
+                                child: const Text('Verify',
+                                    style: TextStyle(fontSize: 11)),
                               ),
                             ),
                           if (!b.isRegistryVerified) const SizedBox(width: 8),
@@ -933,9 +1024,11 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                               onPressed: _showStatusDialog,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.info,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
                               ),
-                              child: const Text('Status', style: TextStyle(fontSize: 11)),
+                              child: const Text('Status',
+                                  style: TextStyle(fontSize: 11)),
                             ),
                           ),
                         ],
@@ -959,7 +1052,10 @@ class _BidMobileCardState extends State<_BidMobileCard> {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -993,14 +1089,20 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
         title: const Text('Update Status'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ['Pending', 'Processing', 'Distributor Assigned', 'Completed']
+          children: [
+            'Pending',
+            'Processing',
+            'Distributor Assigned',
+            'Completed'
+          ]
               .map((status) => ListTile(
                     title: Text(status),
                     onTap: () async {
                       Navigator.pop(ctx);
                       setState(() => _updating = true);
                       try {
-                        await widget.db.updateBulkOrderStatus(widget.order.id, status);
+                        await widget.db
+                            .updateBulkOrderStatus(widget.order.id, status);
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error updating status: $e')),
@@ -1032,13 +1134,15 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
               setState(() => _updating = true);
               try {
-                await widget.db.updateBulkOrderAdminNotes(widget.order.id, ctrl.text.trim());
+                await widget.db.updateBulkOrderAdminNotes(
+                    widget.order.id, ctrl.text.trim());
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error updating notes: $e')),
@@ -1058,7 +1162,7 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
     final o = widget.order;
     final formattedDate = DateFormat('MMM dd, yyyy').format(o.createdAt);
     final formattedTime = DateFormat('HH:mm').format(o.createdAt);
-    
+
     Color statusColor = AppTheme.warning;
     if (o.status == 'Completed') {
       statusColor = AppTheme.green;
@@ -1075,7 +1179,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppTheme.card,
-              border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+              border: Border(
+                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
             ),
             child: Row(
               children: [
@@ -1094,7 +1199,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                       ),
                       Text(
                         formattedTime,
-                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
@@ -1116,7 +1222,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                       ),
                       Text(
                         o.category,
-                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
@@ -1144,10 +1251,15 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                 Expanded(
                   flex: 2,
                   child: _updating
-                      ? const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
+                      ? const Center(
+                          child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2)))
                       : Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -1167,7 +1279,9 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                 Expanded(
                   flex: 1,
                   child: Icon(
-                    _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: AppTheme.textMuted,
                     size: 20,
                   ),
@@ -1182,7 +1296,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.surfaceLight,
-              border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+              border: Border(
+                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1203,7 +1318,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                     _detailItem('Order ID', o.id),
                     _detailItem('Buyer Phone', o.buyerPhone),
                     _detailItem('Order Type', o.orderType),
-                    _detailItem('Created At', DateFormat('yyyy-MM-dd HH:mm:ss').format(o.createdAt)),
+                    _detailItem('Created At',
+                        DateFormat('yyyy-MM-dd HH:mm:ss').format(o.createdAt)),
                   ],
                 ),
                 if (o.notes.isNotEmpty) ...[
@@ -1211,7 +1327,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                   _detailItem('Buyer Notes', o.notes),
                 ],
                 const SizedBox(height: 12),
-                _detailItem('Admin/Registry Notes', o.adminNotes.isEmpty ? 'No notes added' : o.adminNotes),
+                _detailItem('Admin/Registry Notes',
+                    o.adminNotes.isEmpty ? 'No notes added' : o.adminNotes),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -1221,8 +1338,10 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                       label: const Text('Update Status'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.green,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1233,8 +1352,10 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textPrimary,
                         side: BorderSide(color: AppTheme.border),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1252,7 +1373,11 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
         const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary)),
       ],
     );
   }
@@ -1276,10 +1401,15 @@ class _BidRowState extends State<_BidRow> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Verify Bid'),
-        content: Text('Are you sure you want to mark the bid for ${widget.bid.productName} (UGX ${widget.bid.offeredPrice.toInt()}) as verified by Registry?'),
+        content: Text(
+            'Are you sure you want to mark the bid for ${widget.bid.productName} (UGX ${widget.bid.offeredPrice.toInt()}) as verified by Registry?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Verify Bid')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Verify Bid')),
         ],
       ),
     );
@@ -1287,9 +1417,11 @@ class _BidRowState extends State<_BidRow> {
     if (confirmed == true) {
       setState(() => _updating = true);
       try {
-        await widget.db.updateBid(widget.bid.id, {'isRegistryVerified': true, 'status': 'Under Review'});
+        await widget.db.updateBid(widget.bid.id,
+            {'isRegistryVerified': true, 'status': 'Under Review'});
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
       if (mounted) setState(() => _updating = false);
     }
@@ -1302,7 +1434,13 @@ class _BidRowState extends State<_BidRow> {
         title: const Text('Update Bid Status'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ['Pending', 'Under Review', 'Accepted', 'Rejected', 'Completed']
+          children: [
+            'Pending',
+            'Under Review',
+            'Accepted',
+            'Rejected',
+            'Completed'
+          ]
               .map((status) => ListTile(
                     title: Text(status),
                     onTap: () async {
@@ -1341,13 +1479,15 @@ class _BidRowState extends State<_BidRow> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
               setState(() => _updating = true);
               try {
-                await widget.db.updateBid(widget.bid.id, {'adminNotes': ctrl.text.trim()});
+                await widget.db
+                    .updateBid(widget.bid.id, {'adminNotes': ctrl.text.trim()});
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error updating notes: $e')),
@@ -1367,9 +1507,11 @@ class _BidRowState extends State<_BidRow> {
     final b = widget.bid;
     final formattedDate = DateFormat('MMM dd, yyyy').format(b.createdAt);
     final formattedTime = DateFormat('HH:mm').format(b.createdAt);
-    
+
     Color statusColor = AppTheme.info;
-    if (b.status == 'Accepted' || b.status == 'Completed' || b.isRegistryVerified) {
+    if (b.status == 'Accepted' ||
+        b.status == 'Completed' ||
+        b.isRegistryVerified) {
       statusColor = AppTheme.green;
     } else if (b.status == 'Rejected') {
       statusColor = AppTheme.error;
@@ -1388,7 +1530,8 @@ class _BidRowState extends State<_BidRow> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppTheme.card,
-              border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+              border: Border(
+                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
             ),
             child: Row(
               children: [
@@ -1407,7 +1550,8 @@ class _BidRowState extends State<_BidRow> {
                       ),
                       Text(
                         formattedTime,
-                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
@@ -1448,10 +1592,15 @@ class _BidRowState extends State<_BidRow> {
                 Expanded(
                   flex: 2,
                   child: _updating
-                      ? const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
+                      ? const Center(
+                          child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2)))
                       : Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -1471,7 +1620,9 @@ class _BidRowState extends State<_BidRow> {
                 Expanded(
                   flex: 1,
                   child: Icon(
-                    _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: AppTheme.textMuted,
                     size: 20,
                   ),
@@ -1486,7 +1637,8 @@ class _BidRowState extends State<_BidRow> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.surfaceLight,
-              border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+              border: Border(
+                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1510,8 +1662,10 @@ class _BidRowState extends State<_BidRow> {
                     _detailItem('Seller Name', b.sellerName),
                     _detailItem('Seller Phone', b.sellerPhone),
                     _detailItem('Quantity', '${b.quantity}'),
-                    _detailItem('Offered Price', 'UGX ${b.offeredPrice.toInt()}'),
-                    _detailItem('Registry Verified', b.isRegistryVerified ? '✓ Yes' : 'No'),
+                    _detailItem(
+                        'Offered Price', 'UGX ${b.offeredPrice.toInt()}'),
+                    _detailItem('Registry Verified',
+                        b.isRegistryVerified ? '✓ Yes' : 'No'),
                   ],
                 ),
                 if (b.notes != null && b.notes!.isNotEmpty) ...[
@@ -1519,7 +1673,11 @@ class _BidRowState extends State<_BidRow> {
                   _detailItem('Buyer Notes', b.notes!),
                 ],
                 const SizedBox(height: 12),
-                _detailItem('Admin Notes', (b.adminNotes == null || b.adminNotes!.isEmpty) ? 'No notes' : b.adminNotes!),
+                _detailItem(
+                    'Admin Notes',
+                    (b.adminNotes == null || b.adminNotes!.isEmpty)
+                        ? 'No notes'
+                        : b.adminNotes!),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -1530,8 +1688,10 @@ class _BidRowState extends State<_BidRow> {
                         label: const Text('Verify Bid'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1542,8 +1702,10 @@ class _BidRowState extends State<_BidRow> {
                       label: const Text('Update Status'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.info,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1554,8 +1716,10 @@ class _BidRowState extends State<_BidRow> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textPrimary,
                         side: BorderSide(color: AppTheme.border),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1573,7 +1737,11 @@ class _BidRowState extends State<_BidRow> {
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
         const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary)),
       ],
     );
   }

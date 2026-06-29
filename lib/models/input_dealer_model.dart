@@ -1,3 +1,4 @@
+import '../utils/model_parsers.dart';
 
 class InputDealerModel {
   final String id;
@@ -35,19 +36,19 @@ class InputDealerModel {
   factory InputDealerModel.fromMap(Map<String, dynamic> map, String id) {
     return InputDealerModel(
       id: id,
-      businessName: map['businessName'] ?? '',
-      registrationNumber: map['registrationNumber'] ?? '',
-      productType: map['productType'] ?? '',
-      phone: map['phone'] ?? '',
-      district: map['district'] ?? '',
-      subcounty: map['subcounty'] ?? '',
-      village: map['village'] ?? '',
-      address: map['address'] ?? '',
-      tradingLicensePhoto: map['tradingLicensePhoto'],
-      isVerified: map['isVerified'] ?? false,
-      isActive: map['isActive'] ?? true,
-      registeredBy: map['registeredBy'],
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
+      businessName: readString(map['businessName']),
+      registrationNumber: readString(map['registrationNumber']),
+      productType: readString(map['productType']),
+      phone: readString(map['phone']),
+      district: readString(map['district']),
+      subcounty: readString(map['subcounty']),
+      village: readString(map['village']),
+      address: readString(map['address']),
+      tradingLicensePhoto: readNullableString(map['tradingLicensePhoto']),
+      isVerified: readBool(map['isVerified']),
+      isActive: readBool(map['isActive'], fallback: true),
+      registeredBy: readNullableString(map['registeredBy']),
+      createdAt: readDate(map['createdAt']),
     );
   }
 
@@ -79,7 +80,8 @@ class FarmerGroupModel {
   final String leaderName;
   final String leaderPhone;
   final int memberCount;
-  final String category; // Produce, Poultry, Livestock, Fruits & Vegetables, All
+  final String
+      category; // Produce, Poultry, Livestock, Fruits & Vegetables, All
   final String? userId; // Linked Firebase Auth user account
   final String? registeredBy;
   final DateTime createdAt;
@@ -102,17 +104,17 @@ class FarmerGroupModel {
   factory FarmerGroupModel.fromMap(Map<String, dynamic> map, String id) {
     return FarmerGroupModel(
       id: id,
-      groupName: map['groupName'] ?? '',
-      district: map['district'] ?? '',
-      subcounty: map['subcounty'] ?? '',
-      village: map['village'] ?? '',
-      leaderName: map['leaderName'] ?? '',
-      leaderPhone: map['leaderPhone'] ?? '',
-      memberCount: map['memberCount'] ?? 0,
-      category: map['category'] ?? '',
-      userId: map['userId'],
-      registeredBy: map['registeredBy'],
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
+      groupName: readString(map['groupName']),
+      district: readString(map['district']),
+      subcounty: readString(map['subcounty']),
+      village: readString(map['village']),
+      leaderName: readString(map['leaderName']),
+      leaderPhone: readString(map['leaderPhone']),
+      memberCount: readInt(map['memberCount']),
+      category: readString(map['category']),
+      userId: readNullableString(map['userId']),
+      registeredBy: readNullableString(map['registeredBy']),
+      createdAt: readDate(map['createdAt']),
     );
   }
 

@@ -23,7 +23,8 @@ class AgentDashboardScreen extends StatefulWidget {
   State<AgentDashboardScreen> createState() => _AgentDashboardScreenState();
 }
 
-class _AgentDashboardScreenState extends State<AgentDashboardScreen> with SingleTickerProviderStateMixin {
+class _AgentDashboardScreenState extends State<AgentDashboardScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
   @override
@@ -51,7 +52,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> with Single
             unselectedLabelColor: AppTheme.textMuted,
             indicatorColor: AppTheme.green,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            labelStyle:
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'Register'),
               Tab(text: 'Farmers'),
@@ -82,7 +84,11 @@ class _ActionCard extends StatelessWidget {
   final String desc;
   final VoidCallback onTap;
 
-  const _ActionCard({required this.icon, required this.title, required this.desc, required this.onTap});
+  const _ActionCard(
+      {required this.icon,
+      required this.title,
+      required this.desc,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -110,9 +116,15 @@ class _ActionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                  Text(title,
+                      style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text(desc, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  Text(desc,
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                 ],
               ),
             ),
@@ -134,52 +146,74 @@ class _RegisterTab extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: ResponsiveWrapper(
-        maxWidth: 700,
-        child: Column(
+        maxWidth: 1100,
+        child: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: context.isDesktop ? 2 : 1,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: context.isDesktop ? 3.25 : 3.6,
           children: [
-          _ActionCard(
-            icon: Icons.grass,
-            title: 'Register Farmer',
-            desc: 'Create a new farmer account',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterUserScreen(agentId: agentId, role: 'Farmer'))),
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.shopping_bag_outlined,
-            title: 'Register Buyer',
-            desc: 'Create a new buyer account',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterUserScreen(agentId: agentId, role: 'Buyer'))),
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.groups,
-            title: 'Register Farmer Group',
-            desc: 'Register a group of farmers',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterGroupScreen(agentId: agentId))),
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.storefront,
-            title: 'Register Produce Store',
-            desc: 'Register a farm store or produce outlet',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterStoreScreen(agentId: agentId))),
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.store,
-            title: 'Register Input Dealer',
-            desc: 'Register an agro input dealer',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterDealerScreen(agentId: agentId))),
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.add_business_outlined,
-            title: 'Add Product Listing',
-            desc: 'List new produce for a managed farmer',
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _AgentSelectFarmerPicker(agentId: agentId))),
-          ),
-        ],
-      ),
+            _ActionCard(
+              icon: Icons.grass,
+              title: 'Register Farmer',
+              desc: 'Create a new farmer account',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => RegisterUserScreen(
+                          agentId: agentId, role: 'Farmer'))),
+            ),
+            _ActionCard(
+              icon: Icons.shopping_bag_outlined,
+              title: 'Register Buyer',
+              desc: 'Create a new buyer account',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          RegisterUserScreen(agentId: agentId, role: 'Buyer'))),
+            ),
+            _ActionCard(
+              icon: Icons.groups,
+              title: 'Register Farmer Group',
+              desc: 'Register a group of farmers',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => RegisterGroupScreen(agentId: agentId))),
+            ),
+            _ActionCard(
+              icon: Icons.storefront,
+              title: 'Register Produce Store',
+              desc: 'Register a farm store or produce outlet',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => RegisterStoreScreen(agentId: agentId))),
+            ),
+            _ActionCard(
+              icon: Icons.store,
+              title: 'Register Input Dealer',
+              desc: 'Register an agro input dealer',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => RegisterDealerScreen(agentId: agentId))),
+            ),
+            _ActionCard(
+              icon: Icons.add_business_outlined,
+              title: 'Add Product Listing',
+              desc: 'List new produce for a managed farmer',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          _AgentSelectFarmerPicker(agentId: agentId))),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,12 +231,17 @@ class _MyUsersTab extends StatelessWidget {
       future: db.getUsersByAgent(agentId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.green));
         }
         // Show Farmers AND Stores managed by this agent
-        final users = (snap.data ?? []).where((u) => u.role == 'Farmer' || u.role == 'Store').toList();
+        final users = (snap.data ?? [])
+            .where((u) => u.role == 'Farmer' || u.role == 'Store')
+            .toList();
         if (users.isEmpty) {
-          return Center(child: Text('No registered farmers or stores yet', style: TextStyle(color: AppTheme.textMuted)));
+          return Center(
+              child: Text('No registered farmers or stores yet',
+                  style: TextStyle(color: AppTheme.textMuted)));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -215,69 +254,105 @@ class _MyUsersTab extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => _UserDetailScreen(user: u, agentId: agentId)),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.border, width: 0.5),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: isStore ? AppTheme.info.withOpacity(0.1) : AppTheme.surfaceLight,
-                      backgroundImage: u.profilePhoto != null ? NetworkImage(u.profilePhoto!) : null,
-                      child: u.profilePhoto == null
-                          ? Icon(isStore ? Icons.storefront : Icons.person, color: isStore ? AppTheme.info : AppTheme.textMuted, size: 20)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(u.name.isNotEmpty ? u.name : u.phone, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: isStore ? AppTheme.info.withOpacity(0.12) : AppTheme.greenSurface,
-                                  borderRadius: BorderRadius.circular(4),
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            _UserDetailScreen(user: u, agentId: agentId)),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.card,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.border, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: isStore
+                            ? AppTheme.info.withOpacity(0.1)
+                            : AppTheme.surfaceLight,
+                        backgroundImage: u.profilePhoto != null
+                            ? NetworkImage(u.profilePhoto!)
+                            : null,
+                        child: u.profilePhoto == null
+                            ? Icon(isStore ? Icons.storefront : Icons.person,
+                                color: isStore
+                                    ? AppTheme.info
+                                    : AppTheme.textMuted,
+                                size: 20)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(u.name.isNotEmpty ? u.name : u.phone,
+                                style: TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500)),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: isStore
+                                        ? AppTheme.info.withOpacity(0.12)
+                                        : AppTheme.greenSurface,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(u.role,
+                                      style: TextStyle(
+                                          color: isStore
+                                              ? AppTheme.info
+                                              : AppTheme.greenLight,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600)),
                                 ),
-                                child: Text(u.role, style: TextStyle(color: isStore ? AppTheme.info : AppTheme.greenLight, fontSize: 10, fontWeight: FontWeight.w600)),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(u.district, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                            ],
-                          ),
-                          if (u.phone.isNotEmpty)
-                            Text(u.phone, style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-                        ],
+                                const SizedBox(width: 6),
+                                Text(u.district,
+                                    style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 12)),
+                              ],
+                            ),
+                            if (u.phone.isNotEmpty)
+                              Text(u.phone,
+                                  style: TextStyle(
+                                      color: AppTheme.textMuted, fontSize: 11)),
+                          ],
+                        ),
                       ),
-                    ),
-                    // Quick manage listings button for farmers and stores
-                    if (u.role == 'Farmer' || u.role == 'Store')
-                      IconButton(
-                        icon: Icon(isStore ? Icons.storefront : Icons.inventory_2_outlined, color: AppTheme.greenLight, size: 20),
-                        tooltip: 'Manage Listings',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => _FarmerListingsManageScreen(farmer: u)),
-                          );
-                        },
-                      ),
-                    Icon(Icons.chevron_right, color: AppTheme.textMuted, size: 20),
-                  ],
+                      // Quick manage listings button for farmers and stores
+                      if (u.role == 'Farmer' || u.role == 'Store')
+                        IconButton(
+                          icon: Icon(
+                              isStore
+                                  ? Icons.storefront
+                                  : Icons.inventory_2_outlined,
+                              color: AppTheme.greenLight,
+                              size: 20),
+                          tooltip: 'Manage Listings',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      _FarmerListingsManageScreen(farmer: u)),
+                            );
+                          },
+                        ),
+                      Icon(Icons.chevron_right,
+                          color: AppTheme.textMuted, size: 20),
+                    ],
+                  ),
                 ),
-              ),
               ),
             );
           },
@@ -340,11 +415,14 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
         'district': _district ?? '',
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Updated successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Updated successfully!')));
         setState(() => _editing = false);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -371,11 +449,14 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
                 _district = u.district.isNotEmpty ? u.district : null;
                 setState(() => _editing = false);
               },
-              child: Text('Cancel', style: TextStyle(color: AppTheme.textMuted)),
+              child:
+                  Text('Cancel', style: TextStyle(color: AppTheme.textMuted)),
             ),
             TextButton(
               onPressed: _save,
-              child: const Text('Save', style: TextStyle(color: AppTheme.greenLight, fontWeight: FontWeight.w600)),
+              child: const Text('Save',
+                  style: TextStyle(
+                      color: AppTheme.greenLight, fontWeight: FontWeight.w600)),
             ),
           ],
         ],
@@ -386,37 +467,49 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
           maxWidth: 600,
           child: Column(
             children: [
-            // Avatar header
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppTheme.surfaceLight,
-              backgroundImage: u.profilePhoto != null ? NetworkImage(u.profilePhoto!) : null,
-              child: u.profilePhoto == null
-                  ? Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 28, fontWeight: FontWeight.w700))
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(color: AppTheme.greenSurface, borderRadius: BorderRadius.circular(6)),
-              child: Text(u.role, style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(height: 24),
-
-            // Info card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppTheme.card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.border, width: 0.5),
+              // Avatar header
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppTheme.surfaceLight,
+                backgroundImage: u.profilePhoto != null
+                    ? NetworkImage(u.profilePhoto!)
+                    : null,
+                child: u.profilePhoto == null
+                    ? Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?',
+                        style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700))
+                    : null,
               ),
-              child: _editing ? _buildEditForm() : _buildInfoView(),
-            ),
-          ],
-        ),
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                    color: AppTheme.greenSurface,
+                    borderRadius: BorderRadius.circular(6)),
+                child: Text(u.role,
+                    style: TextStyle(
+                        color: AppTheme.greenLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(height: 24),
+
+              // Info card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppTheme.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.border, width: 0.5),
+                ),
+                child: _editing ? _buildEditForm() : _buildInfoView(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -425,27 +518,35 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
   Widget _buildInfoView() {
     final u = widget.user;
     final isManagingAgent = u.agentId == widget.agentId;
-    
+
     return Column(
       children: [
-        _infoRow(Icons.person, 'Full Name', '${u.firstName} ${u.lastName}'.trim()),
         _infoRow(
-          Icons.phone, 
-          'Phone', 
-          isManagingAgent ? (u.phone.isNotEmpty ? u.phone : 'Not set') : 'Hidden (Not your farmer)'
-        ),
+            Icons.person, 'Full Name', '${u.firstName} ${u.lastName}'.trim()),
         _infoRow(
-          Icons.email, 
-          'Email', 
-          isManagingAgent ? (u.email.isNotEmpty ? u.email : 'Not set') : 'Hidden (Not your farmer)'
-        ),
-        _infoRow(Icons.wc, 'Gender', u.gender.isNotEmpty ? u.gender : 'Not set'),
-        _infoRow(Icons.location_on, 'District', u.district.isNotEmpty ? u.district : 'Not set'),
-        _infoRow(Icons.map, 'Subcounty', u.subcounty.isNotEmpty ? u.subcounty : 'Not set'),
-        _infoRow(Icons.home, 'Village', u.village.isNotEmpty ? u.village : 'Not set'),
+            Icons.phone,
+            'Phone',
+            isManagingAgent
+                ? (u.phone.isNotEmpty ? u.phone : 'Not set')
+                : 'Hidden (Not your farmer)'),
+        _infoRow(
+            Icons.email,
+            'Email',
+            isManagingAgent
+                ? (u.email.isNotEmpty ? u.email : 'Not set')
+                : 'Hidden (Not your farmer)'),
+        _infoRow(
+            Icons.wc, 'Gender', u.gender.isNotEmpty ? u.gender : 'Not set'),
+        _infoRow(Icons.location_on, 'District',
+            u.district.isNotEmpty ? u.district : 'Not set'),
+        _infoRow(Icons.map, 'Subcounty',
+            u.subcounty.isNotEmpty ? u.subcounty : 'Not set'),
+        _infoRow(Icons.home, 'Village',
+            u.village.isNotEmpty ? u.village : 'Not set'),
         if (u.bio != null && u.bio!.isNotEmpty)
           _infoRow(Icons.info_outline, 'Bio', u.bio!),
-        _infoRow(Icons.verified, 'Status', u.isVerified ? 'Verified' : 'Unverified',
+        _infoRow(
+            Icons.verified, 'Status', u.isVerified ? 'Verified' : 'Unverified',
             valueColor: u.isVerified ? AppTheme.greenLight : AppTheme.warning),
         _infoRow(Icons.calendar_today, 'Registered', _formatDate(u.createdAt)),
       ],
@@ -457,33 +558,57 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: CustomTextField(label: 'First Name', controller: _firstNameCtrl)),
+            Expanded(
+                child: CustomTextField(
+                    label: 'First Name', controller: _firstNameCtrl)),
             const SizedBox(width: 12),
-            Expanded(child: CustomTextField(label: 'Last Name', controller: _lastNameCtrl)),
+            Expanded(
+                child: CustomTextField(
+                    label: 'Last Name', controller: _lastNameCtrl)),
           ],
         ),
         const SizedBox(height: 14),
-        CustomTextField(label: 'Phone', controller: _phoneCtrl, keyboardType: TextInputType.phone),
+        CustomTextField(
+            label: 'Phone',
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone),
         const SizedBox(height: 14),
-        CustomTextField(label: 'Email (read-only)', controller: _emailCtrl, enabled: false),
+        CustomTextField(
+            label: 'Email (read-only)', controller: _emailCtrl, enabled: false),
         const SizedBox(height: 14),
-        CustomDropdown(label: 'Gender', value: _gender, items: AppConstants.genderOptions, onChanged: (v) => setState(() => _gender = v)),
+        CustomDropdown(
+            label: 'Gender',
+            value: _gender,
+            items: AppConstants.genderOptions,
+            onChanged: (v) => setState(() => _gender = v)),
         const SizedBox(height: 14),
-        CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
+        CustomDropdown(
+            label: 'District',
+            value: _district,
+            items: AppConstants.bunyoroDistricts,
+            onChanged: (v) => setState(() => _district = v)),
       ],
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _infoRow(IconData icon, String label, String value,
+      {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
           Icon(icon, color: AppTheme.textMuted, size: 18),
           const SizedBox(width: 12),
-          SizedBox(width: 80, child: Text(label, style: TextStyle(color: AppTheme.textMuted, fontSize: 13))),
+          SizedBox(
+              width: 80,
+              child: Text(label,
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 13))),
           Expanded(
-            child: Text(value, style: TextStyle(color: valueColor ?? AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+            child: Text(value,
+                style: TextStyle(
+                    color: valueColor ?? AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -491,7 +616,20 @@ class _UserDetailScreenState extends State<_UserDetailScreen> {
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
@@ -506,7 +644,8 @@ class _FarmerListingsManageScreen extends StatelessWidget {
     final db = DatabaseService();
     return Scaffold(
       appBar: AppBar(
-        title: Text('${farmer.firstName.isNotEmpty ? farmer.firstName : farmer.name}\'s Listings'),
+        title: Text(
+            '${farmer.firstName.isNotEmpty ? farmer.firstName : farmer.name}\'s Listings'),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -520,7 +659,11 @@ class _FarmerListingsManageScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.swap_horiz, color: Colors.orange, size: 14),
                 const SizedBox(width: 4),
-                Text('Managing as Agent', style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600)),
+                Text('Managing as Agent',
+                    style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -530,7 +673,8 @@ class _FarmerListingsManageScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: farmer.id)),
+            MaterialPageRoute(
+                builder: (_) => AddProductScreen(sellerId: farmer.id)),
           );
         },
         icon: const Icon(Icons.add),
@@ -540,7 +684,8 @@ class _FarmerListingsManageScreen extends StatelessWidget {
         future: db.getProductsBySeller(farmer.id),
         builder: (ctx, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+            return const Center(
+                child: CircularProgressIndicator(color: AppTheme.green));
           }
           final products = snap.data ?? [];
           if (products.isEmpty) {
@@ -548,11 +693,17 @@ class _FarmerListingsManageScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.inventory_2_outlined, color: AppTheme.textMuted.withOpacity(0.3), size: 56),
+                  Icon(Icons.inventory_2_outlined,
+                      color: AppTheme.textMuted.withOpacity(0.3), size: 56),
                   const SizedBox(height: 12),
-                  Text('No listings yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                  Text('No listings yet',
+                      style:
+                          TextStyle(color: AppTheme.textMuted, fontSize: 16)),
                   const SizedBox(height: 6),
-                  Text('Add a listing for this farmer', style: TextStyle(color: AppTheme.textMuted.withOpacity(0.6), fontSize: 13)),
+                  Text('Add a listing for this farmer',
+                      style: TextStyle(
+                          color: AppTheme.textMuted.withOpacity(0.6),
+                          fontSize: 13)),
                 ],
               ),
             );
@@ -568,7 +719,9 @@ class _FarmerListingsManageScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: farmer.id, existingProduct: p)),
+                      MaterialPageRoute(
+                          builder: (_) => AddProductScreen(
+                              sellerId: farmer.id, existingProduct: p)),
                     );
                   },
                   child: Container(
@@ -579,65 +732,84 @@ class _FarmerListingsManageScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppTheme.border, width: 0.5),
                     ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppTheme.greenSurface,
-                          borderRadius: BorderRadius.circular(10),
-                          image: p.imageUrl != null
-                              ? DecorationImage(
-                                  image: p.imageUrl!.startsWith('assets/')
-                                      ? AssetImage(p.imageUrl!) as ImageProvider
-                                      : NetworkImage(p.imageUrl!),
-                                  fit: BoxFit.cover)
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: AppTheme.greenSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            image: p.imageUrl != null
+                                ? DecorationImage(
+                                    image: p.imageUrl!.startsWith('assets/')
+                                        ? AssetImage(p.imageUrl!)
+                                            as ImageProvider
+                                        : NetworkImage(p.imageUrl!),
+                                    fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: p.imageUrl == null
+                              ? const Icon(Icons.eco,
+                                  color: AppTheme.greenLight)
                               : null,
                         ),
-                        child: p.imageUrl == null ? const Icon(Icons.eco, color: AppTheme.greenLight) : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p.productName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 2),
-                            Text('${p.quantity} ${p.quantityUnit} • ${p.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'UGX ${p.price.toStringAsFixed(0)}',
-                            style: TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w600),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p.productName,
+                                  style: TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text(
+                                  '${p.quantity} ${p.quantityUnit} • ${p.district}',
+                                  style: TextStyle(
+                                      color: AppTheme.textMuted, fontSize: 12)),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: p.availability == 'Available Now' ? AppTheme.greenSurface : AppTheme.surfaceLight,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              p.availability,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'UGX ${p.price.toStringAsFixed(0)}',
                               style: TextStyle(
-                                color: p.availability == 'Available Now' ? AppTheme.greenLight : AppTheme.textMuted,
-                                fontSize: 10,
+                                  color: AppTheme.greenLight,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: p.availability == 'Available Now'
+                                    ? AppTheme.greenSurface
+                                    : AppTheme.surfaceLight,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                p.availability,
+                                style: TextStyle(
+                                  color: p.availability == 'Available Now'
+                                      ? AppTheme.greenLight
+                                      : AppTheme.textMuted,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
           );
         },
       ),
@@ -657,11 +829,14 @@ class _GroupsTab extends StatelessWidget {
       future: db.getGroupsByAgent(agentId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.green));
         }
         final groups = snap.data ?? [];
         if (groups.isEmpty) {
-          return Center(child: Text('No groups registered', style: TextStyle(color: AppTheme.textMuted)));
+          return Center(
+              child: Text('No groups registered',
+                  style: TextStyle(color: AppTheme.textMuted)));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -681,12 +856,24 @@ class _GroupsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(g.groupName, style: TextStyle(color: AppTheme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                    Text(g.groupName,
+                        style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    Text('Leader: ${g.leaderName} • ${g.district}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                    Text('${g.memberCount} members${g.category.isNotEmpty ? ' • ${g.category}' : ''}', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                    Text('Leader: ${g.leaderName} • ${g.district}',
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                    Text(
+                        '${g.memberCount} members${g.category.isNotEmpty ? ' • ${g.category}' : ''}',
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                     if (g.subcounty.isNotEmpty || g.village.isNotEmpty)
-                      Text('${g.subcounty}${g.subcounty.isNotEmpty && g.village.isNotEmpty ? ', ' : ''}${g.village}', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      Text(
+                          '${g.subcounty}${g.subcounty.isNotEmpty && g.village.isNotEmpty ? ', ' : ''}${g.village}',
+                          style: TextStyle(
+                              color: AppTheme.textMuted, fontSize: 11)),
                   ],
                 ),
               ),
@@ -705,7 +892,8 @@ class _AgentRegisterUserScreen extends StatefulWidget {
   const _AgentRegisterUserScreen({required this.agentId, required this.role});
 
   @override
-  State<_AgentRegisterUserScreen> createState() => _AgentRegisterUserScreenState();
+  State<_AgentRegisterUserScreen> createState() =>
+      _AgentRegisterUserScreenState();
 }
 
 class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
@@ -723,12 +911,14 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
   bool _loading = false;
 
   /// Password is the user's phone number (digits only)
-  String get _defaultPassword => _phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+  String get _defaultPassword =>
+      _phoneCtrl.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     if (_gender == null || _district == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fill all required fields')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fill all required fields')));
       return;
     }
     setState(() => _loading = true);
@@ -747,7 +937,8 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
           profileData: {
             'firstName': _firstNameCtrl.text.trim(),
             'lastName': _lastNameCtrl.text.trim(),
-            'name': '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
+            'name':
+                '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
             'phone': _phoneCtrl.text.trim(),
             'gender': _gender,
             'district': _district,
@@ -762,12 +953,15 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
         // No email: create Firestore-only profile. User will sign in via Phone OTP.
         final phone = _phoneCtrl.text.trim();
         if (phone.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number is required when no email is provided')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content:
+                  Text('Phone number is required when no email is provided')));
           setState(() => _loading = false);
           return;
         }
         // Use phone as unique document ID base + timestamp
-        final uid = 'phone_${phone.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
+        final uid =
+            'phone_${phone.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
         await db.setUser(uid, {
           'firstName': _firstNameCtrl.text.trim(),
           'lastName': _lastNameCtrl.text.trim(),
@@ -789,16 +983,21 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
           'createdAt': DateTime.now().toIso8601String(),
         });
         // Notify admins
-        db.sendUserSignupNotification(
-          userName: '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
-          userRole: widget.role,
-          userId: uid,
-        ).catchError((_) {});
+        db
+            .sendUserSignupNotification(
+              userName:
+                  '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}',
+              userRole: widget.role,
+              userId: uid,
+            )
+            .catchError((_) {});
       }
 
       if (mounted) _showSuccessDialog();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -816,16 +1015,20 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
         return AlertDialog(
           title: Row(
             children: [
-              const Icon(Icons.check_circle, color: AppTheme.greenLight, size: 24),
+              const Icon(Icons.check_circle,
+                  color: AppTheme.greenLight, size: 24),
               const SizedBox(width: 8),
-              Text('${widget.role} Registered!', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18)),
+              Text('${widget.role} Registered!',
+                  style: TextStyle(color: AppTheme.textPrimary, fontSize: 18)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Login credentials for $name:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text('Login credentials for $name:',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               const SizedBox(height: 16),
 
               // Credentials card
@@ -846,7 +1049,8 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
                     if (hasEmail) _credRow('Password', _defaultPassword),
                     _credRow('Role', widget.role),
                     _credRow('District', _district ?? ''),
-                    _credRow('Login via', hasEmail ? 'Email & Password' : 'Phone Number (OTP)'),
+                    _credRow('Login via',
+                        hasEmail ? 'Email & Password' : 'Phone Number (OTP)'),
                   ],
                 ),
               ),
@@ -864,12 +1068,16 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.phone_android, color: AppTheme.greenLight, size: 16),
+                      Icon(Icons.phone_android,
+                          color: AppTheme.greenLight, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'This user has no email. They must sign in using their Phone Number via OTP on the BFarm login screen.',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 11, height: 1.4),
+                          style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 11,
+                              height: 1.4),
                         ),
                       ),
                     ],
@@ -889,14 +1097,19 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
                           'Role: ${widget.role}',
                     ));
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Credentials copied to clipboard')),
+                      const SnackBar(
+                          content: Text('Credentials copied to clipboard')),
                     );
                   },
-                  icon: Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
-                  label: Text('Copy Credentials', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  icon:
+                      Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
+                  label: Text('Copy Credentials',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
@@ -906,7 +1119,10 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
                 hasEmail
                     ? 'The user can change their password after first login.'
                     : 'The user will verify their phone number on first login.',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -932,10 +1148,15 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
         children: [
           SizedBox(
             width: 70,
-            child: Text('$label:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+            child: Text('$label:',
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
           ),
           Expanded(
-            child: Text(value, style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+            child: Text(value,
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -943,7 +1164,14 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
   }
 
   @override
-  void dispose() { _firstNameCtrl.dispose(); _lastNameCtrl.dispose(); _phoneCtrl.dispose(); _emailCtrl.dispose(); _bioCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _bioCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -967,12 +1195,16 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: AppTheme.greenLight, size: 18),
+                    const Icon(Icons.info_outline,
+                        color: AppTheme.greenLight, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Default password: Phone Number (digits only)\nThe user can change it after first login.',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                            height: 1.4),
                       ),
                     ),
                   ],
@@ -980,34 +1212,69 @@ class _AgentRegisterUserScreenState extends State<_AgentRegisterUserScreen> {
               ),
               const SizedBox(height: 20),
 
-              CustomTextField(label: 'First Name', controller: _firstNameCtrl, validator: (v) => Validators.required(v, 'First name')),
+              CustomTextField(
+                  label: 'First Name',
+                  controller: _firstNameCtrl,
+                  validator: (v) => Validators.required(v, 'First name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Last Name', controller: _lastNameCtrl, validator: (v) => Validators.required(v, 'Last name')),
+              CustomTextField(
+                  label: 'Last Name',
+                  controller: _lastNameCtrl,
+                  validator: (v) => Validators.required(v, 'Last name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl, validator: Validators.phone, keyboardType: TextInputType.phone,
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20)),
+              CustomTextField(
+                  label: 'Phone',
+                  controller: _phoneCtrl,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone,
+                  prefixIcon: Icon(Icons.phone_outlined,
+                      color: AppTheme.textMuted, size: 20)),
               const SizedBox(height: 14),
               CustomTextField(
                 label: 'Email (Optional — leave blank to use phone login)',
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted, size: 20),
+                prefixIcon: Icon(Icons.email_outlined,
+                    color: AppTheme.textMuted, size: 20),
                 // No validator — email is optional
               ),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'Gender', value: _gender, items: AppConstants.genderOptions, onChanged: (v) => setState(() => _gender = v)),
+              CustomDropdown(
+                  label: 'Gender',
+                  value: _gender,
+                  items: AppConstants.genderOptions,
+                  onChanged: (v) => setState(() => _gender = v)),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
+              CustomDropdown(
+                  label: 'District',
+                  value: _district,
+                  items: AppConstants.bunyoroDistricts,
+                  onChanged: (v) => setState(() => _district = v)),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Subcounty (Optional)', hint: 'e.g. Buseruka', onChanged: (v) => _subcounty = v),
+              CustomTextField(
+                  label: 'Subcounty (Optional)',
+                  hint: 'e.g. Buseruka',
+                  onChanged: (v) => _subcounty = v),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Village (Optional)', hint: 'e.g. Kaiso', onChanged: (v) => _village = v),
+              CustomTextField(
+                  label: 'Village (Optional)',
+                  hint: 'e.g. Kaiso',
+                  onChanged: (v) => _village = v),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Bio / Speciality (Optional)', hint: 'e.g. Pigs Farmer, Fruit Specialist', controller: _bioCtrl),
+              CustomTextField(
+                  label: 'Bio / Speciality (Optional)',
+                  hint: 'e.g. Pigs Farmer, Fruit Specialist',
+                  controller: _bioCtrl),
               const SizedBox(height: 14),
-              CustomTextField(label: 'NIN (Optional)', hint: 'National ID Number', onChanged: (v) => _nin = v),
+              CustomTextField(
+                  label: 'NIN (Optional)',
+                  hint: 'National ID Number',
+                  onChanged: (v) => _nin = v),
               const SizedBox(height: 28),
-              CustomButton(text: 'Register ${widget.role}', onPressed: _register, isLoading: _loading),
+              CustomButton(
+                  text: 'Register ${widget.role}',
+                  onPressed: _register,
+                  isLoading: _loading),
             ],
           ),
         ),
@@ -1022,7 +1289,8 @@ class _AgentRegisterGroupScreen extends StatefulWidget {
   const _AgentRegisterGroupScreen({required this.agentId});
 
   @override
-  State<_AgentRegisterGroupScreen> createState() => _AgentRegisterGroupScreenState();
+  State<_AgentRegisterGroupScreen> createState() =>
+      _AgentRegisterGroupScreenState();
 }
 
 class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
@@ -1106,23 +1374,32 @@ class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
         userId: userId,
         registeredBy: widget.agentId,
       ));
-      if (mounted) _showGroupSuccessDialog(groupName, email, password, phone, userId != null);
+      if (mounted)
+        _showGroupSuccessDialog(
+            groupName, email, password, phone, userId != null);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
 
-  void _showGroupSuccessDialog(String name, String email, String password, String phone, bool hasAccount) {
+  void _showGroupSuccessDialog(String name, String email, String password,
+      String phone, bool hasAccount) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppTheme.greenLight, size: 24),
+            const Icon(Icons.check_circle,
+                color: AppTheme.greenLight, size: 24),
             const SizedBox(width: 8),
-            Expanded(child: Text('Group Registered!', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18))),
+            Expanded(
+                child: Text('Group Registered!',
+                    style:
+                        TextStyle(color: AppTheme.textPrimary, fontSize: 18))),
           ],
         ),
         content: Column(
@@ -1130,7 +1407,9 @@ class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (hasAccount) ...[
-              Text('Login credentials for $name:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text('Login credentials for $name:',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -1156,25 +1435,37 @@ class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Clipboard.setData(ClipboardData(
-                      text: 'BFarm Group Login\nGroup: $name\nEmail: $email\nPassword: $password\nPhone: $phone',
+                      text:
+                          'BFarm Group Login\nGroup: $name\nEmail: $email\nPassword: $password\nPhone: $phone',
                     ));
-                    ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Credentials copied!')));
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(content: Text('Credentials copied!')));
                   },
-                  icon: Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
-                  label: Text('Copy Credentials', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  icon:
+                      Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
+                  label: Text('Copy Credentials',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
             ] else
-              Text('Group "$name" registered successfully (no login account created — email may already exist).', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text(
+                  'Group "$name" registered successfully (no login account created — email may already exist).',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
           ],
         ),
         actions: [
           ElevatedButton(
-            onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
             child: const Text('Done'),
           ),
         ],
@@ -1188,15 +1479,31 @@ class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 70, child: Text('$label:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12))),
-          Expanded(child: Text(value, style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
+          SizedBox(
+              width: 70,
+              child: Text('$label:',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12))),
+          Expanded(
+              child: Text(value,
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600))),
         ],
       ),
     );
   }
 
   @override
-  void dispose() { _nameCtrl.dispose(); _leaderCtrl.dispose(); _phoneCtrl.dispose(); _membersCtrl.dispose(); _subcountyCtrl.dispose(); _villageCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _nameCtrl.dispose();
+    _leaderCtrl.dispose();
+    _phoneCtrl.dispose();
+    _membersCtrl.dispose();
+    _subcountyCtrl.dispose();
+    _villageCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1221,35 +1528,70 @@ class _AgentRegisterGroupScreenState extends State<_AgentRegisterGroupScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.groups, color: AppTheme.greenLight, size: 20),
+                    const Icon(Icons.groups,
+                        color: AppTheme.greenLight, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'A user account will be created for this group.\nPassword: Leader\'s phone number (digits only).',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                            height: 1.4),
                       ),
                     ),
                   ],
                 ),
               ),
-              CustomTextField(label: 'Group Name', controller: _nameCtrl, validator: (v) => Validators.required(v, 'Group name')),
+              CustomTextField(
+                  label: 'Group Name',
+                  controller: _nameCtrl,
+                  validator: (v) => Validators.required(v, 'Group name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Leader Name', controller: _leaderCtrl, validator: (v) => Validators.required(v, 'Leader name')),
+              CustomTextField(
+                  label: 'Leader Name',
+                  controller: _leaderCtrl,
+                  validator: (v) => Validators.required(v, 'Leader name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Leader Phone', controller: _phoneCtrl, validator: Validators.phone, keyboardType: TextInputType.phone,
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20)),
+              CustomTextField(
+                  label: 'Leader Phone',
+                  controller: _phoneCtrl,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone,
+                  prefixIcon: Icon(Icons.phone_outlined,
+                      color: AppTheme.textMuted, size: 20)),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Number of Members', controller: _membersCtrl, keyboardType: TextInputType.number),
+              CustomTextField(
+                  label: 'Number of Members',
+                  controller: _membersCtrl,
+                  keyboardType: TextInputType.number),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'Category', value: _category, items: _groupCategories, onChanged: (v) => setState(() => _category = v)),
+              CustomDropdown(
+                  label: 'Category',
+                  value: _category,
+                  items: _groupCategories,
+                  onChanged: (v) => setState(() => _category = v)),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
+              CustomDropdown(
+                  label: 'District',
+                  value: _district,
+                  items: AppConstants.bunyoroDistricts,
+                  onChanged: (v) => setState(() => _district = v)),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Subcounty', hint: 'e.g. Buseruka', controller: _subcountyCtrl),
+              CustomTextField(
+                  label: 'Subcounty',
+                  hint: 'e.g. Buseruka',
+                  controller: _subcountyCtrl),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Village', hint: 'e.g. Kaiso', controller: _villageCtrl),
+              CustomTextField(
+                  label: 'Village',
+                  hint: 'e.g. Kaiso',
+                  controller: _villageCtrl),
               const SizedBox(height: 28),
-              CustomButton(text: 'Register Group', onPressed: _save, isLoading: _loading),
+              CustomButton(
+                  text: 'Register Group',
+                  onPressed: _save,
+                  isLoading: _loading),
             ],
           ),
         ),
@@ -1264,10 +1606,12 @@ class _AgentRegisterDealerScreen extends StatefulWidget {
   const _AgentRegisterDealerScreen({required this.agentId});
 
   @override
-  State<_AgentRegisterDealerScreen> createState() => _AgentRegisterDealerScreenState();
+  State<_AgentRegisterDealerScreen> createState() =>
+      _AgentRegisterDealerScreenState();
 }
 
-class _AgentRegisterDealerScreenState extends State<_AgentRegisterDealerScreen> {
+class _AgentRegisterDealerScreenState
+    extends State<_AgentRegisterDealerScreen> {
   final _formKey = GlobalKey<FormState>();
   final _bizNameCtrl = TextEditingController();
   final _regNumCtrl = TextEditingController();
@@ -1278,7 +1622,9 @@ class _AgentRegisterDealerScreenState extends State<_AgentRegisterDealerScreen> 
   bool _loading = false;
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _district == null || _productType == null) return;
+    if (!_formKey.currentState!.validate() ||
+        _district == null ||
+        _productType == null) return;
     setState(() => _loading = true);
     try {
       final db = DatabaseService();
@@ -1293,17 +1639,26 @@ class _AgentRegisterDealerScreenState extends State<_AgentRegisterDealerScreen> 
         registeredBy: widget.agentId,
       ));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dealer registered!')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Dealer registered!')));
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
 
   @override
-  void dispose() { _bizNameCtrl.dispose(); _regNumCtrl.dispose(); _phoneCtrl.dispose(); _addressCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _bizNameCtrl.dispose();
+    _regNumCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addressCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1315,19 +1670,38 @@ class _AgentRegisterDealerScreenState extends State<_AgentRegisterDealerScreen> 
           key: _formKey,
           child: Column(
             children: [
-              CustomTextField(label: 'Business Name', controller: _bizNameCtrl, validator: (v) => Validators.required(v, 'Business name')),
+              CustomTextField(
+                  label: 'Business Name',
+                  controller: _bizNameCtrl,
+                  validator: (v) => Validators.required(v, 'Business name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Registration Number', controller: _regNumCtrl),
+              CustomTextField(
+                  label: 'Registration Number', controller: _regNumCtrl),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'Product Type', value: _productType, items: AppConstants.inputProductTypes, onChanged: (v) => setState(() => _productType = v)),
+              CustomDropdown(
+                  label: 'Product Type',
+                  value: _productType,
+                  items: AppConstants.inputProductTypes,
+                  onChanged: (v) => setState(() => _productType = v)),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl, validator: Validators.phone, keyboardType: TextInputType.phone),
+              CustomTextField(
+                  label: 'Phone',
+                  controller: _phoneCtrl,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
+              CustomDropdown(
+                  label: 'District',
+                  value: _district,
+                  items: AppConstants.bunyoroDistricts,
+                  onChanged: (v) => setState(() => _district = v)),
               const SizedBox(height: 14),
               CustomTextField(label: 'Address', controller: _addressCtrl),
               const SizedBox(height: 28),
-              CustomButton(text: 'Register Dealer', onPressed: _save, isLoading: _loading),
+              CustomButton(
+                  text: 'Register Dealer',
+                  onPressed: _save,
+                  isLoading: _loading),
             ],
           ),
         ),
@@ -1342,10 +1716,12 @@ class _AgentRegisterProduceStoreScreen extends StatefulWidget {
   const _AgentRegisterProduceStoreScreen({required this.agentId});
 
   @override
-  State<_AgentRegisterProduceStoreScreen> createState() => _AgentRegisterProduceStoreScreenState();
+  State<_AgentRegisterProduceStoreScreen> createState() =>
+      _AgentRegisterProduceStoreScreenState();
 }
 
-class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceStoreScreen> {
+class _AgentRegisterProduceStoreScreenState
+    extends State<_AgentRegisterProduceStoreScreen> {
   final _formKey = GlobalKey<FormState>();
   final _storeNameCtrl = TextEditingController();
   final _ownerNameCtrl = TextEditingController();
@@ -1355,15 +1731,22 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
   String? _storeType;
   bool _loading = false;
 
-  static const List<String> _storeTypes = ['Farm Store', 'Produce Store', 'Wholesale Store'];
+  static const List<String> _storeTypes = [
+    'Farm Store',
+    'Produce Store',
+    'Wholesale Store'
+  ];
 
   String _sanitizeEmail(String name) {
     return name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _district == null || _storeType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields')));
+    if (!_formKey.currentState!.validate() ||
+        _district == null ||
+        _storeType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill all required fields')));
       return;
     }
     setState(() => _loading = true);
@@ -1419,23 +1802,32 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
         'isActive': true,
         'createdAt': DateTime.now().toIso8601String(),
       });
-      if (mounted) _showStoreSuccessDialog(storeName, email, password, phone, userId != null);
+      if (mounted)
+        _showStoreSuccessDialog(
+            storeName, email, password, phone, userId != null);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
     if (mounted) setState(() => _loading = false);
   }
 
-  void _showStoreSuccessDialog(String name, String email, String password, String phone, bool hasAccount) {
+  void _showStoreSuccessDialog(String name, String email, String password,
+      String phone, bool hasAccount) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppTheme.greenLight, size: 24),
+            const Icon(Icons.check_circle,
+                color: AppTheme.greenLight, size: 24),
             const SizedBox(width: 8),
-            Expanded(child: Text('Store Registered!', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18))),
+            Expanded(
+                child: Text('Store Registered!',
+                    style:
+                        TextStyle(color: AppTheme.textPrimary, fontSize: 18))),
           ],
         ),
         content: Column(
@@ -1443,7 +1835,9 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (hasAccount) ...[
-              Text('Marketplace login credentials for $name:', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text('Marketplace login credentials for $name:',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -1470,15 +1864,21 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Clipboard.setData(ClipboardData(
-                      text: 'BFarm Store Login\nStore: $name\nEmail: $email\nPassword: $password\nPhone: $phone\nAccess: Buy, Sell & Update Products',
+                      text:
+                          'BFarm Store Login\nStore: $name\nEmail: $email\nPassword: $password\nPhone: $phone\nAccess: Buy, Sell & Update Products',
                     ));
-                    ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Credentials copied!')));
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(content: Text('Credentials copied!')));
                   },
-                  icon: Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
-                  label: Text('Copy Credentials', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  icon:
+                      Icon(Icons.copy, size: 16, color: AppTheme.textSecondary),
+                  label: Text('Copy Credentials',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
@@ -1498,19 +1898,28 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
                     Expanded(
                       child: Text(
                         'This store can now log in to buy, sell and update products on the marketplace. You (the agent) can also list products for them.',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 11, height: 1.4),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            height: 1.4),
                       ),
                     ),
                   ],
                 ),
               ),
             ] else
-              Text('Store "$name" registered successfully (no login account created — email may already exist).', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text(
+                  'Store "$name" registered successfully (no login account created — email may already exist).',
+                  style:
+                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
           ],
         ),
         actions: [
           ElevatedButton(
-            onPressed: () { Navigator.pop(ctx); Navigator.pop(context); },
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
             child: const Text('Done'),
           ),
         ],
@@ -1524,15 +1933,29 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 70, child: Text('$label:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12))),
-          Expanded(child: Text(value, style: TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
+          SizedBox(
+              width: 70,
+              child: Text('$label:',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12))),
+          Expanded(
+              child: Text(value,
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600))),
         ],
       ),
     );
   }
 
   @override
-  void dispose() { _storeNameCtrl.dispose(); _ownerNameCtrl.dispose(); _phoneCtrl.dispose(); _subcountyCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _storeNameCtrl.dispose();
+    _ownerNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _subcountyCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1555,31 +1978,60 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.storefront, color: AppTheme.greenLight, size: 20),
+                    const Icon(Icons.storefront,
+                        color: AppTheme.greenLight, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Register a store with marketplace access.\nPassword: Phone number (digits only). The store can buy, sell & update products.',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+                        style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                            height: 1.4),
                       ),
                     ),
                   ],
                 ),
               ),
-              CustomTextField(label: 'Store Name', controller: _storeNameCtrl, validator: (v) => Validators.required(v, 'Store name')),
+              CustomTextField(
+                  label: 'Store Name',
+                  controller: _storeNameCtrl,
+                  validator: (v) => Validators.required(v, 'Store name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Owner / Manager Name', controller: _ownerNameCtrl, validator: (v) => Validators.required(v, 'Owner name')),
+              CustomTextField(
+                  label: 'Owner / Manager Name',
+                  controller: _ownerNameCtrl,
+                  validator: (v) => Validators.required(v, 'Owner name')),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Phone', controller: _phoneCtrl, validator: Validators.phone, keyboardType: TextInputType.phone,
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20)),
+              CustomTextField(
+                  label: 'Phone',
+                  controller: _phoneCtrl,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone,
+                  prefixIcon: Icon(Icons.phone_outlined,
+                      color: AppTheme.textMuted, size: 20)),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'Store Type', value: _storeType, items: _storeTypes, onChanged: (v) => setState(() => _storeType = v)),
+              CustomDropdown(
+                  label: 'Store Type',
+                  value: _storeType,
+                  items: _storeTypes,
+                  onChanged: (v) => setState(() => _storeType = v)),
               const SizedBox(height: 14),
-              CustomDropdown(label: 'District', value: _district, items: AppConstants.bunyoroDistricts, onChanged: (v) => setState(() => _district = v)),
+              CustomDropdown(
+                  label: 'District',
+                  value: _district,
+                  items: AppConstants.bunyoroDistricts,
+                  onChanged: (v) => setState(() => _district = v)),
               const SizedBox(height: 14),
-              CustomTextField(label: 'Subcounty (Optional)', hint: 'e.g. Buseruka', controller: _subcountyCtrl),
+              CustomTextField(
+                  label: 'Subcounty (Optional)',
+                  hint: 'e.g. Buseruka',
+                  controller: _subcountyCtrl),
               const SizedBox(height: 28),
-              CustomButton(text: 'Register Store', onPressed: _save, isLoading: _loading),
+              CustomButton(
+                  text: 'Register Store',
+                  onPressed: _save,
+                  isLoading: _loading),
             ],
           ),
         ),
@@ -1587,7 +2039,6 @@ class _AgentRegisterProduceStoreScreenState extends State<_AgentRegisterProduceS
     );
   }
 }
-
 
 // --- Agent Select Farmer/Store Picker (for Add Listing flow) ----
 class _AgentSelectFarmerPicker extends StatelessWidget {
@@ -1602,10 +2053,13 @@ class _AgentSelectFarmerPicker extends StatelessWidget {
         future: DatabaseService().getUsersByAgent(agentId),
         builder: (ctx, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+            return const Center(
+                child: CircularProgressIndicator(color: AppTheme.green));
           }
           // Include both Farmers and Stores for listing products
-          final sellers = (snap.data ?? []).where((u) => u.role == 'Farmer' || u.role == 'Store').toList();
+          final sellers = (snap.data ?? [])
+              .where((u) => u.role == 'Farmer' || u.role == 'Store')
+              .toList();
           if (sellers.isEmpty) {
             return Center(
               child: Padding(
@@ -1613,9 +2067,12 @@ class _AgentSelectFarmerPicker extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.person_off_rounded, size: 64, color: AppTheme.textMuted.withOpacity(0.2)),
+                    Icon(Icons.person_off_rounded,
+                        size: 64, color: AppTheme.textMuted.withOpacity(0.2)),
                     const SizedBox(height: 16),
-                    Text('No farmers or stores managed by you yet', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textMuted)),
+                    Text('No farmers or stores managed by you yet',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.textMuted)),
                   ],
                 ),
               ),
@@ -1631,28 +2088,51 @@ class _AgentSelectFarmerPicker extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: isStore ? AppTheme.info.withOpacity(0.1) : AppTheme.surfaceLight,
-                    backgroundImage: f.profilePhoto != null ? NetworkImage(f.profilePhoto!) : null,
-                    child: f.profilePhoto == null ? Icon(isStore ? Icons.storefront : Icons.person, color: isStore ? AppTheme.info : AppTheme.textMuted) : null,
+                    backgroundColor: isStore
+                        ? AppTheme.info.withOpacity(0.1)
+                        : AppTheme.surfaceLight,
+                    backgroundImage: f.profilePhoto != null
+                        ? NetworkImage(f.profilePhoto!)
+                        : null,
+                    child: f.profilePhoto == null
+                        ? Icon(isStore ? Icons.storefront : Icons.person,
+                            color: isStore ? AppTheme.info : AppTheme.textMuted)
+                        : null,
                   ),
-                  title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(f.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: isStore ? AppTheme.info.withOpacity(0.12) : AppTheme.greenSurface,
+                          color: isStore
+                              ? AppTheme.info.withOpacity(0.12)
+                              : AppTheme.greenSurface,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(f.role, style: TextStyle(color: isStore ? AppTheme.info : AppTheme.greenLight, fontSize: 10, fontWeight: FontWeight.w600)),
+                        child: Text(f.role,
+                            style: TextStyle(
+                                color: isStore
+                                    ? AppTheme.info
+                                    : AppTheme.greenLight,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600)),
                       ),
                       const SizedBox(width: 6),
-                      Text(f.district, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      Text(f.district,
+                          style: TextStyle(
+                              color: AppTheme.textMuted, fontSize: 12)),
                     ],
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  trailing:
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14),
                   onTap: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddProductScreen(sellerId: f.id)));
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => AddProductScreen(sellerId: f.id)));
                   },
                 ),
               );

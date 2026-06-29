@@ -9,7 +9,8 @@ class Validators {
   static String? phone(String? value) {
     if (value == null || value.isEmpty) return 'Phone number is required';
     final regex = RegExp(r'^[\+]?[0-9]{10,13}$');
-    if (!regex.hasMatch(value.replaceAll(' ', ''))) return 'Enter a valid phone number';
+    if (!regex.hasMatch(value.replaceAll(' ', '')))
+      return 'Enter a valid phone number';
     return null;
   }
 

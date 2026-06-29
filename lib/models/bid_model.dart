@@ -1,3 +1,4 @@
+import '../utils/model_parsers.dart';
 
 class BidModel {
   final String id;
@@ -68,22 +69,22 @@ class BidModel {
   factory BidModel.fromMap(Map<String, dynamic> map, String id) {
     return BidModel(
       id: id,
-      productId: map['productId'] ?? '',
-      productName: map['productName'] ?? '',
-      buyerId: map['buyerId'] ?? '',
-      buyerName: map['buyerName'] ?? '',
-      buyerPhone: map['buyerPhone'] ?? '',
-      sellerId: map['sellerId'] ?? '',
-      sellerName: map['sellerName'] ?? '',
-      sellerPhone: map['sellerPhone'] ?? '',
-      quantity: (map['quantity'] ?? 0).toDouble(),
-      offeredPrice: (map['offeredPrice'] ?? 0).toDouble(),
-      status: map['status'] ?? 'Pending',
-      notes: map['notes'],
-      adminNotes: map['adminNotes'],
-      isRegistryVerified: map['isRegistryVerified'] ?? false,
-      registryNotes: map['registryNotes'],
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
+      productId: readString(map['productId']),
+      productName: readString(map['productName']),
+      buyerId: readString(map['buyerId']),
+      buyerName: readString(map['buyerName']),
+      buyerPhone: readString(map['buyerPhone']),
+      sellerId: readString(map['sellerId']),
+      sellerName: readString(map['sellerName']),
+      sellerPhone: readString(map['sellerPhone']),
+      quantity: readDouble(map['quantity']),
+      offeredPrice: readDouble(map['offeredPrice']),
+      status: readString(map['status'], fallback: 'Pending'),
+      notes: readNullableString(map['notes']),
+      adminNotes: readNullableString(map['adminNotes']),
+      isRegistryVerified: readBool(map['isRegistryVerified']),
+      registryNotes: readNullableString(map['registryNotes']),
+      createdAt: readDate(map['createdAt']),
     );
   }
 

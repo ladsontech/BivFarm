@@ -1,3 +1,5 @@
+import '../utils/model_parsers.dart';
+
 class ProductModel {
   final String id;
   final String sellerId;
@@ -44,31 +46,30 @@ class ProductModel {
 
   factory ProductModel.fromMap(Map<String, dynamic> map, String id) {
     // Support both old single imageUrl and new imageUrls list
-    List<String> urls = [];
-    if (map['imageUrls'] != null && map['imageUrls'] is List) {
-      urls = List<String>.from(map['imageUrls']);
-    } else if (map['imageUrl'] != null && (map['imageUrl'] as String).isNotEmpty) {
-      urls = [map['imageUrl'] as String];
+    var urls = readStringList(map['imageUrls']);
+    if (urls.isEmpty) {
+      final legacyUrl = readNullableString(map['imageUrl']);
+      if (legacyUrl != null) urls = [legacyUrl];
     }
 
     return ProductModel(
       id: id,
-      sellerId: map['sellerId'] ?? '',
-      sellerName: map['sellerName'] ?? '',
-      sellerPhoto: map['sellerPhoto'],
-      sellerPhone: map['sellerPhone'],
-      category: map['category'] ?? '',
-      productName: map['productName'] ?? '',
-      quantity: (map['quantity'] ?? 0).toDouble(),
-      quantityUnit: map['quantityUnit'] ?? 'Kg',
-      availability: map['availability'] ?? 'Available Now',
-      price: (map['price'] ?? 0).toDouble(),
-      district: map['district'] ?? '',
+      sellerId: readString(map['sellerId']),
+      sellerName: readString(map['sellerName']),
+      sellerPhoto: readNullableString(map['sellerPhoto']),
+      sellerPhone: readNullableString(map['sellerPhone']),
+      category: readString(map['category']),
+      productName: readString(map['productName']),
+      quantity: readDouble(map['quantity']),
+      quantityUnit: readString(map['quantityUnit'], fallback: 'Kg'),
+      availability: readString(map['availability'], fallback: 'Available Now'),
+      price: readDouble(map['price']),
+      district: readString(map['district']),
       imageUrls: urls,
-      isActive: map['isActive'] ?? true,
-      agentId: map['agentId'],
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'].toString()) : DateTime.now(),
-      sellerRole: map['sellerRole'] ?? '',
+      isActive: readBool(map['isActive'], fallback: true),
+      agentId: readNullableString(map['agentId']),
+      createdAt: readDate(map['createdAt']),
+      sellerRole: readString(map['sellerRole']),
     );
   }
 

@@ -18,7 +18,7 @@ class StorageService {
   Future<String> uploadXFile(XFile xfile, String folder) async {
     final fileName = '${_uuid.v4()}.jpg';
     final ref = _storage.ref().child(folder).child(fileName);
-    
+
     if (kIsWeb) {
       final bytes = await xfile.readAsBytes();
       final uploadTask = await ref.putData(

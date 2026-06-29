@@ -14,7 +14,8 @@ class PublicProfileScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Farmer Profile', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18)),
+        title: Text('Farmer Profile',
+            style: TextStyle(color: AppTheme.textPrimary, fontSize: 18)),
         backgroundColor: AppTheme.background,
         iconTheme: IconThemeData(color: AppTheme.textPrimary),
         elevation: 0,
@@ -24,11 +25,14 @@ class PublicProfileScreen extends StatelessWidget {
         future: db.getUser(userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+            return const Center(
+                child: CircularProgressIndicator(color: AppTheme.green));
           }
           final user = snapshot.data;
           if (user == null) {
-            return Center(child: Text('Farmer details not found.', style: TextStyle(color: AppTheme.textMuted)));
+            return Center(
+                child: Text('Farmer details not found.',
+                    style: TextStyle(color: AppTheme.textMuted)));
           }
 
           return SingleChildScrollView(
@@ -40,12 +44,21 @@ class PublicProfileScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: AppTheme.surfaceLight,
-                  backgroundImage: (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) ? NetworkImage(user.profilePhoto!) : null,
-                  child: (user.profilePhoto == null || user.profilePhoto!.isEmpty)
-                      ? (user.name.isNotEmpty 
-                         ? Text(user.name[0].toUpperCase(), style: TextStyle(color: AppTheme.textMuted, fontSize: 36, fontWeight: FontWeight.w700))
-                         : Icon(Icons.person_outline, color: AppTheme.textMuted, size: 40))
+                  backgroundImage: (user.profilePhoto != null &&
+                          user.profilePhoto!.isNotEmpty)
+                      ? NetworkImage(user.profilePhoto!)
                       : null,
+                  child:
+                      (user.profilePhoto == null || user.profilePhoto!.isEmpty)
+                          ? (user.name.isNotEmpty
+                              ? Text(user.name[0].toUpperCase(),
+                                  style: TextStyle(
+                                      color: AppTheme.textMuted,
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w700))
+                              : Icon(Icons.person_outline,
+                                  color: AppTheme.textMuted, size: 40))
+                          : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -62,14 +75,18 @@ class PublicProfileScreen extends StatelessWidget {
 
                 // Role
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.greenSurface,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     user.role,
-                    style: TextStyle(color: AppTheme.greenLight, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: AppTheme.greenLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -88,7 +105,8 @@ class PublicProfileScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined, color: AppTheme.textMuted, size: 18),
+                          Icon(Icons.location_on_outlined,
+                              color: AppTheme.textMuted, size: 18),
                           const SizedBox(width: 8),
                           Text(
                             'Location',
@@ -101,11 +119,26 @@ class PublicProfileScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _infoRow(Icons.map, 'District', user.district.isNotEmpty ? user.district : 'Not specified'),
+                      _infoRow(
+                          Icons.map,
+                          'District',
+                          user.district.isNotEmpty
+                              ? user.district
+                              : 'Not specified'),
                       const SizedBox(height: 12),
-                      _infoRow(Icons.location_city, 'Subcounty', user.subcounty.isNotEmpty ? user.subcounty : 'Not specified'),
+                      _infoRow(
+                          Icons.location_city,
+                          'Subcounty',
+                          user.subcounty.isNotEmpty
+                              ? user.subcounty
+                              : 'Not specified'),
                       const SizedBox(height: 12),
-                      _infoRow(Icons.house, 'Village', user.village.isNotEmpty ? user.village : 'Not specified'),
+                      _infoRow(
+                          Icons.house,
+                          'Village',
+                          user.village.isNotEmpty
+                              ? user.village
+                              : 'Not specified'),
                     ],
                   ),
                 ),
@@ -114,7 +147,10 @@ class PublicProfileScreen extends StatelessWidget {
                 // Notice about contact info
                 Text(
                   'Contact information is protected for privacy.',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12, fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
               ],

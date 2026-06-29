@@ -103,7 +103,9 @@ class CustomDropdown extends StatelessWidget {
           isExpanded: true,
           style: TextStyle(color: AppTheme.textPrimary, fontSize: 15),
           decoration: const InputDecoration(),
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: onChanged,
         ),
       ],
@@ -261,7 +263,68 @@ class BidStatusBadge extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: TextStyle(color: _color, fontSize: 11, fontWeight: FontWeight.w600),
+        style:
+            TextStyle(color: _color, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class AppErrorState extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback? onRetry;
+
+  const AppErrorState({
+    super.key,
+    this.title = 'Something went wrong',
+    this.message =
+        'We could not load this content. Check your connection and try again.',
+    this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppTheme.greenSurface,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cloud_off_rounded,
+                    color: AppTheme.green, size: 36),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              if (onRetry != null) ...[
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Try again'),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

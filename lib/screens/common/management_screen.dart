@@ -18,13 +18,15 @@ class ManagementScreen extends StatefulWidget {
   State<ManagementScreen> createState() => _ManagementScreenState();
 }
 
-class _ManagementScreenState extends State<ManagementScreen> with SingleTickerProviderStateMixin {
+class _ManagementScreenState extends State<ManagementScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    _tabCtrl = TabController(
+        length: 2, vsync: this, initialIndex: widget.initialTabIndex);
   }
 
   @override
@@ -54,7 +56,8 @@ class _ManagementScreenState extends State<ManagementScreen> with SingleTickerPr
           child: TabBarView(
             controller: _tabCtrl,
             children: [
-              BidsListScreen(userId: widget.user.id, userRole: widget.user.role),
+              BidsListScreen(
+                  userId: widget.user.id, userRole: widget.user.role),
               MyListingsTab(userId: widget.user.id),
             ],
           ),

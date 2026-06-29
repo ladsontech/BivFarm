@@ -1,3 +1,5 @@
+import '../utils/model_parsers.dart';
+
 class NotificationModel {
   final String id;
   final String recipientId;
@@ -40,15 +42,15 @@ class NotificationModel {
   factory NotificationModel.fromMap(Map<String, dynamic> map, String id) {
     return NotificationModel(
       id: id,
-      recipientId: map['recipientId'] ?? '',
-      senderId: map['senderId'],
-      title: map['title'] ?? '',
-      body: map['body'] ?? '',
-      type: map['type'] ?? 'general',
-      relatedId: map['relatedId'],
-      isRead: map['isRead'] ?? false,
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
-      data: map['data'],
+      recipientId: readString(map['recipientId']),
+      senderId: readNullableString(map['senderId']),
+      title: readString(map['title']),
+      body: readString(map['body']),
+      type: readString(map['type'], fallback: 'general'),
+      relatedId: readNullableString(map['relatedId']),
+      isRead: readBool(map['isRead']),
+      createdAt: readDate(map['createdAt']),
+      data: readStringMap(map['data']),
     );
   }
 }

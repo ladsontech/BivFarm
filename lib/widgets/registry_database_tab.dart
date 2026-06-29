@@ -13,7 +13,8 @@ class RegistryDatabaseTab extends StatefulWidget {
   State<RegistryDatabaseTab> createState() => _RegistryDatabaseTabState();
 }
 
-class _RegistryDatabaseTabState extends State<RegistryDatabaseTab> with SingleTickerProviderStateMixin {
+class _RegistryDatabaseTabState extends State<RegistryDatabaseTab>
+    with SingleTickerProviderStateMixin {
   late TabController _innerTabCtrl;
   final _searchCtrl = TextEditingController();
   String _query = '';
@@ -46,7 +47,8 @@ class _RegistryDatabaseTabState extends State<RegistryDatabaseTab> with SingleTi
             unselectedLabelColor: AppTheme.textMuted,
             indicatorColor: AppTheme.green,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            labelStyle:
+                const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'Individuals'),
               Tab(text: 'Farmer Groups'),
@@ -55,7 +57,7 @@ class _RegistryDatabaseTabState extends State<RegistryDatabaseTab> with SingleTi
             ],
           ),
         ),
-        
+
         // Search Bar
         Padding(
           padding: const EdgeInsets.all(16),
@@ -65,8 +67,13 @@ class _RegistryDatabaseTabState extends State<RegistryDatabaseTab> with SingleTi
             decoration: InputDecoration(
               hintText: 'Search database...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: _query.isNotEmpty 
-                  ? IconButton(icon: const Icon(Icons.close), onPressed: () => setState(() { _searchCtrl.clear(); _query = ''; })) 
+              suffixIcon: _query.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() {
+                            _searchCtrl.clear();
+                            _query = '';
+                          }))
                   : null,
             ),
           ),
@@ -98,13 +105,19 @@ class _IndividualsList extends StatelessWidget {
     return StreamBuilder<List<UserModel>>(
       stream: Stream.fromFuture(db.getAllUsers()),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-        final users = snap.data!.where((u) => u.role == 'Farmer' || u.role == 'Buyer').where((u) {
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
+        final users = snap.data!
+            .where((u) => u.role == 'Farmer' || u.role == 'Buyer')
+            .where((u) {
           final q = query.toLowerCase();
-          return u.name.toLowerCase().contains(q) || u.phone.contains(q) || u.district.toLowerCase().contains(q);
+          return u.name.toLowerCase().contains(q) ||
+              u.phone.contains(q) ||
+              u.district.toLowerCase().contains(q);
         }).toList();
 
-        if (users.isEmpty) return const Center(child: Text('No individuals found'));
+        if (users.isEmpty)
+          return const Center(child: Text('No individuals found'));
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -135,13 +148,16 @@ class _GroupsList extends StatelessWidget {
     return StreamBuilder<List<FarmerGroupModel>>(
       stream: db.streamAllGroups(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
         final items = snap.data!.where((g) {
           final q = query.toLowerCase();
-          return g.groupName.toLowerCase().contains(q) || g.district.toLowerCase().contains(q);
+          return g.groupName.toLowerCase().contains(q) ||
+              g.district.toLowerCase().contains(q);
         }).toList();
 
-        if (items.isEmpty) return const Center(child: Text('No farmer groups found'));
+        if (items.isEmpty)
+          return const Center(child: Text('No farmer groups found'));
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -172,10 +188,12 @@ class _StoresList extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: db.streamAllProduceStores(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
         final items = snap.data!.where((s) {
           final q = query.toLowerCase();
-          return (s['storeName'] ?? '').toString().toLowerCase().contains(q) || (s['district'] ?? '').toString().toLowerCase().contains(q);
+          return (s['storeName'] ?? '').toString().toLowerCase().contains(q) ||
+              (s['district'] ?? '').toString().toLowerCase().contains(q);
         }).toList();
 
         if (items.isEmpty) return const Center(child: Text('No stores found'));
@@ -209,10 +227,12 @@ class _DealersList extends StatelessWidget {
     return StreamBuilder<List<InputDealerModel>>(
       stream: db.streamAllInputDealers(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData)
+          return const Center(child: CircularProgressIndicator());
         final items = snap.data!.where((d) {
           final q = query.toLowerCase();
-          return d.businessName.toLowerCase().contains(q) || d.district.toLowerCase().contains(q);
+          return d.businessName.toLowerCase().contains(q) ||
+              d.district.toLowerCase().contains(q);
         }).toList();
 
         if (items.isEmpty) return const Center(child: Text('No dealers found'));
@@ -265,7 +285,9 @@ class _DatabaseTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 16),
@@ -273,9 +295,16 @@ class _DatabaseTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                Text(subtitle, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                Text(info, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 15)),
+                Text(subtitle,
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                Text(info,
+                    style: TextStyle(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600)),
               ],
             ),
           ),

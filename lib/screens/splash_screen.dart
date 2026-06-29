@@ -11,11 +11,12 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _mainController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
-  
+
   int _brandingIndex = 0;
   Timer? _brandingTimer;
   bool _precacheDone = false;
@@ -36,11 +37,15 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
 
     _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _mainController, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _mainController, curve: const Interval(0.0, 0.4, curve: Curves.easeIn)),
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.0, 0.4, curve: Curves.easeIn)),
     );
 
     _startFlow();
@@ -69,7 +74,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _mainController.forward();
 
     // Branding Carousel Timer
-    _brandingTimer = Timer.periodic(const Duration(milliseconds: 2800), (timer) {
+    _brandingTimer =
+        Timer.periodic(const Duration(milliseconds: 2800), (timer) {
       if (mounted) {
         setState(() => _brandingIndex = (_brandingIndex + 1) % 2);
       }
@@ -100,8 +106,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             center: Alignment.center,
             radius: 1.5,
             colors: [
-              Color(0xFF0D3B26), 
-              Color(0xFF030D08), 
+              Color(0xFF0D3B26),
+              Color(0xFF030D08),
             ],
           ),
         ),
@@ -112,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(flex: 4),
-                
+
                 // Animated Logo Section
                 AnimatedBuilder(
                   animation: _mainController,
@@ -160,9 +166,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     ],
                   ),
                 ),
-                
+
                 const Spacer(flex: 3),
-                
+
                 // Subtle Premium Loader
                 SizedBox(
                   width: 50,
@@ -171,11 +177,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     borderRadius: BorderRadius.circular(2),
                     child: const LinearProgressIndicator(
                       backgroundColor: Colors.white10,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.greenLight),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppTheme.greenLight),
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 60),
 
                 // Branding Carousel
@@ -183,12 +190,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   height: 80,
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 1000),
-                    child: _brandingIndex == 0 
-                      ? _buildBrandingItem('A product of', 'assets/images/BIVmark_icon.png', 48)
-                      : _buildBrandingItem('Powered by', 'assets/images/carousel/buyaff.png', 55),
+                    child: _brandingIndex == 0
+                        ? _buildBrandingItem('A product of',
+                            'assets/images/BIVmark_icon.png', 48)
+                        : _buildBrandingItem('Powered by',
+                            'assets/images/carousel/buyaff.png', 55),
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
               ],
             ),
@@ -205,7 +214,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 3),
+          style: TextStyle(
+              color: Colors.white.withOpacity(0.35),
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3),
         ),
         const SizedBox(height: 12),
         Image.asset(asset, height: height, fit: BoxFit.contain),
@@ -213,6 +226,3 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
   }
 }
-
-
-

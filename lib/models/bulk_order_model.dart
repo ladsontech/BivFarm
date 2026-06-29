@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/model_parsers.dart';
 
 class BulkOrderModel {
   final String id;
@@ -55,26 +55,19 @@ class BulkOrderModel {
   factory BulkOrderModel.fromMap(Map<String, dynamic> map, String id) {
     return BulkOrderModel(
       id: id,
-      buyerId: map['buyerId'] ?? '',
-      buyerName: map['buyerName'] ?? '',
-      buyerPhone: map['buyerPhone'] ?? '',
-      orderType: map['orderType'] ?? 'Produce',
-      category: map['category'] ?? '',
-      itemName: map['itemName'] ?? '',
-      quantity: (map['quantity'] ?? 0).toDouble(),
-      quantityUnit: map['quantityUnit'] ?? 'Kg',
-      notes: map['notes'] ?? '',
-      adminNotes: map['adminNotes'] ?? '',
-      status: map['status'] ?? 'Pending',
-      createdAt: _parseDate(map['createdAt']),
+      buyerId: readString(map['buyerId']),
+      buyerName: readString(map['buyerName']),
+      buyerPhone: readString(map['buyerPhone']),
+      orderType: readString(map['orderType'], fallback: 'Produce'),
+      category: readString(map['category']),
+      itemName: readString(map['itemName']),
+      quantity: readDouble(map['quantity']),
+      quantityUnit: readString(map['quantityUnit'], fallback: 'Kg'),
+      notes: readString(map['notes']),
+      adminNotes: readString(map['adminNotes']),
+      status: readString(map['status'], fallback: 'Pending'),
+      createdAt: readDate(map['createdAt']),
     );
-  }
-
-  static DateTime _parseDate(dynamic dateVal) {
-    if (dateVal == null) return DateTime.now();
-    if (dateVal is Timestamp) return dateVal.toDate();
-    if (dateVal is String) return DateTime.tryParse(dateVal) ?? DateTime.now();
-    return DateTime.now();
   }
 
   Map<String, dynamic> toMap() {

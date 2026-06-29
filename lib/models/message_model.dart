@@ -1,3 +1,5 @@
+import '../utils/model_parsers.dart';
+
 class MessageModel {
   final String id;
   final String senderId;
@@ -37,14 +39,14 @@ class MessageModel {
   factory MessageModel.fromMap(Map<String, dynamic> map, String id) {
     return MessageModel(
       id: id,
-      senderId: map['senderId'] ?? '',
-      senderName: map['senderName'] ?? '',
-      senderRole: map['senderRole'] ?? 'Admin',
-      recipientId: map['recipientId'] ?? '',
-      subject: map['subject'] ?? '',
-      body: map['body'] ?? '',
-      isRead: map['isRead'] ?? false,
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
+      senderId: readString(map['senderId']),
+      senderName: readString(map['senderName']),
+      senderRole: readString(map['senderRole'], fallback: 'Admin'),
+      recipientId: readString(map['recipientId']),
+      subject: readString(map['subject']),
+      body: readString(map['body']),
+      isRead: readBool(map['isRead']),
+      createdAt: readDate(map['createdAt']),
     );
   }
 }

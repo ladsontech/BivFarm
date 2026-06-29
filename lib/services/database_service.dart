@@ -13,8 +13,8 @@ class DatabaseService {
 
   // --- Users ---
   Stream<UserModel?> streamUser(String uid) {
-    return _db.collection('users').doc(uid).snapshots().map((doc) => 
-      doc.exists ? UserModel.fromMap(doc.data()!, doc.id) : null);
+    return _db.collection('users').doc(uid).snapshots().map(
+        (doc) => doc.exists ? UserModel.fromMap(doc.data()!, doc.id) : null);
   }
 
   Future<UserModel?> getUser(String uid) async {
@@ -24,23 +24,37 @@ class DatabaseService {
 
   Future<List<UserModel>> getAllUsers() async {
     final snap = await _db.collection('users').get();
-    return snap.docs.map((doc) => UserModel.fromMap(doc.data(), doc.id)).toList();
+    return snap.docs
+        .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   Future<List<UserModel>> getUsersByRole(String role) async {
-    final snap = await _db.collection('users').where('role', isEqualTo: role).get();
-    return snap.docs.map((doc) => UserModel.fromMap(doc.data(), doc.id)).toList();
+    final snap =
+        await _db.collection('users').where('role', isEqualTo: role).get();
+    return snap.docs
+        .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   Future<UserModel?> getFirstAdmin() async {
-    final snap = await _db.collection('users').where('role', isEqualTo: 'Admin').limit(1).get();
+    final snap = await _db
+        .collection('users')
+        .where('role', isEqualTo: 'Admin')
+        .limit(1)
+        .get();
     if (snap.docs.isEmpty) return null;
     return UserModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
   }
 
   Future<List<UserModel>> getUsersByAgent(String agentId) async {
-    final snap = await _db.collection('users').where('agentId', isEqualTo: agentId).get();
-    return snap.docs.map((doc) => UserModel.fromMap(doc.data(), doc.id)).toList();
+    final snap = await _db
+        .collection('users')
+        .where('agentId', isEqualTo: agentId)
+        .get();
+    return snap.docs
+        .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
@@ -62,21 +76,33 @@ class DatabaseService {
     }
 
     // Try exact match first
-    var snap = await _db.collection('users').where('phone', isEqualTo: normalized).limit(1).get();
+    var snap = await _db
+        .collection('users')
+        .where('phone', isEqualTo: normalized)
+        .limit(1)
+        .get();
     if (snap.docs.isNotEmpty) {
       return UserModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
     }
 
     // Try with 0-prefix format (some agents store as 07...)
     final localFormat = '0${normalized.substring(4)}'; // +256 -> 0
-    snap = await _db.collection('users').where('phone', isEqualTo: localFormat).limit(1).get();
+    snap = await _db
+        .collection('users')
+        .where('phone', isEqualTo: localFormat)
+        .limit(1)
+        .get();
     if (snap.docs.isNotEmpty) {
       return UserModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
     }
 
     // Try without country code prefix
     final rawDigits = normalized.replaceAll('+', '');
-    snap = await _db.collection('users').where('phone', isEqualTo: rawDigits).limit(1).get();
+    snap = await _db
+        .collection('users')
+        .where('phone', isEqualTo: rawDigits)
+        .limit(1)
+        .get();
     if (snap.docs.isNotEmpty) {
       return UserModel.fromMap(snap.docs.first.data(), snap.docs.first.id);
     }
@@ -99,29 +125,40 @@ class DatabaseService {
     await _db.collection('users').doc(newUid).set(data);
 
     // Update products where sellerId == oldUid
-    final products = await _db.collection('products').where('sellerId', isEqualTo: oldUid).get();
+    final products = await _db
+        .collection('products')
+        .where('sellerId', isEqualTo: oldUid)
+        .get();
     for (final doc in products.docs) {
       await doc.reference.update({'sellerId': newUid});
     }
 
     // Update farmer_groups where userId == oldUid
-    final groups = await _db.collection('farmer_groups').where('userId', isEqualTo: oldUid).get();
+    final groups = await _db
+        .collection('farmer_groups')
+        .where('userId', isEqualTo: oldUid)
+        .get();
     for (final doc in groups.docs) {
       await doc.reference.update({'userId': newUid});
     }
 
     // Update produce_stores where userId == oldUid
-    final stores = await _db.collection('produce_stores').where('userId', isEqualTo: oldUid).get();
+    final stores = await _db
+        .collection('produce_stores')
+        .where('userId', isEqualTo: oldUid)
+        .get();
     for (final doc in stores.docs) {
       await doc.reference.update({'userId': newUid});
     }
 
     // Update bids where sellerId or buyerId == oldUid
-    final sellerBids = await _db.collection('bids').where('sellerId', isEqualTo: oldUid).get();
+    final sellerBids =
+        await _db.collection('bids').where('sellerId', isEqualTo: oldUid).get();
     for (final doc in sellerBids.docs) {
       await doc.reference.update({'sellerId': newUid});
     }
-    final buyerBids = await _db.collection('bids').where('buyerId', isEqualTo: oldUid).get();
+    final buyerBids =
+        await _db.collection('bids').where('buyerId', isEqualTo: oldUid).get();
     for (final doc in buyerBids.docs) {
       await doc.reference.update({'buyerId': newUid});
     }
@@ -132,13 +169,14 @@ class DatabaseService {
 
   /// Live stream of all users (for Admin Users tab)
   Stream<List<UserModel>> streamAllUsers() {
-    return _db.collection('users')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs
-        .where((doc) => doc.data()['isDeleted'] != true)
-        .map((doc) => UserModel.fromMap(doc.data(), doc.id))
-        .toList());
+    return _db
+        .collection('users')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .where((doc) => doc.data()['isDeleted'] != true)
+            .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   // --- Products ---
@@ -156,44 +194,54 @@ class DatabaseService {
   }
 
   Stream<List<ProductModel>> streamProducts() {
-    return _db.collection('products')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs
-        .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
-        .where((p) => p.isActive) 
-        .toList());
+    return _db
+        .collection('products')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+            .where((p) => p.isActive)
+            .toList());
   }
 
-  Stream<List<ProductModel>> streamProductsFiltered({String? category, String? district}) {
+  Stream<List<ProductModel>> streamProductsFiltered(
+      {String? category, String? district}) {
     Query query = _db.collection('products').where('isActive', isEqualTo: true);
-    
+
     if (category != null) {
       query = query.where('category', isEqualTo: category);
     }
     if (district != null) {
       query = query.where('district', isEqualTo: district);
     }
-    
-    return query.orderBy('createdAt', descending: true).snapshots().map((snap) => 
-      snap.docs.map((doc) => ProductModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList());
+
+    return query.orderBy('createdAt', descending: true).snapshots().map(
+        (snap) => snap.docs
+            .map((doc) => ProductModel.fromMap(
+                doc.data() as Map<String, dynamic>, doc.id))
+            .toList());
   }
 
   Stream<List<ProductModel>> streamProductsBySeller(String sellerId) {
-    return _db.collection('products')
-      .where('sellerId', isEqualTo: sellerId)
-      .snapshots()
-      .map((snap) {
-        final products = snap.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)).toList();
-        // Sort in memory to avoid requiring complex composite indexes
-        products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return products.where((p) => p.isActive).toList();
-      });
+    return _db
+        .collection('products')
+        .where('sellerId', isEqualTo: sellerId)
+        .snapshots()
+        .map((snap) {
+      final products = snap.docs
+          .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+          .toList();
+      // Sort in memory to avoid requiring complex composite indexes
+      products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return products.where((p) => p.isActive).toList();
+    });
   }
 
   Future<List<ProductModel>> getAllProducts() async {
     final snap = await _db.collection('products').get();
-    return snap.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)).toList();
+    return snap.docs
+        .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   /// Stream products for all farmers assigned to this agent
@@ -201,28 +249,36 @@ class DatabaseService {
     return Stream.fromFuture(getUsersByAgent(agentId)).asyncExpand((farmers) {
       final farmerIds = farmers.map((f) => f.id).toList();
       if (farmerIds.isEmpty) return Stream.value(<ProductModel>[]);
-      
+
       // Firestore whereIn limited to 30, chunk if needed
       final chunks = <List<String>>[];
       for (var i = 0; i < farmerIds.length; i += 30) {
-        chunks.add(farmerIds.sublist(i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
+        chunks.add(farmerIds.sublist(
+            i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
       }
-      
+
       if (chunks.length == 1) {
-        return _db.collection('products')
+        return _db
+            .collection('products')
             .where('sellerId', whereIn: chunks.first)
             .snapshots()
             .map((snap) {
-              final products = snap.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)).toList();
-              products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-              return products.where((p) => p.isActive).toList();
-            });
+          final products = snap.docs
+              .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+              .toList();
+          products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return products.where((p) => p.isActive).toList();
+        });
       }
-      
+
       return Stream.fromFuture(Future.wait(
-        chunks.map((chunk) => _db.collection('products').where('sellerId', whereIn: chunk).get()),
+        chunks.map((chunk) =>
+            _db.collection('products').where('sellerId', whereIn: chunk).get()),
       )).map((snaps) {
-        final products = snaps.expand((s) => s.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id))).toList();
+        final products = snaps
+            .expand((s) =>
+                s.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)))
+            .toList();
         products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return products.where((p) => p.isActive).toList();
       });
@@ -232,13 +288,14 @@ class DatabaseService {
   // --- Bids ---
   Future<String> addBid(BidModel bid) async {
     final docRef = await _db.collection('bids').add(bid.toMap());
-    
+
     // Send notifications to Farmer, Agent, Buyer and Admin
     try {
       final farmer = await getUser(bid.sellerId);
       await sendOrderNotification(
         title: "New Bid Received",
-        body: "You have a new bid of ${bid.offeredPrice} UGX for ${bid.quantity} ${bid.productName}",
+        body:
+            "You have a new bid of ${bid.offeredPrice} UGX for ${bid.quantity} ${bid.productName}",
         relatedId: docRef.id,
         farmerId: bid.sellerId,
         buyerId: bid.buyerId,
@@ -247,7 +304,7 @@ class DatabaseService {
     } catch (e) {
       print("Notification Error: $e");
     }
-    
+
     return docRef.id;
   }
 
@@ -255,18 +312,19 @@ class DatabaseService {
     await _db.collection('bids').doc(bidId).update(data);
   }
 
-  Future<void> updateBidStatus(String bidId, String status, {String? adminNotes}) async {
+  Future<void> updateBidStatus(String bidId, String status,
+      {String? adminNotes}) async {
     final data = {'status': status};
     if (adminNotes != null) data['adminNotes'] = adminNotes;
     await _db.collection('bids').doc(bidId).update(data);
-    
+
     // Notify about status update
     try {
       final bidDoc = await _db.collection('bids').doc(bidId).get();
       if (bidDoc.exists) {
         final bid = BidModel.fromMap(bidDoc.data()!, bidDoc.id);
         final farmer = await getUser(bid.sellerId);
-        
+
         await sendOrderNotification(
           title: "Bid Status Updated",
           body: "The bid for ${bid.productName} is now $status",
@@ -282,29 +340,40 @@ class DatabaseService {
   }
 
   Stream<List<BidModel>> streamBidsByProduct(String productId) {
-    return _db.collection('bids')
-      .where('productId', isEqualTo: productId)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bids')
+        .where('productId', isEqualTo: productId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Stream<List<BidModel>> streamBidsByBuyer(String buyerId) {
-    return _db.collection('bids')
-      .where('buyerId', isEqualTo: buyerId)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bids')
+        .where('buyerId', isEqualTo: buyerId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Stream<List<BidModel>> streamBidsBySeller(String sellerId) {
-    return _db.collection('bids')
-      .where('sellerId', isEqualTo: sellerId)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bids')
+        .where('sellerId', isEqualTo: sellerId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Future<List<BidModel>> getAllBids() async {
     final snap = await _db.collection('bids').get();
-    return snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList();
+    return snap.docs
+        .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   /// Stream bids for all farmers assigned to this agent
@@ -316,18 +385,26 @@ class DatabaseService {
       // Firestore whereIn limited to 30, chunk if needed
       final chunks = <List<String>>[];
       for (var i = 0; i < farmerIds.length; i += 30) {
-        chunks.add(farmerIds.sublist(i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
+        chunks.add(farmerIds.sublist(
+            i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
       }
       if (chunks.length == 1) {
-        return _db.collection('bids')
+        return _db
+            .collection('bids')
             .where('sellerId', whereIn: chunks.first)
             .snapshots()
-            .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+            .map((snap) => snap.docs
+                .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+                .toList());
       }
       // Multiple chunks: merge results
       return Stream.fromFuture(Future.wait(
-        chunks.map((chunk) => _db.collection('bids').where('sellerId', whereIn: chunk).get()),
-      )).map((snaps) => snaps.expand((s) => s.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id))).toList());
+        chunks.map((chunk) =>
+            _db.collection('bids').where('sellerId', whereIn: chunk).get()),
+      )).map((snaps) => snaps
+          .expand(
+              (s) => s.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)))
+          .toList());
     });
   }
 
@@ -338,17 +415,27 @@ class DatabaseService {
       if (farmerIds.isEmpty) return Stream.value(<BulkOrderModel>[]);
       final chunks = <List<String>>[];
       for (var i = 0; i < farmerIds.length; i += 30) {
-        chunks.add(farmerIds.sublist(i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
+        chunks.add(farmerIds.sublist(
+            i, i + 30 > farmerIds.length ? farmerIds.length : i + 30));
       }
       if (chunks.length == 1) {
-        return _db.collection('bulk_orders')
+        return _db
+            .collection('bulk_orders')
             .where('sellerId', whereIn: chunks.first)
             .snapshots()
-            .map((snap) => snap.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id)).toList());
+            .map((snap) => snap.docs
+                .map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id))
+                .toList());
       }
       return Stream.fromFuture(Future.wait(
-        chunks.map((chunk) => _db.collection('bulk_orders').where('sellerId', whereIn: chunk).get()),
-      )).map((snaps) => snaps.expand((s) => s.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id))).toList());
+        chunks.map((chunk) => _db
+            .collection('bulk_orders')
+            .where('sellerId', whereIn: chunk)
+            .get()),
+      )).map((snaps) => snaps
+          .expand((s) =>
+              s.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id)))
+          .toList());
     });
   }
 
@@ -383,22 +470,31 @@ class DatabaseService {
   }
 
   Future<void> updateBulkOrderAdminNotes(String orderId, String notes) async {
-    await _db.collection('bulk_orders').doc(orderId).update({'adminNotes': notes});
+    await _db
+        .collection('bulk_orders')
+        .doc(orderId)
+        .update({'adminNotes': notes});
   }
 
   Stream<List<BulkOrderModel>> streamBulkOrders() {
-    return _db.collection('bulk_orders')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bulk_orders')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Stream<List<BulkOrderModel>> streamBulkOrdersByBuyer(String buyerId) {
-    return _db.collection('bulk_orders')
-      .where('buyerId', isEqualTo: buyerId)
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bulk_orders')
+        .where('buyerId', isEqualTo: buyerId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BulkOrderModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   // --- Input Dealers ---
@@ -408,9 +504,9 @@ class DatabaseService {
   }
 
   Stream<List<InputDealerModel>> streamInputDealers() {
-    return _db.collection('input_dealers')
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => InputDealerModel.fromMap(doc.data(), doc.id)).toList());
+    return _db.collection('input_dealers').snapshots().map((snap) => snap.docs
+        .map((doc) => InputDealerModel.fromMap(doc.data(), doc.id))
+        .toList());
   }
 
   // --- Farmer Groups ---
@@ -420,30 +516,36 @@ class DatabaseService {
   }
 
   Stream<List<FarmerGroupModel>> streamAllGroups() {
-    return _db.collection('farmer_groups')
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => FarmerGroupModel.fromMap(doc.data(), doc.id)).toList());
+    return _db.collection('farmer_groups').snapshots().map((snap) => snap.docs
+        .map((doc) => FarmerGroupModel.fromMap(doc.data(), doc.id))
+        .toList());
   }
 
   Stream<List<Map<String, dynamic>>> streamAllProduceStores() {
-    return _db.collection('produce_stores')
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList());
+    return _db
+        .collection('produce_stores')
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList());
   }
 
   Stream<List<InputDealerModel>> streamAllInputDealers() {
-    return _db.collection('input_dealers')
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => InputDealerModel.fromMap(doc.data(), doc.id)).toList());
+    return _db.collection('input_dealers').snapshots().map((snap) => snap.docs
+        .map((doc) => InputDealerModel.fromMap(doc.data(), doc.id))
+        .toList());
   }
 
   Future<List<FarmerGroupModel>> getGroupsByAgent(String agentId) async {
-    final snap = await _db.collection('farmer_groups').where('agentId', isEqualTo: agentId).get();
-    return snap.docs.map((doc) => FarmerGroupModel.fromMap(doc.data(), doc.id)).toList();
+    final snap = await _db
+        .collection('farmer_groups')
+        .where('agentId', isEqualTo: agentId)
+        .get();
+    return snap.docs
+        .map((doc) => FarmerGroupModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   // --- Produce Stores ---
@@ -453,18 +555,23 @@ class DatabaseService {
   }
 
   Stream<List<Map<String, dynamic>>> streamProduceStores() {
-    return _db.collection('produce_stores')
-      .where('isActive', isEqualTo: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList());
+    return _db
+        .collection('produce_stores')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList());
   }
 
-  Future<List<Map<String, dynamic>>> getProduceStoresByAgent(String agentId) async {
-    final snap = await _db.collection('produce_stores').where('agentId', isEqualTo: agentId).get();
+  Future<List<Map<String, dynamic>>> getProduceStoresByAgent(
+      String agentId) async {
+    final snap = await _db
+        .collection('produce_stores')
+        .where('agentId', isEqualTo: agentId)
+        .get();
     return snap.docs.map((doc) {
       final data = doc.data();
       data['id'] = doc.id;
@@ -476,11 +583,23 @@ class DatabaseService {
     try {
       final res = await Future.wait([
         _db.collection('users').count().get(),
-        _db.collection('users').where('role', isEqualTo: 'Farmer').count().get(),
+        _db
+            .collection('users')
+            .where('role', isEqualTo: 'Farmer')
+            .count()
+            .get(),
         _db.collection('users').where('role', isEqualTo: 'Buyer').count().get(),
         _db.collection('users').where('role', isEqualTo: 'Agent').count().get(),
-        _db.collection('users').where('gender', isEqualTo: 'Male').count().get(),
-        _db.collection('users').where('gender', isEqualTo: 'Female').count().get(),
+        _db
+            .collection('users')
+            .where('gender', isEqualTo: 'Male')
+            .count()
+            .get(),
+        _db
+            .collection('users')
+            .where('gender', isEqualTo: 'Female')
+            .count()
+            .get(),
         _db.collection('products').count().get(),
         _db.collection('bids').count().get(),
         _db.collection('users').where('role', isEqualTo: 'Store').count().get(),
@@ -510,7 +629,7 @@ class DatabaseService {
   // --- Messages ---
   Future<String> addMessage(MessageModel msg) async {
     final docRef = await _db.collection('messages').add(msg.toMap());
-    
+
     // Auto-notify recipient(s)
     try {
       if (msg.recipientId == 'support') {
@@ -533,8 +652,12 @@ class DatabaseService {
       } else {
         final recipient = await getUser(msg.recipientId);
         if (recipient != null) {
-          final isSupport = msg.senderId == 'support' || msg.senderId == 'admin' || msg.senderRole == 'Admin' || msg.senderRole == 'Support';
-          final displaySenderName = isSupport ? 'BFarm Support' : msg.senderName;
+          final isSupport = msg.senderId == 'support' ||
+              msg.senderId == 'admin' ||
+              msg.senderRole == 'Admin' ||
+              msg.senderRole == 'Support';
+          final displaySenderName =
+              isSupport ? 'BFarm Support' : msg.senderName;
           // Create Notification Doc
           await _db.collection('notifications').add({
             'recipientId': msg.recipientId,
@@ -553,72 +676,74 @@ class DatabaseService {
     } catch (e) {
       print("Notification Error: $e");
     }
-    
+
     return docRef.id;
   }
 
   Stream<List<MessageModel>> streamMessagesByUser(String userId) {
-    return _db.collection('messages')
-      .where('recipientId', isEqualTo: userId)
-      .snapshots()
-      .map((snap) {
-        final messages = snap.docs.map((doc) => MessageModel.fromMap(doc.data(), doc.id)).toList();
-        messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return messages;
-      });
+    return _db
+        .collection('messages')
+        .where('recipientId', isEqualTo: userId)
+        .snapshots()
+        .map((snap) {
+      final messages = snap.docs
+          .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
+          .toList();
+      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return messages;
+    });
   }
 
   Stream<List<MessageModel>> streamSupportConversations() {
-    final q1 = _db.collection('messages')
-      .where('senderId', isEqualTo: 'support');
-    
-    final q2 = _db.collection('messages')
-      .where('recipientId', isEqualTo: 'support');
+    final q1 =
+        _db.collection('messages').where('senderId', isEqualTo: 'support');
 
-    return CombineLatestStream.combine2<QuerySnapshot, QuerySnapshot, List<MessageModel>>(
-      q1.snapshots(),
-      q2.snapshots(),
-      (s1, s2) {
-        final messages = <MessageModel>[];
-        final seenDocIds = <String>{};
-        
-        for (final d in [...s1.docs, ...s2.docs]) {
-          if (!seenDocIds.contains(d.id)) {
-            seenDocIds.add(d.id);
-            messages.add(MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
-          }
+    final q2 =
+        _db.collection('messages').where('recipientId', isEqualTo: 'support');
+
+    return CombineLatestStream.combine2<QuerySnapshot, QuerySnapshot,
+        List<MessageModel>>(q1.snapshots(), q2.snapshots(), (s1, s2) {
+      final messages = <MessageModel>[];
+      final seenDocIds = <String>{};
+
+      for (final d in [...s1.docs, ...s2.docs]) {
+        if (!seenDocIds.contains(d.id)) {
+          seenDocIds.add(d.id);
+          messages.add(
+              MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
         }
-        
-        messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return messages;
       }
-    );
+
+      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return messages;
+    });
   }
 
   Stream<List<MessageModel>> streamMessagesBetween(String uid1, String uid2) {
     // We filter for either (uid1 -> uid2) OR (uid2 -> uid1)
     // Note: Firestore doesn't support OR across fields easily without multiple queries or custom data structure
-    // For now, we'll stream all messages related to uid1 and filter locally for uid2, 
+    // For now, we'll stream all messages related to uid1 and filter locally for uid2,
     // or better, stream both directions.
-    final q1 = _db.collection('messages')
-      .where('senderId', isEqualTo: uid1)
-      .where('recipientId', isEqualTo: uid2);
-    
-    final q2 = _db.collection('messages')
-      .where('senderId', isEqualTo: uid2)
-      .where('recipientId', isEqualTo: uid1);
+    final q1 = _db
+        .collection('messages')
+        .where('senderId', isEqualTo: uid1)
+        .where('recipientId', isEqualTo: uid2);
 
-    return CombineLatestStream.combine2<QuerySnapshot, QuerySnapshot, List<MessageModel>>(
-      q1.snapshots(),
-      q2.snapshots(),
-      (s1, s2) {
-        final m1 = s1.docs.map((d) => MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
-        final m2 = s2.docs.map((d) => MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
-        final all = [...m1, ...m2];
-        all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return all;
-      }
-    );
+    final q2 = _db
+        .collection('messages')
+        .where('senderId', isEqualTo: uid2)
+        .where('recipientId', isEqualTo: uid1);
+
+    return CombineLatestStream.combine2<QuerySnapshot, QuerySnapshot,
+        List<MessageModel>>(q1.snapshots(), q2.snapshots(), (s1, s2) {
+      final m1 = s1.docs.map(
+          (d) => MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
+      final m2 = s2.docs.map(
+          (d) => MessageModel.fromMap(d.data() as Map<String, dynamic>, d.id));
+      final all = [...m1, ...m2];
+      all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return all;
+    });
   }
 
   Future<void> markMessageRead(String messageId) async {
@@ -626,12 +751,13 @@ class DatabaseService {
   }
 
   Future<void> markSupportMessagesRead(String userId) async {
-    final snap = await _db.collection('messages')
-      .where('senderId', isEqualTo: userId)
-      .where('recipientId', isEqualTo: 'support')
-      .where('isRead', isEqualTo: false)
-      .get();
-    
+    final snap = await _db
+        .collection('messages')
+        .where('senderId', isEqualTo: userId)
+        .where('recipientId', isEqualTo: 'support')
+        .where('isRead', isEqualTo: false)
+        .get();
+
     final batch = _db.batch();
     for (final doc in snap.docs) {
       batch.update(doc.reference, {'isRead': true});
@@ -641,36 +767,50 @@ class DatabaseService {
 
   // --- All Bids (for Registry) ---
   Stream<List<BidModel>> streamAllBids() {
-    return _db.collection('bids')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => BidModel.fromMap(doc.data(), doc.id)).toList());
+    return _db
+        .collection('bids')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => BidModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   // --- Notifications ---
-  Stream<List<NotificationModel>> streamNotifications(String userId, [String role = 'User']) {
+  Stream<List<NotificationModel>> streamNotifications(String userId,
+      [String role = 'User']) {
     if (role == 'Admin') {
       // Admins see everything
-      return _db.collection('notifications')
+      return _db
+          .collection('notifications')
           .orderBy('createdAt', descending: true)
           .snapshots()
-          .map((snap) => snap.docs.map((doc) => NotificationModel.fromMap(doc.data(), doc.id)).toList());
+          .map((snap) => snap.docs
+              .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+              .toList());
     }
-    
-    return _db.collection('notifications')
-      .where('recipientId', isEqualTo: userId)
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((doc) => NotificationModel.fromMap(doc.data(), doc.id)).toList());
+
+    return _db
+        .collection('notifications')
+        .where('recipientId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   /// Specialized stream for Agents to see notifications for their assigned farmers
-  Stream<List<NotificationModel>> streamAgentFarmerNotifications(String agentId) {
-    return _db.collection('notifications')
+  Stream<List<NotificationModel>> streamAgentFarmerNotifications(
+      String agentId) {
+    return _db
+        .collection('notifications')
         .where('data.agentId', isEqualTo: agentId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) => NotificationModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snap) => snap.docs
+            .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Future<void> markNotificationRead(String id) async {
@@ -798,9 +938,12 @@ class DatabaseService {
 
   /// Get products for a specific seller (for agent impersonation)
   Future<List<ProductModel>> getProductsBySeller(String sellerId) async {
-    final snap = await _db.collection('products')
+    final snap = await _db
+        .collection('products')
         .where('sellerId', isEqualTo: sellerId)
         .get();
-    return snap.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)).toList();
+    return snap.docs
+        .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
+        .toList();
   }
 }

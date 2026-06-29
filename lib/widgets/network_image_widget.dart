@@ -38,11 +38,11 @@ class AppNetworkImage extends StatelessWidget {
         cacheHeight: memCacheHeight,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
-          return placeholder ?? _ShimmerPlaceholder(width: width, height: height);
+          return placeholder ??
+              _ShimmerPlaceholder(width: width, height: height);
         },
         errorBuilder: (context, error, stackTrace) =>
-            errorWidget ??
-            _ErrorPlaceholder(width: width, height: height),
+            errorWidget ?? _ErrorPlaceholder(width: width, height: height),
       );
     }
 
@@ -53,7 +53,8 @@ class AppNetworkImage extends StatelessWidget {
       fit: fit,
       memCacheWidth: memCacheWidth,
       memCacheHeight: memCacheHeight,
-      fadeInDuration: const Duration(milliseconds: 300), // Slightly longer for smoothness
+      fadeInDuration:
+          const Duration(milliseconds: 300), // Slightly longer for smoothness
       placeholder: (context, url) =>
           placeholder ?? _ShimmerPlaceholder(width: width, height: height),
       errorWidget: (context, url, error) =>
@@ -92,7 +93,8 @@ class _ErrorPlaceholder extends StatelessWidget {
       width: width ?? double.infinity,
       height: height ?? double.infinity,
       color: Colors.grey[200],
-      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 20)),
+      child: const Center(
+          child: Icon(Icons.broken_image, color: Colors.grey, size: 20)),
     );
   }
 }

@@ -57,16 +57,17 @@ class _LoginScreenState extends State<LoginScreen> {
     final resetEmailCtrl = TextEditingController(text: _emailCtrl.text.trim());
     bool localLoading = false;
     await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
             return AlertDialog(
               title: const Text('Reset Password'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Enter your email address to receive a password reset link.', style: TextStyle(fontSize: 14)),
+                  const Text(
+                      'Enter your email address to receive a password reset link.',
+                      style: TextStyle(fontSize: 14)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: resetEmailCtrl,
@@ -75,7 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'Email',
                       hintText: 'Enter your email',
                       prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ],
@@ -86,46 +88,56 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: localLoading ? null : () async {
-                    final email = resetEmailCtrl.text.trim();
-                    if (email.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter an email')),
-                      );
-                      return;
-                    }
-                    setState(() => localLoading = true);
-                    try {
-                      await _auth.resetPassword(email);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Password reset email sent. Check your inbox.')),
-                        );
-                      }
-                    } catch (e) {
-                      setState(() => localLoading = false);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: localLoading
+                      ? null
+                      : () async {
+                          final email = resetEmailCtrl.text.trim();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Please enter an email')),
+                            );
+                            return;
+                          }
+                          setState(() => localLoading = true);
+                          try {
+                            await _auth.resetPassword(email);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Password reset email sent. Check your inbox.')),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() => localLoading = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(e
+                                        .toString()
+                                        .replaceAll('Exception: ', ''))),
+                              );
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.greenLight,
                     foregroundColor: Colors.white,
                   ),
-                  child: localLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Send Link'),
+                  child: localLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text('Send Link'),
                 ),
               ],
             );
-          }
-        );
-      }
-    );
+          });
+        });
   }
 
   Future<void> _signInWithGoogle() async {
@@ -246,108 +258,115 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 12),
 
-              // ─── Logo ──────────────────────────────
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    'assets/images/Bfarm_icon.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Welcome Back',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Sign in to your account',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-
-              // ─── Toggle ────────────────────────────
-              _buildToggle(),
-              const SizedBox(height: 20),
-
-              // ─── Form ──────────────────────────────
-              _isEmailLogin ? _buildEmailForm() : _buildPhoneForm(),
-
-              const SizedBox(height: 20),
-
-              // ─── OR Divider ────────────────────────
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppTheme.border)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('OR', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                  ),
-                  Expanded(child: Divider(color: AppTheme.border)),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ─── Google Button ─────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _loading ? null : _signInWithGoogle,
-                  icon: Icon(Icons.g_mobiledata, size: 24, color: AppTheme.textPrimary),
-                  label: Text('Continue with Google', style: TextStyle(color: AppTheme.textPrimary)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ─── Register Link ─────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Don't have an account? ",
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                      );
-                    },
-                    child: const Text(
-                      'Register',
-                      style: TextStyle(
-                        color: AppTheme.greenLight,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                  // ─── Logo ──────────────────────────────
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/images/Bfarm_icon.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Welcome Back',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Sign in to your account',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── Toggle ────────────────────────────
+                  _buildToggle(),
+                  const SizedBox(height: 20),
+
+                  // ─── Form ──────────────────────────────
+                  _isEmailLogin ? _buildEmailForm() : _buildPhoneForm(),
+
+                  const SizedBox(height: 20),
+
+                  // ─── OR Divider ────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppTheme.border)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR',
+                            style: TextStyle(
+                                color: AppTheme.textMuted, fontSize: 12)),
+                      ),
+                      Expanded(child: Divider(color: AppTheme.border)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── Google Button ─────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _loading ? null : _signInWithGoogle,
+                      icon: Icon(Icons.g_mobiledata,
+                          size: 24, color: AppTheme.textPrimary),
+                      label: Text('Continue with Google',
+                          style: TextStyle(color: AppTheme.textPrimary)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: AppTheme.border),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ─── Register Link ─────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style:
+                            TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const RegisterScreen()),
+                          );
+                        },
+                        child: const Text(
+                          'Register',
+                          style: TextStyle(
+                            color: AppTheme.greenLight,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }
@@ -362,11 +381,15 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          _toggleTab('Email', _isEmailLogin, () => setState(() {
-            _isEmailLogin = true;
-            _codeSent = false;
-          })),
-          _toggleTab('Phone', !_isEmailLogin, () => setState(() => _isEmailLogin = false)),
+          _toggleTab(
+              'Email',
+              _isEmailLogin,
+              () => setState(() {
+                    _isEmailLogin = true;
+                    _codeSent = false;
+                  })),
+          _toggleTab('Phone', !_isEmailLogin,
+              () => setState(() => _isEmailLogin = false)),
         ],
       ),
     );
@@ -408,7 +431,8 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _emailCtrl,
             validator: Validators.email,
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.email_outlined, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -417,7 +441,8 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _passwordCtrl,
             validator: Validators.password,
             obscureText: !_showPassword,
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
             suffixIcon: IconButton(
               icon: Icon(
                 _showPassword ? Icons.visibility_off : Icons.visibility,
@@ -434,7 +459,10 @@ class _LoginScreenState extends State<LoginScreen> {
               onTap: _resetPassword,
               child: const Text(
                 'Forgot Password?',
-                style: TextStyle(color: AppTheme.greenLight, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: AppTheme.greenLight,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500),
               ),
             ),
           ),
@@ -458,7 +486,8 @@ class _LoginScreenState extends State<LoginScreen> {
             hint: '07XX XXX XXX',
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 24),
           CustomButton(
@@ -476,12 +505,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: AppTheme.greenLight, size: 20),
+                const Icon(Icons.check_circle_outline,
+                    color: AppTheme.greenLight, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Code sent to $_fullPhone',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   ),
                 ),
               ],
@@ -493,7 +524,8 @@ class _LoginScreenState extends State<LoginScreen> {
             hint: '123456',
             controller: _otpCtrl,
             keyboardType: TextInputType.number,
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.lock_outline, color: AppTheme.textMuted, size: 20),
             autofillHints: const [AutofillHints.oneTimeCode],
           ),
           const SizedBox(height: 24),

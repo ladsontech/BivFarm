@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../models/message_model.dart';
 import '../../models/user_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserModel currentUser;
@@ -23,6 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _db = DatabaseService();
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  bool _sending = false;
 
   @override
   void dispose() {
@@ -33,9 +38,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() async {
     final text = _msgCtrl.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _sending) return;
 
     _msgCtrl.clear();
+    setState(() => _sending = true);
 
     final isAdmin = widget.currentUser.role == 'Admin';
     final msg = MessageModel(
@@ -48,8 +54,18 @@ class _ChatScreenState extends State<ChatScreen> {
       subject: 'Chat Message',
     );
 
-    await _db.addMessage(msg);
-    _scrollToBottom();
+    try {
+      await _db.addMessage(msg);
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      if (_msgCtrl.text.isEmpty) _msgCtrl.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Message was not sent. Try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   void _scrollToBottom() {
@@ -64,7 +80,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final customerId = widget.currentUser.role == 'Admin' ? widget.otherUser.id : widget.currentUser.id;
+    final customerId = widget.currentUser.role == 'Admin'
+        ? widget.otherUser.id
+        : widget.currentUser.id;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -75,9 +93,14 @@ class _ChatScreenState extends State<ChatScreen> {
               radius: 16,
               backgroundColor: Colors.white24,
               child: Text(
-                (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                (widget.currentUser.role != 'Admin' &&
+                        (widget.otherUser.role == 'Admin' ||
+                            widget.otherUser.role == 'Support' ||
+                            widget.otherUser.id == 'support'))
                     ? 'S'
-                    : widget.otherUser.name[0].toUpperCase(),
+                    : (widget.otherUser.name.trim().isEmpty
+                        ? '?'
+                        : widget.otherUser.name.trim()[0].toUpperCase()),
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
@@ -87,16 +110,25 @@ class _ChatScreenState extends State<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                    (widget.currentUser.role != 'Admin' &&
+                            (widget.otherUser.role == 'Admin' ||
+                                widget.otherUser.role == 'Support' ||
+                                widget.otherUser.id == 'support'))
                         ? 'BFarm Support'
-                        : widget.otherUser.name,
+                        : (widget.otherUser.name.trim().isEmpty
+                            ? 'BFarm user'
+                            : widget.otherUser.name),
                     style: const TextStyle(fontSize: 15),
                   ),
                   Text(
-                    (widget.currentUser.role != 'Admin' && (widget.otherUser.role == 'Admin' || widget.otherUser.role == 'Support' || widget.otherUser.id == 'support'))
+                    (widget.currentUser.role != 'Admin' &&
+                            (widget.otherUser.role == 'Admin' ||
+                                widget.otherUser.role == 'Support' ||
+                                widget.otherUser.id == 'support'))
                         ? 'Platform Support'
                         : widget.otherUser.role,
-                    style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7)),
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.white.withOpacity(0.7)),
                   ),
                 ],
               ),
@@ -104,41 +136,53 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<List<MessageModel>>(
-              stream: _db.streamMessagesBetween('support', customerId),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final messages = snap.data ?? [];
-                
-                return ListView.builder(
-                  controller: _scrollCtrl,
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  itemCount: messages.length,
-                  itemBuilder: (context, i) {
-                    final m = messages[i];
-                    final isMe = m.senderId == widget.currentUser.id || (widget.currentUser.role == 'Admin' && m.senderId == 'support');
-                    
-                    return _ChatBubble(message: m, isMe: isMe);
-                  },
-                );
-              },
+      body: ResponsiveWrapper(
+        maxWidth: 900,
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<List<MessageModel>>(
+                stream: _db.streamMessagesBetween('support', customerId),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snap.hasError) {
+                    return const AppErrorState(
+                      title: 'Unable to load this conversation',
+                    );
+                  }
+                  final messages = snap.data ?? [];
+
+                  return ListView.builder(
+                    controller: _scrollCtrl,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 20),
+                    itemCount: messages.length,
+                    itemBuilder: (context, i) {
+                      final m = messages[i];
+                      final isMe = m.senderId == widget.currentUser.id ||
+                          (widget.currentUser.role == 'Admin' &&
+                              m.senderId == 'support');
+
+                      return _ChatBubble(message: m, isMe: isMe);
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          _buildInputArea(),
-        ],
+            _buildInputArea(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInputArea() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.of(context).padding.bottom),
+      padding: EdgeInsets.fromLTRB(
+          16, 8, 16, 8 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
@@ -155,7 +199,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 fillColor: AppTheme.background,
               ),
             ),
@@ -164,8 +209,17 @@ class _ChatScreenState extends State<ChatScreen> {
           CircleAvatar(
             backgroundColor: AppTheme.green,
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
-              onPressed: _sendMessage,
+              icon: _sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.send, color: Colors.white, size: 20),
+              onPressed: _sending ? null : _sendMessage,
             ),
           ),
         ],
@@ -185,11 +239,14 @@ class _ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            constraints: BoxConstraints(
+              maxWidth: math.min(560, MediaQuery.sizeOf(context).width * 0.75),
+            ),
             decoration: BoxDecoration(
               color: isMe ? AppTheme.green : AppTheme.surface,
               borderRadius: BorderRadius.only(
@@ -199,7 +256,10 @@ class _ChatBubble extends StatelessWidget {
                 bottomRight: Radius.circular(isMe ? 0 : 16),
               ),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2)),
               ],
             ),
             child: Text(

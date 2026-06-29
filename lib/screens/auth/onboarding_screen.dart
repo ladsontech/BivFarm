@@ -9,6 +9,7 @@ import '../../services/database_service.dart';
 import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -56,7 +57,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_currentPage == 1) {
       // Validate personal info
-      if (_firstNameCtrl.text.trim().isEmpty || _lastNameCtrl.text.trim().isEmpty) {
+      if (_firstNameCtrl.text.trim().isEmpty ||
+          _lastNameCtrl.text.trim().isEmpty) {
         _showError('Please enter your first and last name');
         return;
       }
@@ -103,7 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       String? photoUrl;
       if (_avatarFile != null) {
-        photoUrl = await StorageService().uploadXFile(_avatarFile!, 'profile_photos');
+        photoUrl =
+            await StorageService().uploadXFile(_avatarFile!, 'profile_photos');
       }
 
       final data = <String, dynamic>{
@@ -144,94 +147,107 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         automaticallyImplyLeading: false,
         actions: [
           TextButton(
-            onPressed: () => Provider.of<AuthService>(context, listen: false).signOut(),
-            child: Text('Sign Out', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+            onPressed: () =>
+                Provider.of<AuthService>(context, listen: false).signOut(),
+            child: Text('Sign Out',
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicator
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-              child: Row(
-                children: List.generate(3, (i) {
-                  return Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      height: 4,
-                      margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
-                      decoration: BoxDecoration(
-                        color: i <= _currentPage ? AppTheme.greenLight : AppTheme.surfaceLight,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            // Pages
-            Expanded(
-              child: PageView(
-                controller: _pageCtrl,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (i) => setState(() => _currentPage = i),
-                children: [
-                  _buildWelcomePage(),
-                  _buildPersonalInfoPage(),
-                  _buildLocationPage(),
-                ],
-              ),
-            ),
-
-            // Bottom buttons
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 8, 28, 16),
-              child: Row(
-                children: [
-                  if (_currentPage > 0)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _prevPage,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: AppTheme.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      body: ResponsiveWrapper(
+        maxWidth: 760,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Progress indicator
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+                child: Row(
+                  children: List.generate(3, (i) {
+                    return Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: 4,
+                        margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                        decoration: BoxDecoration(
+                          color: i <= _currentPage
+                              ? AppTheme.greenLight
+                              : AppTheme.surfaceLight,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        child: Text('Back', style: TextStyle(color: AppTheme.textSecondary)),
                       ),
-                    ),
-                  if (_currentPage > 0) const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: _currentPage < 2
-                        ? ElevatedButton(
-                            onPressed: _nextPage,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: const Text('Next'),
-                          )
-                        : ElevatedButton(
-                            onPressed: _loading ? null : _complete,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: _loading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Text('Complete Setup'),
-                          ),
-                  ),
-                ],
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
+
+              // Pages
+              Expanded(
+                child: PageView(
+                  controller: _pageCtrl,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  children: [
+                    _buildWelcomePage(),
+                    _buildPersonalInfoPage(),
+                    _buildLocationPage(),
+                  ],
+                ),
+              ),
+
+              // Bottom buttons
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 8, 28, 16),
+                child: Row(
+                  children: [
+                    if (_currentPage > 0)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _prevPage,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(color: AppTheme.border),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text('Back',
+                              style: TextStyle(color: AppTheme.textSecondary)),
+                        ),
+                      ),
+                    if (_currentPage > 0) const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: _currentPage < 2
+                          ? ElevatedButton(
+                              onPressed: _nextPage,
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text('Next'),
+                            )
+                          : ElevatedButton(
+                              onPressed: _loading ? null : _complete,
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: _loading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Text('Complete Setup'),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -257,7 +273,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 8),
           Text(
             'Add a profile photo so others can recognize you on the marketplace.',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.5),
+            style:
+                TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.5),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 36),
@@ -276,7 +293,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           : FileImage(File(_avatarFile!.path)) as ImageProvider)
                       : null,
                   child: _avatarFile == null
-                      ? Icon(Icons.person, color: AppTheme.textMuted.withOpacity(0.4), size: 56)
+                      ? Icon(Icons.person,
+                          color: AppTheme.textMuted.withOpacity(0.4), size: 56)
                       : null,
                 ),
                 Positioned(
@@ -290,7 +308,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: AppTheme.background, width: 3),
                     ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                    child: const Icon(Icons.camera_alt,
+                        color: Colors.white, size: 16),
                   ),
                 ),
               ],
@@ -300,16 +319,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             _avatarFile != null ? 'Looking great! 🎉' : 'Tap to add photo',
             style: TextStyle(
-              color: _avatarFile != null ? AppTheme.greenLight : AppTheme.textMuted,
+              color: _avatarFile != null
+                  ? AppTheme.greenLight
+                  : AppTheme.textMuted,
               fontSize: 14,
-              fontWeight: _avatarFile != null ? FontWeight.w600 : FontWeight.w400,
+              fontWeight:
+                  _avatarFile != null ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
           const SizedBox(height: 8),
           if (_avatarFile == null)
             Text(
               'You can skip this and add one later',
-              style: TextStyle(color: AppTheme.textMuted.withOpacity(0.6), fontSize: 12),
+              style: TextStyle(
+                  color: AppTheme.textMuted.withOpacity(0.6), fontSize: 12),
             ),
         ],
       ),
@@ -338,7 +361,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 28),
-
           Row(
             children: [
               Expanded(
@@ -359,16 +381,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
           const SizedBox(height: 18),
-
           CustomTextField(
             label: 'Phone Number (Required)',
             hint: '07.. ... ...',
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
+            prefixIcon:
+                Icon(Icons.phone_outlined, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(height: 18),
-
           CustomDropdown(
             label: 'Gender',
             value: _gender,
@@ -435,12 +456,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppTheme.greenLight, size: 20),
+                const Icon(Icons.info_outline,
+                    color: AppTheme.greenLight, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'You can update your location anytime from your profile settings.',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, height: 1.4),
+                    style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                        height: 1.4),
                   ),
                 ),
               ],

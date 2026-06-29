@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/notification_model.dart';
 import '../../services/database_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/responsive_wrapper.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final String userId;
@@ -44,74 +46,99 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(
         title: const Text('Notifications'),
       ),
-      body: StreamBuilder<List<NotificationModel>>(
-        stream: db.streamNotifications(widget.userId),
-        builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-          }
-          final notes = snap.data ?? [];
-          
-          if (notes.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+      body: ResponsiveWrapper(
+        maxWidth: 900,
+        child: StreamBuilder<List<NotificationModel>>(
+          stream: db.streamNotifications(widget.userId),
+          builder: (ctx, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator(color: AppTheme.green));
+            }
+            if (snap.hasError) {
+              return const AppErrorState(
+                title: 'Unable to load notifications',
+              );
+            }
+            final notes = snap.data ?? [];
+
+            if (notes.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.notifications_off_outlined,
+                          size: 48, color: AppTheme.textMuted.withOpacity(0.5)),
+                    ),
+                    const SizedBox(height: 20),
+                    Text('All Caught Up!',
+                        style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Text('You have no new notifications.',
+                        style: TextStyle(color: AppTheme.textMuted)),
+                  ],
+                ),
+              );
+            }
+
+            final unreadCount = notes.where((n) => !n.isRead).length;
+
+            return Column(
+              children: [
+                if (unreadCount > 0)
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceLight,
-                      shape: BoxShape.circle,
+                      border: Border(
+                          bottom:
+                              BorderSide(color: AppTheme.border, width: 0.5)),
                     ),
-                    child: Icon(Icons.notifications_off_outlined, size: 48, color: AppTheme.textMuted.withOpacity(0.5)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('$unreadCount Unread',
+                            style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600)),
+                        GestureDetector(
+                          onTap: () => _markAllAsRead(notes),
+                          child: const Text('Mark all as read',
+                              style: TextStyle(
+                                  color: AppTheme.greenLight,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13)),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  Text('All Caught Up!', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text('You have no new notifications.', style: TextStyle(color: AppTheme.textMuted)),
-                ],
-              ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: notes.length,
+                    itemBuilder: (ctx, i) {
+                      final n = notes[i];
+                      return _NotificationTile(
+                        notification: n,
+                        db: db,
+                        timeAgo: _timeAgo(n.createdAt),
+                      );
+                    },
+                  ),
+                ),
+              ],
             );
-          }
-
-          final unreadCount = notes.where((n) => !n.isRead).length;
-
-          return Column(
-            children: [
-              if (unreadCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceLight,
-                    border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('$unreadCount Unread', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-                      GestureDetector(
-                        onTap: () => _markAllAsRead(notes),
-                        child: const Text('Mark all as read', style: TextStyle(color: AppTheme.greenLight, fontWeight: FontWeight.w600, fontSize: 13)),
-                      ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: notes.length,
-                  itemBuilder: (ctx, i) {
-                    final n = notes[i];
-                    return _NotificationTile(
-                      notification: n, 
-                      db: db,
-                      timeAgo: _timeAgo(n.createdAt),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -121,7 +148,8 @@ class _NotificationTile extends StatelessWidget {
   final NotificationModel notification;
   final DatabaseService db;
   final String timeAgo;
-  const _NotificationTile({required this.notification, required this.db, required this.timeAgo});
+  const _NotificationTile(
+      {required this.notification, required this.db, required this.timeAgo});
 
   IconData _getIcon() {
     switch (notification.type.toLowerCase()) {
@@ -135,14 +163,18 @@ class _NotificationTile extends StatelessWidget {
         return Icons.notifications_active_outlined;
     }
   }
-  
+
   Color _getIconColor() {
     if (notification.isRead) return AppTheme.textMuted;
     switch (notification.type.toLowerCase()) {
-      case 'bid': return Colors.orange;
-      case 'message': return Colors.blue;
-      case 'order': return AppTheme.greenLight;
-      default: return AppTheme.greenLight;
+      case 'bid':
+        return Colors.orange;
+      case 'message':
+        return Colors.blue;
+      case 'order':
+        return AppTheme.greenLight;
+      default:
+        return AppTheme.greenLight;
     }
   }
 
@@ -158,8 +190,11 @@ class _NotificationTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: notification.isRead ? Colors.transparent : AppTheme.greenSurface.withOpacity(0.15),
-          border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+          color: notification.isRead
+              ? Colors.transparent
+              : AppTheme.greenSurface.withOpacity(0.15),
+          border:
+              Border(bottom: BorderSide(color: AppTheme.border, width: 0.5)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,10 +206,14 @@ class _NotificationTile extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: notification.isRead ? AppTheme.surfaceLight : AppTheme.card,
+                    color: notification.isRead
+                        ? AppTheme.surfaceLight
+                        : AppTheme.card,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: notification.isRead ? AppTheme.border : _getIconColor().withOpacity(0.3),
+                      color: notification.isRead
+                          ? AppTheme.border
+                          : _getIconColor().withOpacity(0.3),
                     ),
                   ),
                   child: Icon(_getIcon(), color: _getIconColor(), size: 22),
@@ -189,7 +228,8 @@ class _NotificationTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.error,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.background, width: 2),
+                        border:
+                            Border.all(color: AppTheme.background, width: 2),
                       ),
                     ),
                   ),
@@ -209,7 +249,9 @@ class _NotificationTile extends StatelessWidget {
                           style: TextStyle(
                             color: AppTheme.textPrimary,
                             fontSize: 15,
-                            fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.w700,
+                            fontWeight: notification.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w700,
                           ),
                         ),
                       ),
@@ -217,9 +259,13 @@ class _NotificationTile extends StatelessWidget {
                       Text(
                         timeAgo,
                         style: TextStyle(
-                          color: notification.isRead ? AppTheme.textMuted : AppTheme.greenLight, 
+                          color: notification.isRead
+                              ? AppTheme.textMuted
+                              : AppTheme.greenLight,
                           fontSize: 12,
-                          fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
+                          fontWeight: notification.isRead
+                              ? FontWeight.normal
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -228,7 +274,9 @@ class _NotificationTile extends StatelessWidget {
                   Text(
                     notification.body,
                     style: TextStyle(
-                      color: notification.isRead ? AppTheme.textMuted : AppTheme.textSecondary, 
+                      color: notification.isRead
+                          ? AppTheme.textMuted
+                          : AppTheme.textSecondary,
                       fontSize: 14,
                       height: 1.3,
                     ),
