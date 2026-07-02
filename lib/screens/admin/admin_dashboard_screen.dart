@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
-import '../../models/input_dealer_model.dart';
+
 import '../../services/database_service.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
@@ -243,7 +243,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
 class AdminUsersList extends StatefulWidget {
   final DatabaseService db;
-  const AdminUsersList({required this.db});
+  const AdminUsersList({super.key, required this.db});
 
   @override
   State<AdminUsersList> createState() => _AdminUsersListState();
@@ -713,7 +713,7 @@ class _EditField extends StatelessWidget {
 
 class AdminAgentsList extends StatefulWidget {
   final DatabaseService db;
-  const AdminAgentsList({required this.db});
+  const AdminAgentsList({super.key, required this.db});
 
   @override
   State<AdminAgentsList> createState() => _AdminAgentsListState();
@@ -815,254 +815,20 @@ class _AdminAgentsListState extends State<AdminAgentsList> {
             itemCount: filtered.length,
             itemBuilder: (context, index) {
               final a = filtered[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              color: AppTheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppTheme.border, width: 0.5),
-              ),
-              child: ListTile(
-                onTap: () => _showAgentDetailsSheet(context, a),
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.green.withValues(alpha: 0.08),
-                  child: Text(
-                    a.name.isNotEmpty ? a.name[0].toUpperCase() : 'A',
-                    style: const TextStyle(color: AppTheme.green, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                title: Text(a.name.isNotEmpty ? a.name : 'No Name', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${a.email} • ${a.district}'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(a.phone, style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                    const SizedBox(width: 4),
-                     Icon(Icons.chevron_right, size: 16, color: AppTheme.textMuted),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showAgentDetailsSheet(BuildContext context, UserModel agent) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.95,
-          builder: (context, scrollCtrl) {
-            return Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: () async {
-                  final users = await db.getUsersByAgent(agent.id);
-                  final groups = await db.getGroupsByAgent(agent.id);
-                  return {'users': users, 'groups': groups};
-                }(),
-                builder: (context, snap) {
-                  final isLoading = snap.connectionState == ConnectionState.waiting;
-                  final relations = snap.data;
-                  final List<UserModel> users = relations?['users'] ?? [];
-                  final List<FarmerGroupModel> groups = relations?['groups'] ?? [];
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Handle bar
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppTheme.border,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Agent Header
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 26,
-                            backgroundColor: AppTheme.green.withValues(alpha: 0.1),
-                            child: Text(
-                              agent.name.isNotEmpty ? agent.name[0].toUpperCase() : 'A',
-                              style: const TextStyle(
-                                color: AppTheme.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  agent.name.isNotEmpty ? agent.name : 'No Name',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '${agent.email} • ${agent.district}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Phone: ${agent.phone}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 12),
-
-                      // Relations section header
-                      Text(
-                        'Members Registered by Agent',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      Expanded(
-                        child: isLoading
-                            ? const Center(child: CircularProgressIndicator(color: AppTheme.green))
-                            : ListView(
-                                controller: scrollCtrl,
-                                children: [
-                                  // Expandable Section: Individuals
-                                  Theme(
-                                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                    child: ExpansionTile(
-                                      title: Text(
-                                        'Individuals (${users.length})',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.greenLight,
-                                        ),
-                                      ),
-                                      leading: const Icon(Icons.person, color: AppTheme.greenLight),
-                                      initiallyExpanded: true,
-                                      children: users.isEmpty
-                                          ? [
-                                              Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                                child: Text(
-                                                  'No individuals registered under this agent.',
-                                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                                ),
-                                              ),
-                                            ]
-                                          : users.map((u) {
-                                              return ListTile(
-                                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                                dense: true,
-                                                title: Text(
-                                                  u.name,
-                                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                                                ),
-                                                subtitle: Text('${u.role} • ${u.district}'),
-                                                trailing: Text(
-                                                  u.phone,
-                                                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                                                ),
-                                              );
-                                            }).toList(),
-                                    ),
-                                  ),
-
-                                  const Divider(height: 1),
-
-                                  // Expandable Section: Farmer Groups
-                                  Theme(
-                                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                    child: ExpansionTile(
-                                      title: Text(
-                                        'Farmer Groups (${groups.length})',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.warning,
-                                        ),
-                                      ),
-                                      leading: const Icon(Icons.groups, color: AppTheme.warning),
-                                      initiallyExpanded: true,
-                                      children: groups.isEmpty
-                                          ? [
-                                              Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                                child: Text(
-                                                  'No groups registered under this agent.',
-                                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                                ),
-                                              ),
-                                            ]
-                                          : groups.map((g) {
-                                              return ListTile(
-                                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                                dense: true,
-                                                title: Text(
-                                                  g.groupName,
-                                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                                                ),
-                                                subtitle: Text('Leader: ${g.leaderName} • ${g.district}'),
-                                                trailing: Text(
-                                                  '${g.memberCount} members',
-                                                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                                                ),
-                                              );
-                                            }).toList(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            );
-          },
-        );
-      },
+              final initial = a.name.isNotEmpty ? a.name[0].toUpperCase() : 'A';
+              return _UserCompactCard(
+                user: a,
+                initial: initial,
+                onEdit: () => _showEditSheet(context, a),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
+
 
 class _MenuItem {
   final String label;
