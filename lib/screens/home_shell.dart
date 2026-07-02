@@ -28,6 +28,9 @@ import 'common/management_screen.dart';
 import '../widgets/floating_message_widget.dart';
 import 'orders/bulk_order_form_screen.dart';
 import 'marketplace/product_detail_screen.dart';
+import 'common/registration_screens.dart';
+import '../widgets/registry_bids_tab.dart';
+import '../widgets/registry_database_tab.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -57,9 +60,15 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _onViewAllCategory(String category) {
-    // Go to Categories tab (index 1) with the selected category pre-loaded
-    setState(() => _selectedCategoryForTab = category);
-    _currentIndexNotifier.value = 1;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+    if (isDesktop) {
+      _marketController.showCategory(category);
+      _currentIndexNotifier.value = 0;
+    } else {
+      // Go to Categories tab (index 1) with the selected category pre-loaded
+      setState(() => _selectedCategoryForTab = category);
+      _currentIndexNotifier.value = 1;
+    }
   }
 
   @override
@@ -117,10 +126,6 @@ class _HomeShellState extends State<HomeShell> {
         return ValueListenableBuilder<int>(
           valueListenable: _currentIndexNotifier,
           builder: (context, currentIndex, _) {
-            final navItems = _getNavItems(user);
-            // Clamp index
-            final safeIndex = currentIndex.clamp(0, navItems.length - 1);
-
             return LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktop =
@@ -178,7 +183,76 @@ class _HomeShellState extends State<HomeShell> {
                   const SizedBox(width: 8),
                 ];
 
-                final screens = _getScreens(user, actions);
+                final List<BottomNavigationBarItem> navItems = [];
+                final List<Widget> screens = [];
+
+                if (isDesktop && (user.role == 'Admin' || user.role == 'Registry')) {
+                  // Marketplace
+                  navItems.add(const BottomNavigationBarItem(
+                      icon: Icon(Icons.storefront), label: 'Market'));
+                  screens.add(MarketplaceScreen(
+                      controller: _marketController,
+                      userRole: user.role,
+                      userId: user.id,
+                      actions: actions,
+                      onViewAllCategory: _onViewAllCategory));
+
+                  // Admin Dashboard options (Flattened directly into main sidebar)
+                  navItems.addAll([
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.gavel_outlined), label: 'Bids & Orders'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.storage_outlined), label: 'Registry Database'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.people_outline), label: 'Users'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.person_outline), label: 'Agents'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.agriculture_outlined), label: 'Create Farmer'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.groups_outlined), label: 'Create Group'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.storefront_outlined), label: 'Register Store'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.business_outlined), label: 'Register Dealer'),
+                    const BottomNavigationBarItem(
+                        icon: Icon(Icons.inventory_2_outlined), label: 'My Listings'),
+                  ]);
+
+                  screens.addAll([
+                    RegistryBidsTab(db: DatabaseService()),
+                    RegistryDatabaseTab(db: DatabaseService()),
+                    AdminUsersList(db: DatabaseService()),
+                    AdminAgentsList(db: DatabaseService()),
+                    RegisterUserScreen(role: 'Farmer', agentId: user.id),
+                    RegisterGroupScreen(agentId: user.id),
+                    RegisterStoreScreen(agentId: user.id),
+                    RegisterDealerScreen(agentId: user.id),
+                    MyListingsTab(userId: user.id),
+                  ]);
+
+                  // Profile
+                  navItems.add(const BottomNavigationBarItem(
+                      icon: Icon(Icons.person_outline), label: 'Profile'));
+                  screens.add(ProfileScreen(user: user));
+
+                } else {
+                  final baseNavItems = _getNavItems(user);
+                  final baseScreens = _getScreens(user, actions);
+
+                  for (int i = 0; i < baseNavItems.length; i++) {
+                    if (isDesktop && baseNavItems[i].label == 'Categories') {
+                      continue;
+                    }
+                    navItems.add(baseNavItems[i]);
+                    if (i < baseScreens.length) {
+                      screens.add(baseScreens[i]);
+                    }
+                  }
+                }
+
+                // Clamp index
+                final safeIndex = currentIndex.clamp(0, navItems.length - 1);
 
                 if (isDesktop) {
                   return Scaffold(
@@ -235,16 +309,15 @@ class _HomeShellState extends State<HomeShell> {
                                     builder: (context, idx, _) {
                                       final safeIdx =
                                           idx.clamp(0, screens.length - 1);
-                                      // Hide AppBar for admin/agent dashboards which have their own headers
-                                      final isAdminOrAgentDashboard =
-                                          (user.role == 'Admin' ||
-                                                  user.role == 'Registry' ||
-                                                  user.role == 'Agent') &&
-                                              safeIdx == 3;
+                                      final hideAppBar =
+                                          screens[safeIdx] is MarketplaceScreen ||
+                                          screens[safeIdx] is CategoriesScreen ||
+                                          screens[safeIdx] is ProfileScreen ||
+                                          screens[safeIdx] is AdminDashboardScreen ||
+                                          screens[safeIdx] is AgentDashboardScreen;
 
                                       return Scaffold(
-                                        appBar: !isAdminOrAgentDashboard &&
-                                                safeIdx != 0
+                                        appBar: !hideAppBar
                                             ? AppBar(
                                                 toolbarHeight: 64,
                                                 title: Text(
@@ -275,7 +348,11 @@ class _HomeShellState extends State<HomeShell> {
                 return Stack(
                   children: [
                     Scaffold(
-                      appBar: safeIndex == 0
+                      appBar: (safeIndex == 0 ||
+                              safeIndex == 1 ||
+                              screens[safeIndex] is AdminDashboardScreen ||
+                              screens[safeIndex] is AgentDashboardScreen ||
+                              screens[safeIndex] is ProfileScreen)
                           ? null
                           : AppBar(
                               toolbarHeight: 64,
@@ -294,7 +371,7 @@ class _HomeShellState extends State<HomeShell> {
                       bottomNavigationBar:
                           _buildCustomBottomNav(safeIndex, navItems, context),
                     ),
-                    FloatingMessageWidget(userId: user.id),
+                    if (safeIndex == 0) FloatingMessageWidget(userId: user.id),
                   ],
                 );
               },
@@ -381,15 +458,13 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
                         currentUserId: user.id,
                         currentUserRole: user.role),
                   ))),
-          BidsListScreen(userId: user.id, userRole: user.role),
           const AdminDashboardScreen(),
           ProfileScreen(user: user),
         ];
@@ -406,8 +481,7 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
@@ -431,8 +505,7 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
@@ -456,8 +529,7 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
@@ -480,8 +552,7 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
@@ -504,8 +575,7 @@ class _HomeShellState extends State<HomeShell> {
               initialCategory: _selectedCategoryForTab,
               currentUserId: user.id,
               currentUserRole: user.role,
-              onProductSelected: (p) => Navigator.push(
-                  context,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => ProductDetailScreen(
                         product: p,
@@ -540,7 +610,6 @@ class _HomeShellState extends State<HomeShell> {
     switch (user.role) {
       case 'Admin':
         items.addAll([
-          const BottomNavigationBarItem(icon: Icon(Icons.gavel), label: 'Bids'),
           const BottomNavigationBarItem(
               icon: Icon(Icons.dashboard), label: 'Admin'),
         ]);

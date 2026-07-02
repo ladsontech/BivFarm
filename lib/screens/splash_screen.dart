@@ -194,7 +194,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ? _buildBrandingItem('A product of',
                             'assets/images/BIVmark_icon.png', 48)
                         : _buildBrandingItem('Powered by',
-                            'assets/images/carousel/buyaff.png', 55),
+                            'assets/images/carousel/buyaff.png', 48),
                   ),
                 ),
 
@@ -207,22 +207,22 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildBrandingItem(String label, String asset, double height) {
-    return Column(
-      key: ValueKey(asset),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-              color: Colors.white.withOpacity(0.35),
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3),
-        ),
-        const SizedBox(height: 12),
-        Image.asset(asset, height: height, fit: BoxFit.contain),
-      ],
-    );
-  }
+Widget _buildBrandingItem(String label, String asset, double height) {
+  return Column(
+    key: ValueKey(asset),
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        label.toUpperCase(),
+        style: TextStyle(
+            color: Colors.white.withOpacity(0.35),
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 3),
+      ),
+      const SizedBox(height: 6),
+      Image.asset(asset, height: height, fit: BoxFit.contain),
+    ],
+  );
+}
 }

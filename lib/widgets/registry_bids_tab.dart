@@ -110,7 +110,7 @@ List<T> sortBids<T>(List<T> items, SortType sortType) {
 
 Widget _buildTableHeader(List<String> titles, List<int> flexes) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
     decoration: BoxDecoration(
       color: AppTheme.surfaceLight,
       border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
@@ -123,9 +123,10 @@ Widget _buildTableHeader(List<String> titles, List<int> flexes) {
             titles[index],
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 12,
+              fontSize: 11,
               color: AppTheme.textSecondary,
-              letterSpacing: 0.3,
+              letterSpacing: 0.4,
+              height: 1.2,
             ),
           ),
         );
@@ -174,14 +175,12 @@ class _RegistryBidsTabState extends State<RegistryBidsTab>
   }
 
   Widget _buildEnhancedFilterBar() {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-
     return Column(
       children: [
         // Date filters
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               _FilterChip(
@@ -306,19 +305,37 @@ class _RegistryBidsTabState extends State<RegistryBidsTab>
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 800;
+
     return Column(
       children: [
         Container(
           color: AppTheme.surface,
-          child: TabBar(
-            controller: _typeCtrl,
-            labelColor: AppTheme.green,
-            unselectedLabelColor: AppTheme.textMuted,
-            indicatorColor: AppTheme.green,
-            tabs: const [
-              Tab(text: 'Bulk Requests'),
-              Tab(text: 'Individual Bids'),
-            ],
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWide ? 400 : double.infinity,
+            ),
+            child: TabBar(
+              controller: _typeCtrl,
+              labelColor: AppTheme.green,
+              unselectedLabelColor: AppTheme.textMuted,
+              indicatorColor: AppTheme.green,
+              tabAlignment: isWide ? TabAlignment.start : TabAlignment.fill,
+              isScrollable: isWide,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+              tabs: const [
+                Tab(text: 'Bulk Requests'),
+                Tab(text: 'Individual Bids'),
+              ],
+            ),
           ),
         ),
         _buildEnhancedFilterBar(),
@@ -703,7 +720,7 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       color: AppTheme.card,
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -712,7 +729,7 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -733,7 +750,7 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               formattedDate,
                               style: TextStyle(
@@ -743,19 +760,35 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          o.status,
-                          style: TextStyle(
-                              color: statusColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
+                      InkWell(
+                        onTap: _showStatusDialog,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: statusColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                o.status,
+                                style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 2),
+                              Icon(Icons.arrow_drop_down,
+                                  size: 14, color: statusColor),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -764,20 +797,35 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _mobileDetailItem(
-                          'Qty', '${o.quantity} ${o.quantityUnit}'),
-                      _mobileDetailItem('Buyer', o.buyerName),
+                      Expanded(
+                        child: _mobileDetailItem(
+                            'Qty', '${o.quantity} ${o.quantityUnit}'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _mobileDetailItem('Buyer', o.buyerName),
+                      ),
                     ],
                   ),
                   if (_expanded) ...[
                     const SizedBox(height: 12),
                     Divider(color: AppTheme.border, height: 1),
                     const SizedBox(height: 12),
-                    _mobileDetailItem('Order ID', o.id),
-                    const SizedBox(height: 8),
-                    _mobileDetailItem('Phone', o.buyerPhone),
-                    const SizedBox(height: 8),
-                    _mobileDetailItem('Category', o.category),
+                    Table(
+                      columnWidths: const {
+                        0: FixedColumnWidth(90),
+                        1: FlexColumnWidth(),
+                      },
+                      children: [
+                        _tableRow('Item Name', o.itemName),
+                        _tableRow('Category', o.category),
+                        _tableRow('Order Type', o.orderType),
+                        _tableRow('Buyer Phone', o.buyerPhone),
+                        _tableRow('Created At', DateFormat('yyyy-MM-dd HH:mm').format(o.createdAt)),
+                        if (o.notes.isNotEmpty) _tableRow('Buyer Notes', o.notes),
+                        if (o.adminNotes.isNotEmpty) _tableRow('Admin Notes', o.adminNotes),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -798,6 +846,35 @@ class _BulkOrderMobileCardState extends State<_BulkOrderMobileCard> {
           ),
         ],
       ),
+    );
+  }
+
+  TableRow _tableRow(String label, String value) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textMuted,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -920,7 +997,7 @@ class _BidMobileCardState extends State<_BidMobileCard> {
     final displayStatus = b.isRegistryVerified ? 'Registry Verified' : b.status;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       color: AppTheme.card,
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -929,7 +1006,7 @@ class _BidMobileCardState extends State<_BidMobileCard> {
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -950,7 +1027,7 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               formattedDate,
                               style: TextStyle(
@@ -960,21 +1037,37 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          displayStatus,
-                          style: TextStyle(
-                              color: statusColor,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      InkWell(
+                        onTap: _showStatusDialog,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: statusColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                displayStatus,
+                                style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(width: 2),
+                              Icon(Icons.arrow_drop_down,
+                                  size: 12, color: statusColor),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -983,9 +1076,14 @@ class _BidMobileCardState extends State<_BidMobileCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _mobileDetailItem(
-                          'Price', 'UGX ${b.offeredPrice.toInt()}'),
-                      _mobileDetailItem('Buyer', b.buyerName),
+                      Expanded(
+                        child: _mobileDetailItem(
+                            'Price', 'UGX ${b.offeredPrice.toInt()}'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _mobileDetailItem('Buyer', b.buyerName),
+                      ),
                     ],
                   ),
                   if (_expanded) ...[
@@ -1176,7 +1274,7 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
           onTap: () => setState(() => _expanded = !_expanded),
           hoverColor: AppTheme.cardHover.withOpacity(0.3),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: AppTheme.card,
               border: Border(
@@ -1257,21 +1355,40 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2)))
                       : Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              o.status,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                          child: InkWell(
+                            onTap: _showStatusDialog,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Tooltip(
+                              message: 'Click to change status',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: statusColor.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      o.status,
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.arrow_drop_down,
+                                        size: 14, color: statusColor),
+                                  ],
+                                ),
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -1311,24 +1428,21 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 24,
-                  runSpacing: 12,
+                Table(
+                  columnWidths: const {
+                    0: FixedColumnWidth(150),
+                    1: FlexColumnWidth(),
+                  },
                   children: [
-                    _detailItem('Order ID', o.id),
-                    _detailItem('Buyer Phone', o.buyerPhone),
-                    _detailItem('Order Type', o.orderType),
-                    _detailItem('Created At',
-                        DateFormat('yyyy-MM-dd HH:mm:ss').format(o.createdAt)),
+                    _tableRow('Item Name', o.itemName),
+                    _tableRow('Category', o.category),
+                    _tableRow('Order Type', o.orderType),
+                    _tableRow('Buyer Phone', o.buyerPhone),
+                    _tableRow('Created At', DateFormat('yyyy-MM-dd HH:mm:ss').format(o.createdAt)),
+                    if (o.notes.isNotEmpty) _tableRow('Buyer Notes', o.notes),
+                    _tableRow('Admin Notes', o.adminNotes.isEmpty ? 'No notes added' : o.adminNotes),
                   ],
                 ),
-                if (o.notes.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _detailItem('Buyer Notes', o.notes),
-                ],
-                const SizedBox(height: 12),
-                _detailItem('Admin/Registry Notes',
-                    o.adminNotes.isEmpty ? 'No notes added' : o.adminNotes),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -1347,8 +1461,8 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
                       onPressed: _showNotesDialog,
-                      icon: const Icon(Icons.note_alt_outlined, size: 14),
-                      label: const Text('Admin Notes'),
+                      icon: const Icon(Icons.note_add_outlined, size: 14),
+                      label: const Text('Add Admin Note'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textPrimary,
                         side: BorderSide(color: AppTheme.border),
@@ -1378,6 +1492,35 @@ class _BulkOrderRowState extends State<_BulkOrderRow> {
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.textPrimary)),
+      ],
+    );
+  }
+
+  TableRow _tableRow(String label, String value) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textMuted,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -1527,7 +1670,7 @@ class _BidRowState extends State<_BidRow> {
           onTap: () => setState(() => _expanded = !_expanded),
           hoverColor: AppTheme.cardHover.withOpacity(0.3),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: AppTheme.card,
               border: Border(
@@ -1598,21 +1741,40 @@ class _BidRowState extends State<_BidRow> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2)))
                       : Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              displayStatus,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                          child: InkWell(
+                            onTap: _showStatusDialog,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Tooltip(
+                              message: 'Click to change status',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: statusColor.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      displayStatus,
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.arrow_drop_down,
+                                        size: 14, color: statusColor),
+                                  ],
+                                ),
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),

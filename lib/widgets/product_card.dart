@@ -31,10 +31,10 @@ class _ProductCardState extends State<ProductCard> {
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(16),
             border:
-                Border.all(color: AppTheme.border.withOpacity(0.35), width: 1),
+                Border.all(color: AppTheme.border.withValues(alpha: 0.35), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -54,55 +54,46 @@ class _ProductCardState extends State<ProductCard> {
                 ),
               ),
               // Name + Price
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.topLeft,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 100),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.product.productName,
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'UGX ${formatter.format(widget.product.price.toInt())} / ${_fullUnitLabel(widget.product.quantityUnit)}',
-                            style: const TextStyle(
-                              color: AppTheme.greenLight,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.product.district,
-                            style: TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.product.productName,
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'UGX ${formatter.format(widget.product.price.toInt())} / ${_fullUnitLabel(widget.product.quantityUnit)}',
+                      style: const TextStyle(
+                        color: AppTheme.greenLight,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.product.district,
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -118,10 +109,10 @@ class _ProductCardState extends State<ProductCard> {
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.border.withOpacity(0.4), width: 1),
+          border: Border.all(color: AppTheme.border.withValues(alpha: 0.4), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -138,7 +129,7 @@ class _ProductCardState extends State<ProductCard> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(20)),
                   child: AspectRatio(
-                    aspectRatio: 1.0,
+                    aspectRatio: 1.15,
                     child: _buildImage(),
                   ),
                 ),
@@ -151,8 +142,8 @@ class _ProductCardState extends State<ProductCard> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isAvailableNow
-                          ? AppTheme.green.withOpacity(0.9)
-                          : Colors.orange.withOpacity(0.9),
+                          ? AppTheme.green.withValues(alpha: 0.9)
+                          : Colors.orange.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -161,7 +152,7 @@ class _ProductCardState extends State<ProductCard> {
                         Container(
                           width: 5,
                           height: 5,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
@@ -183,78 +174,70 @@ class _ProductCardState extends State<ProductCard> {
               ],
             ),
 
-            // ── Info section ────────────────────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.topLeft,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Category label
-                        Text(
-                          widget.product.category.toUpperCase(),
-                          style: TextStyle(
-                            color: AppTheme.green.withOpacity(0.8),
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.6,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 3),
-                        // Product name
-                        Text(
-                          widget.product.productName,
-                          style: TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        // Price
-                        Text(
-                          'UGX ${formatter.format(widget.product.price.toInt())} / ${_fullUnitLabel(widget.product.quantityUnit)}',
-                          style: const TextStyle(
-                            color: AppTheme.greenLight,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined,
-                                color: AppTheme.textMuted, size: 10),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.product.district,
-                              style: TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ],
+            // ── Info section ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Category label
+                  Text(
+                    widget.product.category.toUpperCase(),
+                    style: TextStyle(
+                      color: AppTheme.green.withValues(alpha: 0.8),
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                  const SizedBox(height: 3),
+                  // Product name
+                  Text(
+                    widget.product.productName,
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Price
+                  Text(
+                    'UGX ${formatter.format(widget.product.price.toInt())} / ${_fullUnitLabel(widget.product.quantityUnit)}',
+                    style: const TextStyle(
+                      color: AppTheme.greenLight,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          color: AppTheme.textMuted, size: 10),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.product.district,
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -291,22 +274,9 @@ class _ProductCardState extends State<ProductCard> {
             ? const CircularProgressIndicator(
                 color: AppTheme.green, strokeWidth: 2)
             : Icon(_getCategoryIcon(widget.product.category),
-                color: AppTheme.textMuted.withOpacity(0.4), size: 38),
+                color: AppTheme.textMuted.withValues(alpha: 0.4), size: 38),
       ),
     );
-  }
-
-  String _unitLabel(String unit) {
-    final u = unit.toLowerCase();
-    if (u == 'pieces') return 'pc';
-    if (u == 'crates') return 'crate';
-    if (u == 'bags') return 'bag';
-    if (u == 'bunches') return 'bunch';
-    if (u == 'trays') return 'tray';
-    if (u == 'litres') return 'L';
-    if (u == 'tonnes') return 'T';
-    if (u == 'kilograms') return 'kg';
-    return u;
   }
 
   String _fullUnitLabel(String unit) {
@@ -321,11 +291,6 @@ class _ProductCardState extends State<ProductCard> {
     if (u == 'kilograms') return 'Kg';
     if (u.endsWith('s')) return u.substring(0, u.length - 1);
     return u;
-  }
-
-  String _formatQty(double qty) {
-    if (qty == qty.truncate()) return qty.toInt().toString();
-    return qty.toStringAsFixed(1);
   }
 
   IconData _getCategoryIcon(String category) {
