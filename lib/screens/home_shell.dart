@@ -76,7 +76,29 @@ class _HomeShellState extends State<HomeShell> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final uid = authService.currentUser?.uid;
 
-    if (uid == null) return const LoginScreen();
+    if (uid == null) {
+      if (kIsWeb) {
+        final visitorUser = UserModel(
+          id: 'visitor',
+          name: 'Visitor',
+          firstName: 'Visitor',
+          lastName: '',
+          phone: '',
+          email: '',
+          role: 'Visitor',
+          gender: '',
+          nin: '',
+          userCategory: 'Buyer',
+          district: '',
+          subcounty: '',
+          village: '',
+          isProfileComplete: true,
+          isVerified: false,
+        );
+        return _buildShellWithUser(visitorUser, authService);
+      }
+      return const LoginScreen();
+    }
 
     return StreamBuilder<UserModel?>(
       key: ValueKey(_profileRetryVersion),
@@ -123,258 +145,279 @@ class _HomeShellState extends State<HomeShell> {
           );
         }
 
-        return ValueListenableBuilder<int>(
-          valueListenable: _currentIndexNotifier,
-          builder: (context, currentIndex, _) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop =
-                    constraints.maxWidth >= AppBreakpoints.desktop;
-                final showExtendedRail =
-                    constraints.maxWidth >= AppBreakpoints.wide;
+        return _buildShellWithUser(user, authService);
+      },
+    );
+  }
 
-                final actions = [
-                  StreamBuilder<List<NotificationModel>>(
-                    stream: DatabaseService().streamNotifications(user.id),
-                    builder: (context, snap) {
-                      final unreadCount =
-                          snap.data?.where((n) => !n.isRead).length ?? 0;
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_none,
-                                color: Colors.white),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) =>
-                                        NotificationsScreen(userId: user.id)),
-                              );
-                            },
-                          ),
-                          if (unreadCount > 0)
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.error,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                constraints: const BoxConstraints(
-                                    minWidth: 16, minHeight: 16),
-                                child: Text(
-                                  unreadCount > 9 ? '9+' : '$unreadCount',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold),
-                                  textAlign: TextAlign.center,
+  Widget _buildShellWithUser(UserModel user, AuthService authService) {
+    return ValueListenableBuilder<int>(
+      valueListenable: _currentIndexNotifier,
+      builder: (context, currentIndex, _) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop =
+                constraints.maxWidth >= AppBreakpoints.desktop;
+            final showExtendedRail =
+                constraints.maxWidth >= AppBreakpoints.wide;
+
+            final actions = user.id == 'visitor'
+                ? [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.login, color: Colors.white, size: 18),
+                      label: const Text(
+                        'Login',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ]
+                : [
+                    StreamBuilder<List<NotificationModel>>(
+                      stream: DatabaseService().streamNotifications(user.id),
+                      builder: (context, snap) {
+                        final unreadCount =
+                            snap.data?.where((n) => !n.isRead).length ?? 0;
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_none,
+                                  color: Colors.white),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          NotificationsScreen(userId: user.id)),
+                                );
+                              },
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.error,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                      minWidth: 16, minHeight: 16),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : '$unreadCount',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ];
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ];
 
-                final List<BottomNavigationBarItem> navItems = [];
-                final List<Widget> screens = [];
+            final List<BottomNavigationBarItem> navItems = [];
+            final List<Widget> screens = [];
 
-                if (isDesktop && (user.role == 'Admin' || user.role == 'Registry')) {
-                  // Marketplace
-                  navItems.add(const BottomNavigationBarItem(
-                      icon: Icon(Icons.storefront), label: 'Market'));
-                  screens.add(MarketplaceScreen(
-                      controller: _marketController,
-                      userRole: user.role,
-                      userId: user.id,
-                      actions: actions,
-                      onViewAllCategory: _onViewAllCategory));
+            if (isDesktop && (user.role == 'Admin' || user.role == 'Registry')) {
+              // Marketplace
+              navItems.add(const BottomNavigationBarItem(
+                  icon: Icon(Icons.storefront), label: 'Market'));
+              screens.add(MarketplaceScreen(
+                  controller: _marketController,
+                  userRole: user.role,
+                  userId: user.id,
+                  actions: actions,
+                  onViewAllCategory: _onViewAllCategory));
 
-                  // Admin Dashboard options (Flattened directly into main sidebar)
-                  navItems.addAll([
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.gavel_outlined), label: 'Bids & Orders'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.storage_outlined), label: 'Registry Database'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.people_outline), label: 'Users'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.person_outline), label: 'Agents'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.agriculture_outlined), label: 'Create Farmer'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.groups_outlined), label: 'Create Group'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.storefront_outlined), label: 'Register Store'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.business_outlined), label: 'Register Dealer'),
-                    const BottomNavigationBarItem(
-                        icon: Icon(Icons.inventory_2_outlined), label: 'My Listings'),
-                  ]);
+              // Admin Dashboard options (Flattened directly into main sidebar)
+              navItems.addAll([
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.gavel_outlined), label: 'Bids & Orders'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.storage_outlined), label: 'Registry Database'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.people_outline), label: 'Users'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline), label: 'Agents'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.agriculture_outlined), label: 'Create Farmer'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.groups_outlined), label: 'Create Group'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.storefront_outlined), label: 'Register Store'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.business_outlined), label: 'Register Dealer'),
+                const BottomNavigationBarItem(
+                    icon: Icon(Icons.inventory_2_outlined), label: 'My Listings'),
+              ]);
 
-                  screens.addAll([
-                    RegistryBidsTab(db: DatabaseService()),
-                    RegistryDatabaseTab(db: DatabaseService()),
-                    AdminUsersList(db: DatabaseService()),
-                    AdminAgentsList(db: DatabaseService()),
-                    RegisterUserScreen(role: 'Farmer', agentId: user.id),
-                    RegisterGroupScreen(agentId: user.id),
-                    RegisterStoreScreen(agentId: user.id),
-                    RegisterDealerScreen(agentId: user.id),
-                    MyListingsTab(userId: user.id),
-                  ]);
+              screens.addAll([
+                RegistryBidsTab(db: DatabaseService()),
+                RegistryDatabaseTab(db: DatabaseService()),
+                AdminUsersList(db: DatabaseService()),
+                AdminAgentsList(db: DatabaseService()),
+                RegisterUserScreen(role: 'Farmer', agentId: user.id),
+                RegisterGroupScreen(agentId: user.id),
+                RegisterStoreScreen(agentId: user.id),
+                RegisterDealerScreen(agentId: user.id),
+                MyListingsTab(userId: user.id),
+              ]);
 
-                  // Profile
-                  navItems.add(const BottomNavigationBarItem(
-                      icon: Icon(Icons.person_outline), label: 'Profile'));
-                  screens.add(ProfileScreen(user: user));
+              // Profile
+              navItems.add(const BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline), label: 'Profile'));
+              screens.add(ProfileScreen(user: user));
 
-                } else {
-                  final baseNavItems = _getNavItems(user);
-                  final baseScreens = _getScreens(user, actions);
+            } else {
+              final baseNavItems = _getNavItems(user);
+              final baseScreens = _getScreens(user, actions);
 
-                  for (int i = 0; i < baseNavItems.length; i++) {
-                    if (isDesktop && baseNavItems[i].label == 'Categories') {
-                      continue;
-                    }
-                    navItems.add(baseNavItems[i]);
-                    if (i < baseScreens.length) {
-                      screens.add(baseScreens[i]);
-                    }
-                  }
+              for (int i = 0; i < baseNavItems.length; i++) {
+                if (isDesktop && baseNavItems[i].label == 'Categories') {
+                  continue;
                 }
+                navItems.add(baseNavItems[i]);
+                if (i < baseScreens.length) {
+                  screens.add(baseScreens[i]);
+                }
+              }
+            }
 
-                // Clamp index
-                final safeIndex = currentIndex.clamp(0, navItems.length - 1);
+            // Clamp index
+            final safeIndex = currentIndex.clamp(0, navItems.length - 1);
 
-                if (isDesktop) {
-                  return Scaffold(
-                    body: Row(
-                      children: [
-                        NavigationRail(
-                          extended: showExtendedRail,
-                          minExtendedWidth: 220,
-                          selectedIndex: safeIndex,
-                          onDestinationSelected: (i) {
-                            // If we are deep into the nested navigator, pop back to root when switching tabs
-                            if (_desktopNavKey.currentState?.canPop() ??
-                                false) {
-                              _desktopNavKey.currentState
-                                  ?.popUntil((route) => route.isFirst);
-                            }
-                            _currentIndexNotifier.value = i;
-                          },
-                          labelType: showExtendedRail
-                              ? NavigationRailLabelType.none
-                              : NavigationRailLabelType.all,
-                          backgroundColor: AppTheme.surfaceLight,
-                          selectedIconTheme:
-                              const IconThemeData(color: AppTheme.green),
-                          selectedLabelTextStyle: const TextStyle(
-                              color: AppTheme.green,
-                              fontWeight: FontWeight.bold),
-                          unselectedIconTheme:
-                              IconThemeData(color: AppTheme.textMuted),
-                          unselectedLabelTextStyle:
-                              TextStyle(color: AppTheme.textMuted),
-                          leading: Padding(
-                            padding: const EdgeInsets.only(bottom: 20, top: 10),
-                            child: Image.asset('assets/images/Bfarm_icon.png',
-                                height: 48),
-                          ),
-                          destinations: navItems
-                              .map((item) => NavigationRailDestination(
-                                    icon: item.icon,
-                                    label: Text(item.label ?? ''),
-                                  ))
-                              .toList(),
-                        ),
-                        VerticalDivider(
-                            thickness: 1, width: 1, color: AppTheme.border),
-                        Expanded(
-                          child: Navigator(
-                            key: _desktopNavKey,
-                            onGenerateRoute: (settings) {
-                              return MaterialPageRoute(
-                                builder: (context) {
-                                  return ValueListenableBuilder<int>(
-                                    valueListenable: _currentIndexNotifier,
-                                    builder: (context, idx, _) {
-                                      final safeIdx =
-                                          idx.clamp(0, screens.length - 1);
-                                      final hideAppBar =
-                                          screens[safeIdx] is MarketplaceScreen ||
-                                          screens[safeIdx] is CategoriesScreen ||
-                                          screens[safeIdx] is ProfileScreen ||
-                                          screens[safeIdx] is AdminDashboardScreen ||
-                                          screens[safeIdx] is AgentDashboardScreen;
+            if (isDesktop) {
+              return Scaffold(
+                body: Row(
+                  children: [
+                    NavigationRail(
+                      extended: showExtendedRail,
+                      minExtendedWidth: 220,
+                      selectedIndex: safeIndex,
+                      onDestinationSelected: (i) {
+                        // If we are deep into the nested navigator, pop back to root when switching tabs
+                        if (_desktopNavKey.currentState?.canPop() ??
+                            false) {
+                          _desktopNavKey.currentState
+                              ?.popUntil((route) => route.isFirst);
+                        }
+                        _currentIndexNotifier.value = i;
+                      },
+                      labelType: showExtendedRail
+                          ? NavigationRailLabelType.none
+                          : NavigationRailLabelType.all,
+                      backgroundColor: AppTheme.surface,
+                      selectedIconTheme:
+                          const IconThemeData(color: AppTheme.green),
+                      selectedLabelTextStyle: const TextStyle(
+                          color: AppTheme.green,
+                          fontWeight: FontWeight.bold),
+                      unselectedIconTheme:
+                          IconThemeData(color: AppTheme.textMuted),
+                      unselectedLabelTextStyle:
+                          TextStyle(color: AppTheme.textMuted),
+                      leading: Padding(
+                        padding: const EdgeInsets.only(bottom: 20, top: 10),
+                        child: Image.asset('assets/images/Bfarm_icon.png',
+                            height: 48),
+                      ),
+                      destinations: navItems
+                          .map((item) => NavigationRailDestination(
+                                icon: item.icon,
+                                label: Text(item.label ?? ''),
+                              ))
+                          .toList(),
+                    ),
+                    VerticalDivider(
+                        thickness: 1, width: 1, color: AppTheme.border),
+                    Expanded(
+                      child: Navigator(
+                        key: _desktopNavKey,
+                        onGenerateRoute: (settings) {
+                          return MaterialPageRoute(
+                            builder: (context) {
+                              return ValueListenableBuilder<int>(
+                                valueListenable: _currentIndexNotifier,
+                                builder: (context, idx, _) {
+                                  final safeIdx =
+                                      idx.clamp(0, screens.length - 1);
+                                  final hideAppBar =
+                                      screens[safeIdx] is MarketplaceScreen ||
+                                      screens[safeIdx] is CategoriesScreen ||
+                                      screens[safeIdx] is ProfileScreen ||
+                                      screens[safeIdx] is AdminDashboardScreen ||
+                                      screens[safeIdx] is AgentDashboardScreen;
 
-                                      return Scaffold(
-                                        appBar: !hideAppBar
-                                            ? AppBar(
-                                                toolbarHeight: 64,
-                                                title: Text(
-                                                    navItems[safeIdx].label ??
-                                                        'BFarm',
-                                                    style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w700)),
-                                                actions: actions,
-                                              )
-                                            : null,
-                                        body: IndexedStack(
-                                            index: safeIdx, children: screens),
-                                      );
-                                    },
+                                  return Scaffold(
+                                    appBar: !hideAppBar
+                                        ? AppBar(
+                                            toolbarHeight: 64,
+                                            title: Text(
+                                                navItems[safeIdx].label ??
+                                                    'BFarm',
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w700)),
+                                            actions: actions,
+                                          )
+                                        : null,
+                                    body: IndexedStack(
+                                        index: safeIdx, children: screens),
                                   );
                                 },
                               );
                             },
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Stack(
-                  children: [
-                    Scaffold(
-                      appBar: (safeIndex == 0 ||
-                              safeIndex == 1 ||
-                              screens[safeIndex] is AdminDashboardScreen ||
-                              screens[safeIndex] is AgentDashboardScreen ||
-                              screens[safeIndex] is ProfileScreen)
-                          ? null
-                          : AppBar(
-                              toolbarHeight: 64,
-                              title: Image.asset(
-                                'assets/images/bfarm_premium_logo.png',
-                                height: 64,
-                                fit: BoxFit.contain,
-                                alignment: Alignment.centerLeft,
-                              ),
-                              actions: actions,
-                            ),
-                      body: IndexedStack(
-                        index: safeIndex,
-                        children: screens,
+                          );
+                        },
                       ),
-                      bottomNavigationBar:
-                          _buildCustomBottomNav(safeIndex, navItems, context),
                     ),
-                    if (safeIndex == 0) FloatingMessageWidget(userId: user.id),
                   ],
-                );
-              },
+                ),
+              );
+            }
+
+            return Stack(
+              children: [
+                Scaffold(
+                  appBar: (safeIndex == 0 ||
+                          safeIndex == 1 ||
+                          screens[safeIndex] is AdminDashboardScreen ||
+                          screens[safeIndex] is AgentDashboardScreen ||
+                          screens[safeIndex] is ProfileScreen)
+                      ? null
+                      : AppBar(
+                          toolbarHeight: 64,
+                          title: Image.asset(
+                            'assets/images/bfarm_premium_logo.png',
+                            height: 64,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.centerLeft,
+                          ),
+                          actions: actions,
+                        ),
+                  body: IndexedStack(
+                    index: safeIndex,
+                    children: screens,
+                  ),
+                  bottomNavigationBar:
+                      _buildCustomBottomNav(safeIndex, navItems, context),
+                ),
+                if (safeIndex == 0 && user.id != 'visitor') FloatingMessageWidget(userId: user.id),
+              ],
             );
           },
         );
@@ -584,6 +627,28 @@ class _HomeShellState extends State<HomeShell> {
                   ))),
           ManagementScreen(
               user: user, initialTabIndex: 1), // Default to Listings for Store
+          ProfileScreen(user: user),
+        ];
+      case 'Visitor':
+        return [
+          MarketplaceScreen(
+              controller: _marketController,
+              userRole: user.role,
+              userId: user.id,
+              actions: actions,
+              onViewAllCategory: _onViewAllCategory),
+          CategoriesScreen(
+              onCategorySelected: _onCategorySelected,
+              initialCategory: _selectedCategoryForTab,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+              onProductSelected: (p) => Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(
+                        product: p,
+                        currentUserId: user.id,
+                        currentUserRole: user.role),
+                  ))),
           ProfileScreen(user: user),
         ];
       default:

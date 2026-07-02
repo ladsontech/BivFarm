@@ -119,6 +119,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
         if (snapshot.hasData) return const HomeShell();
+        if (kIsWeb) return const HomeShell();
         return const LoginScreen();
       },
     );

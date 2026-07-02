@@ -11,6 +11,7 @@ import '../../widgets/responsive_wrapper.dart';
 import '../bidding/bid_form_screen.dart';
 import '../../widgets/product_card.dart';
 import 'add_product_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -142,14 +143,53 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton.icon(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BidFormScreen(
-                                    product: widget.product,
-                                    buyerId: widget.currentUserId),
-                              ),
-                            ),
+                            onPressed: () {
+                              if (widget.currentUserId == 'visitor') {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    title: const Text('Authentication Required'),
+                                    content: const Text(
+                                        'You need to be signed in to place a bid. Would you like to log in or register now?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text('Cancel',
+                                            style: TextStyle(color: AppTheme.textMuted)),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (_) => const LoginScreen()),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppTheme.green,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                        child: const Text('Log In / Sign Up'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BidFormScreen(
+                                        product: widget.product,
+                                        buyerId: widget.currentUserId),
+                                  ),
+                                );
+                              }
+                            },
                             icon: const Icon(Icons.gavel_rounded),
                             label: const Text(
                               'Place a Bid',

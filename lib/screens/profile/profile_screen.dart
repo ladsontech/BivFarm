@@ -12,6 +12,7 @@ import '../../widgets/responsive_wrapper.dart';
 import '../../utils/constants.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -150,6 +151,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final user = widget.user;
     final themeProvider = Provider.of<ThemeProvider>(context);
+
+    if (user.role == 'Visitor') {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Card(
+            margin: const EdgeInsets.all(24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppTheme.border, width: 0.5),
+            ),
+            color: AppTheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: AppTheme.green.withValues(alpha: 0.1),
+                    child: const Icon(Icons.account_circle, size: 50, color: AppTheme.green),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Join BFarm',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign up or log in to place bids, upload products, view orders, and message agents/farmers.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textMuted, height: 1.4),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.green,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Log In / Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
