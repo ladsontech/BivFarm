@@ -119,7 +119,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
         if (snapshot.hasData) return const HomeShell();
-        if (kIsWeb) return const HomeShell();
+        if (kIsWeb) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AuthService>().signInAnonymously().catchError((e) {
+              debugPrint('Failed to sign in anonymously: $e');
+            });
+          });
+          return const HomeShell();
+        }
         return const LoginScreen();
       },
     );

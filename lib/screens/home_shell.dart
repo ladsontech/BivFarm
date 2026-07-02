@@ -74,9 +74,11 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context, listen: false);
-    final uid = authService.currentUser?.uid;
+    final currentUser = authService.currentUser;
+    final uid = currentUser?.uid;
+    final isAnonymous = currentUser?.isAnonymous ?? false;
 
-    if (uid == null) {
+    if (uid == null || isAnonymous) {
       if (kIsWeb) {
         final visitorUser = UserModel(
           id: 'visitor',

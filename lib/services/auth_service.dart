@@ -378,4 +378,9 @@ class AuthService {
       rethrow;
     }
   }
+
+  Future<auth.UserCredential> signInAnonymously() async {
+    return await _auth.signInAnonymously();
+  }
 }
+
